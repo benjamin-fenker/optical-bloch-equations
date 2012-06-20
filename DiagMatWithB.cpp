@@ -53,9 +53,9 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
   cout << endl;
 
   for(int i = 0; i < numBasisStates*2; i+=2) {
-    cout << Iz2[i] << "/2 + " << Iz2[i+1] << " i , " << Jz2[i] << "/2 +" << Jz2[i+1] << " i " << endl;
+    //cout << Iz2[i] << "/2 + " << Iz2[i+1] << " i , " << Jz2[i] << "/2 +" << Jz2[i+1] << " i " << endl;
   }
-  cout << endl;
+  //cout << endl;
 
   
   double I_z[2*numBasisStates*numBasisStates];
@@ -295,7 +295,8 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
     //genAtomicState::Fz2vec[L][i] = setFz2;
   }
   
-  /*
+
+    /*
   for(int i = 0; i < numBasisStates; i++) {
     double eval_i = gsl_vector_get(eval,i);
     gsl_vector_complex_view evec_i = gsl_matrix_complex_column(evec,i);
@@ -346,9 +347,9 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
       
       *(arrayToFill+j+(i*numBasisStates)) = admixture[i][j];
 
-      printf("%10.6G\t ",admixture[i][j]);
+      //printf("%10.6G\t ",admixture[i][j]);
     }
-    printf("\n");
+    //printf("\n");
   }
   
   /*  
