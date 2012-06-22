@@ -18,21 +18,25 @@ class DiagMatWithB {
 
 public:
 
-  void diagH(int I2, int L, int J2, double mu_B, double B_z, double B_x, double g_I, double Aj, double *arrayToFill);
+  void diagH(int I2, int L, int J2, double mu_B, double B_z, double B_x, 
+	     double g_I, double Aj, double *arrayToFill);
   double calc_gf(int F2, int J2, int I2,int L2, int S2,double g_I);
   double calc_gj(int J2, int L2, int S2);
 
 };
 
 
-void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double B_x, double g_I, double Aj, double *arrayToFill) {
+void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, 
+			 double B_x, double g_I, double Aj, 
+			 double *arrayToFill) {
 
   //bool debug = true;
   bool debug = false;
-  printf( "Decomposing nuclear spin I = %i/2 for the L = %i ; J = %i/2 state.  Aj = %6.4G",I2,L,J2,Aj);
+  printf( "Decomposing nuclear spin I = %i/2 for the L = %i ; ",I2,L);
+  printf( "J = %i/2 state.  Aj = %6.4G",J2,Aj);
   int numBasisStates = (I2 + 1)*(J2+1);
   //genAtomicState::numBasisStates = numBasisStates;
-  //  int Iz2[8] = {-3, -1, 1 , 3 , -3, -1, 1, 3}; these define the ordering of the states
+
   int Iz2[numBasisStates*2];
   int Jz2[numBasisStates*2];
 
@@ -43,19 +47,9 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
     Jz2[i] = -J2+ 2*(i/2/(I2+1));
     Jz2[i+1] = 0.0;
     
-    //genAtomicState::Iz2[i] = -I2 + 2*i;
-    //genAtomicState::Iz2[i+(numBasisStates/2)] = -I2+(2*i);
-    //genAtomicState::Jz2[i] = -1;
-    //genAtomicState::Jz2[i+(numBasisStates/2)] = 1;
-
   }
   
   cout << endl;
-
-  for(int i = 0; i < numBasisStates*2; i+=2) {
-    //cout << Iz2[i] << "/2 + " << Iz2[i+1] << " i , " << Jz2[i] << "/2 +" << Jz2[i+1] << " i " << endl;
-  }
-  //cout << endl;
 
   
   double I_z[2*numBasisStates*numBasisStates];
@@ -81,7 +75,6 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
     }
     I_z[i+1] = 0.0;  //Im
     J_z[i+1] = 0.0;
-    //cout << "set I_z[" << i << "] = " << I_z[i] << " , I_z[" << i+1 << "] = " << I_z[i+1] << endl;
     
     
     if( ((i/2)+1) % (numBasisStates+1) == 0) { //One below the diagonal only
@@ -105,7 +98,8 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
     I_minus[i+1] = 0.0;
 
     
-    if( ((i/2)+(numBasisStates/(J2+1)))%(numBasisStates+1) ==0 ) { //Below the diagonal only
+    if( ((i/2)+(numBasisStates/(J2+1)))%(numBasisStates+1) ==0 ) { 
+      //Below the diagonal only
       double J = (double)J2 / 2.0;
       double Jz = (double)Jz2[(2*((i/2)%numBasisStates))]/2.0;
       J_plus[i] = sqrt( J*(J+1.0) - Jz*(Jz+1.0));
@@ -115,10 +109,12 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
     J_plus[i+1] = 0.0;
     
     
-    if( ((i/2)-(numBasisStates/(J2+1)))%(numBasisStates+1) == 0) {//  && (i/2) < (numBasisStates*numBasisStates/2)) { //Above diagonal only
+    if( ((i/2)-(numBasisStates/(J2+1)))%(numBasisStates+1) == 0) {
+      //  && (i/2) < (numBasisStates*numBasisStates/2)) { //Above diagonal only
       double J = (double)J2 / 2.0;
-      double Jz = (double)Jz2[2* ( ((((i/2)-(numBasisStates/(J2+1)))%numBasisStates)+(numBasisStates/(J2+1))) %numBasisStates)]/2.0;
-      //      printf("Index I'm looking at = %i and Jz = %1.2f\n",((((i/2)-(numBasisStates/(J2+1)))%numBasisStates)+(numBasisStates/(J2+1))),Jz);
+      int index = 2* ( ((((i/2)-(numBasisStates/(J2+1)))%numBasisStates)+
+			(numBasisStates/(J2+1))) %numBasisStates);
+      double Jz = (double)Jz2[index]/2.0;
       if( sqrt(J*(J+1.0) - Jz*(Jz-1.0)) > 0.0 ) {
 	J_minus[i] = sqrt(J*(J+1.0) - Jz*(Jz-1.0));
       } else {
@@ -145,25 +141,57 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
   }
   
   
-  gsl_matrix_complex_view I_z_view     = gsl_matrix_complex_view_array (I_z    , numBasisStates, numBasisStates);
-  gsl_matrix_complex_view J_z_view     = gsl_matrix_complex_view_array (J_z    , numBasisStates, numBasisStates);
-  gsl_matrix_complex_view I_plus_view  = gsl_matrix_complex_view_array (I_plus , numBasisStates, numBasisStates);
-  gsl_matrix_complex_view J_plus_view  = gsl_matrix_complex_view_array (J_plus , numBasisStates, numBasisStates);
-  gsl_matrix_complex_view I_minus_view = gsl_matrix_complex_view_array (I_minus, numBasisStates, numBasisStates);
-  gsl_matrix_complex_view J_minus_view = gsl_matrix_complex_view_array (J_minus, numBasisStates, numBasisStates);
-  gsl_matrix_complex_view H_view       = gsl_matrix_complex_view_array (H      , numBasisStates, numBasisStates);
-  //gsl_matrix_complex_view F_z_view     = gsl_matrix_complex_view_array (F_z    , numBasisStates, numBasisStates);
+  gsl_matrix_complex_view I_z_view     = gsl_matrix_complex_view_array (
+					     I_z    , numBasisStates, 
+					     numBasisStates);
+
+  gsl_matrix_complex_view J_z_view     = gsl_matrix_complex_view_array (
+					     J_z    , 
+					     numBasisStates, numBasisStates);
+  
+  gsl_matrix_complex_view I_plus_view  = gsl_matrix_complex_view_array (
+					     I_plus , 
+					     numBasisStates, numBasisStates);
+
+  gsl_matrix_complex_view J_plus_view  = gsl_matrix_complex_view_array (
+					     J_plus , 
+					     numBasisStates, numBasisStates);
+
+  gsl_matrix_complex_view I_minus_view = gsl_matrix_complex_view_array (
+					     I_minus, 
+					     numBasisStates, numBasisStates);
+  gsl_matrix_complex_view J_minus_view = gsl_matrix_complex_view_array (
+					     J_minus, 
+					     numBasisStates, numBasisStates);
+  gsl_matrix_complex_view H_view       = gsl_matrix_complex_view_array (
+					     H      , 
+					     numBasisStates, numBasisStates);
 
   
+  //Initializes to all zeroes
+  gsl_matrix_complex *Hbz = gsl_matrix_complex_calloc(numBasisStates,
+						      numBasisStates); 
 
-  gsl_matrix_complex *Hbz = gsl_matrix_complex_calloc(numBasisStates,numBasisStates); //Initializes to all zeroes
-  gsl_matrix_complex *tempz = gsl_matrix_complex_calloc(numBasisStates,numBasisStates); //Initializes to all zeroes
-  gsl_matrix_complex *Jx = gsl_matrix_complex_calloc(numBasisStates,numBasisStates);
-  gsl_matrix_complex *Ix = gsl_matrix_complex_calloc(numBasisStates,numBasisStates);
-  gsl_matrix_complex *Jy = gsl_matrix_complex_calloc(numBasisStates,numBasisStates);
-  gsl_matrix_complex *Iy = gsl_matrix_complex_calloc(numBasisStates,numBasisStates);
-  gsl_matrix_complex *Hbt = gsl_matrix_complex_calloc(numBasisStates,numBasisStates);
-  gsl_matrix_complex *tempt = gsl_matrix_complex_calloc(numBasisStates,numBasisStates); //Initializes to all zeroes
+  gsl_matrix_complex *tempz = gsl_matrix_complex_calloc(numBasisStates,
+							numBasisStates);
+ 
+  gsl_matrix_complex *Jx = gsl_matrix_complex_calloc(numBasisStates,
+						     numBasisStates);
+
+  gsl_matrix_complex *Ix = gsl_matrix_complex_calloc(numBasisStates,
+						     numBasisStates);
+
+  gsl_matrix_complex *Jy = gsl_matrix_complex_calloc(numBasisStates,
+						     numBasisStates);
+
+  gsl_matrix_complex *Iy = gsl_matrix_complex_calloc(numBasisStates,
+						     numBasisStates);
+
+  gsl_matrix_complex *Hbt = gsl_matrix_complex_calloc(numBasisStates,
+						      numBasisStates);
+
+  gsl_matrix_complex *tempt = gsl_matrix_complex_calloc(numBasisStates,
+							numBasisStates); 
 
   double memn = 1.0/1836.152701;
   gsl_complex g_Ip = gsl_complex_rect(-g_I * memn,0.0);
@@ -199,7 +227,8 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
   //gsl_matrix_complex_fprintf(stdout, Iy, "%g");
   //gsl_matrix_complex_fprintf(stdout, Hb, "%g");
 
-  //Now that I've got my I,J x,y components I need to build on 3.20 from Dan's thesis
+  //Now that I've got my I,J x,y components 
+  //I need to build on 3.20 from Dan's thesis
   gsl_matrix_complex_add (Hbt, Ix);
   gsl_matrix_complex_scale(Hbt,g_Ip);
   
@@ -212,9 +241,18 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
   //*******************************************************************
   
 
-  gsl_blas_zgemm( CblasNoTrans , CblasNoTrans , gsl_complex_rect(1.0,0.0), &I_z_view.matrix,     &J_z_view.matrix    , gsl_complex_rect(0.0,0.0) , &H_view.matrix );
-  gsl_blas_zgemm( CblasNoTrans , CblasNoTrans , gsl_complex_rect(0.5,0.0), &I_plus_view.matrix,  &J_minus_view.matrix, gsl_complex_rect(1.0,0.0) , &H_view.matrix);
-  gsl_blas_zgemm( CblasNoTrans , CblasNoTrans , gsl_complex_rect(0.5,0.0), &I_minus_view.matrix, &J_plus_view.matrix , gsl_complex_rect(1.0,0.0) , &H_view.matrix);
+  gsl_blas_zgemm( CblasNoTrans , CblasNoTrans , gsl_complex_rect(1.0,0.0), 
+		  &I_z_view.matrix,     &J_z_view.matrix    , 
+		  gsl_complex_rect(0.0,0.0) , &H_view.matrix );
+
+  gsl_blas_zgemm( CblasNoTrans , CblasNoTrans , gsl_complex_rect(0.5,0.0), 
+		  &I_plus_view.matrix,  &J_minus_view.matrix, 
+		  gsl_complex_rect(1.0,0.0) , &H_view.matrix);
+
+  gsl_blas_zgemm( CblasNoTrans , CblasNoTrans , gsl_complex_rect(0.5,0.0), 
+		  &I_minus_view.matrix, &J_plus_view.matrix , 
+		  gsl_complex_rect(1.0,0.0) , &H_view.matrix);
+
   gsl_matrix_complex_scale(&H_view.matrix, gsl_complex_rect(Aj,0.0));
 
   gsl_matrix_complex_add(&H_view.matrix, Hbz);
@@ -239,7 +277,8 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
 
   
   gsl_vector *eval = gsl_vector_alloc(numBasisStates);
-  gsl_matrix_complex *evec = gsl_matrix_complex_alloc(numBasisStates,numBasisStates);
+  gsl_matrix_complex *evec = gsl_matrix_complex_alloc(numBasisStates,
+						      numBasisStates);
   
   gsl_eigen_hermv_workspace * w = gsl_eigen_hermv_alloc(numBasisStates);
 
@@ -278,12 +317,9 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
       for(int k = 0; k < numBasisStates; k++) { 
 	gsl_complex adMix = gsl_vector_complex_get(&evec_i.vector,k);
 	if(fabs(GSL_REAL(adMix)) > pow(10,-10)) {
-	  //printf("Mixing partly with state Iz2 = %i and Jz2 = %i\n",Iz2[2*k],Jz2[2*k]);
 	  if(firstAdMix) { //This is the first time through
 	    setFz2 = Iz2[2*k] + Jz2[2*k];
 	    firstAdMix = false;
-	  } else { //Check that it is consistent
-	    //if(Iz2[k]+Jz2[k] != setFz2) { cout << "Houston, we have a problem." << endl; }
 	  }
 	}
 
@@ -296,17 +332,18 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
   }
   
 
-    /*
+  /*
   for(int i = 0; i < numBasisStates; i++) {
     double eval_i = gsl_vector_get(eval,i);
     gsl_vector_complex_view evec_i = gsl_matrix_complex_column(evec,i);
-    cout << "eigenvalue =  " << eval_i ;//<< "\t State has 2F = " << F2[i] << "\t and 2Fz = " << Fz2[i] << endl;
+    cout << "eigenvalue =  " << eval_i ;
     cout << "\t\t | " << F2[i] << "/2 , " << Fz2[i] << "/2 > = ";
     //     cout << "eigenvector = " << endl;
     for(int k = 0; k < numBasisStates; k++) {
       gsl_complex adMix = gsl_vector_complex_get(&evec_i.vector,k);
       if( fabs(GSL_REAL(adMix)) > pow(10,-10)) {
-	cout << GSL_REAL(adMix) << " | " << Iz2[2*k] << "/2 , " << Jz2[2*k] << "/2 > + ";
+	cout << GSL_REAL(adMix) << " | " << Iz2[2*k];
+	cout << "/2 , " << Jz2[2*k] << "/2 > + ";
       }
     }
     cout << endl << endl;
@@ -378,7 +415,7 @@ void DiagMatWithB::diagH(int I2, int L, int J2, double mu_B, double B_z, double 
     for(int j = 0; j < numBasisStates; j++) {
       gsl_vector_complex_view evec_j = gsl_matrix_complex_column(evec,j);
       gsl_complex ev = gsl_vector_complex_get(&evec_j.vector,i);
-      cout << setw(14) << left << GSL_REAL(ev); //<< " + " << setw(12) << left << GSL_IMAG(ev) << "i";
+      cout << setw(14) << left << GSL_REAL(ev); 
     }
     cout << endl;
   }
