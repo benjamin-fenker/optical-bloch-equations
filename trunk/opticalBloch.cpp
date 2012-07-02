@@ -29,7 +29,8 @@ void printArray2D_imag(gsl_complex *array, int col, int row);
 bool isHermitian(gsl_complex *array, int size);
 
 int main(int argc, char* argv[]) {
-
+  
+  cout << endl;
   bool production = true;
   double epsilon_0 = GSL_CONST_MKSA_VACUUM_PERMITTIVITY * pow(10,27); 
   // Units are A^2 ns^4 / cm^3 g
@@ -37,7 +38,6 @@ int main(int argc, char* argv[]) {
   // Units are cm/ns
   const double hbar = GSL_CONST_CGSM_PLANCKS_CONSTANT_HBAR    * pow(10,-9); 
   // Units are g cm^2 / ns
-  printf("hbar = %8.6G\n",hbar);
 
   DiagMatWithB decomp;
 
@@ -53,26 +53,99 @@ int main(int argc, char* argv[]) {
   // Units are ns^-1 omega = c/(2pi*lambda) and for Potassium the D1 laser has
   // lambda = 769.9 nm.  
 
+  //The idea is to adjust these parameters even though they will later be 
+  //switched to better units
+  //*********Inputs, constants*******
+  double laser_I_fe = 0.522   ; //mW/cm^2
+  double laser_I_ge = laser_I_fe; //mW/cm^2
+
+  double laser_pol_fe[3] = {0.0,0.0,1.0};
+  double laser_pol_ge[3] = {0.0,0.0,1.0};
+
+  double detune =  0.1; //MHz
+  double gamma_1 = 0.2; 
+  //Units are Mhz ; Linewidth of laser on the g->e transition omega_1 in T&J
+  double gamma_2 = 0.2; 
+  //Units are Mhz ; Linewidth of laser on the f->e transition omega_2 in T&J
+  //*********************************
+  
+  bool moreInput = false;
   //Get command line input 
   if (argc > 1) {  
     if (strcmp(argv[1],"-h")==0) {
-      cout << "First paramter is isotope (K37 or K38) [K38]" << endl;
+      cout << "First paramter is isotope (K37 or K38) [K37]" << endl;
       cout << "Second parameter is OP transition: 1 for D1 line 3 ";
       cout << "for D2 line [1]" << endl;
       cout << "Third parameter is tmax in ns [1]" << endl;
       cout << "Fourth paramter is B_ext in G [2]" << endl;
       cout << "Fifth paramter is dt in ns [0.1]" << endl;
+      cout << "Sixth parameter is detune (both lasers) in MHz [0.1]" << endl;
+      cout << "Seventh parameter is linewidth (both lasers) in MHz [0.2]";
+      cout << endl;
+      cout << "For more options, use -I for interactive mode." << endl;
+      cout << endl;
       exit(0);
-    }
-    isotope = argv[1];
-    if (argc > 2) {
-      Je2 = atoi(argv[2]);
-      if (argc > 3) {
-	tmax = atof(argv[3]);
-	if (argc > 4) {
-	  B_z = atof(argv[4]);
-	  if (argc > 5) { 
-	    dt = atof(argv[5]);
+    } else if(strcmp(argv[1],"-I")==0) {
+      moreInput = true;
+      //Do interactive setup
+      cout << "Enter isotope to consider (K37, K38, K47) ";
+      cin >> isotope;
+      cout << "Enter which excited state to pump to (1 for D1, 3 for D2) ";
+      cin >> Je2;
+      cout << "Enter max time in ns or -1 to stop entering input ";
+      cin >> tmax;
+      if( fabs(tmax+1.0) < pow(10,-4)) {
+	tmax = 1.0; 
+	moreInput = false;
+      }
+      if(moreInput) {
+	cout << "Enter time step in ns or -1 to stop entering input: ";
+	cin >> dt;
+	if( fabs(dt + 1.0) < pow(10,-4)) {
+	  dt = 0.1;
+	  moreInput = false;
+	}
+	if(moreInput) {
+	  cout << "Enter z-Magnetic Field in Gauss: ";
+	  cin >> B_z;
+	  if( fabs(B_z + 1.0) < pow(10,-4)) {
+	    B_z = 2.0;
+	    moreInput = false;
+	  }
+	  if(moreInput) {
+	    cout << "Enter polarization in format - pi + as percents ";
+	    cout << "or -1 to stop entering input: ";
+	    cin >> laser_pol_ge[0] >> laser_pol_ge[1] >> laser_pol_ge[2];
+	    
+	    if( fabs(laser_pol_ge[0] + 1.0) < pow(10,-4)) {
+	      laser_pol_ge[0] = 0.0;
+	      moreInput = false;
+	    }
+	    for(int i = 0; i < 3; i++) laser_pol_fe[i] = laser_pol_ge[i];
+		    
+	  }
+	}
+	
+      }
+      
+    } else {
+      isotope = argv[1];
+      if (argc > 2) {
+	Je2 = atoi(argv[2]);
+	if (argc > 3) {
+	  tmax = atof(argv[3]);
+	  if (argc > 4) {
+	    B_z = atof(argv[4]);
+	    if (argc > 5) { 
+	      dt = atof(argv[5]);
+	      if (argc > 6) {
+		detune = atof(argv[6]);
+		if( argc > 7) {
+		  gamma_1 = atof(argv[7]);
+		  gamma_2 = atof(argv[7]);
+		}
+	      }
+	    }
 	  }
 	}
       }
@@ -93,7 +166,8 @@ int main(int argc, char* argv[]) {
       omega_Di = 2*M_PI*(speed_of_light / (766.7 *pow(10,-7)));
       Aj[1] = 0.00805;
     }
-  } //see Besch 1968 and Dan's thesis
+  } 
+  //see Besch 1968 and Dan's thesis
 
   if ( strcmp(isotope.c_str(),"K38")  == 0 || strcmp(isotope.c_str(),"38K")==0) { 
     I2 = 6; 
@@ -104,7 +178,8 @@ int main(int argc, char* argv[]) {
       omega_Di = 2*M_PI*(speed_of_light / (766.7 *pow(10,-7)));
       Aj[1] = 0.05575;
     }
-  } //see Besch 1968 and Dan's thesis
+  }
+  //see Besch 1968 and Dan's thesis
 
   if ( strcmp(isotope.c_str(),"K47")  == 0 || strcmp(isotope.c_str(),"47K") ==0 ) { 
     I2 = 1; Aj[0] = 0.70765   ;
@@ -114,23 +189,9 @@ int main(int argc, char* argv[]) {
       omega_Di = 2*M_PI*(speed_of_light / (766.7 *pow(10,-7)));
       Aj[1] = 0.00805;
     }
-  } //see Besch 1968 and Dan's thesis THIS IS NOT REAL NUMBRES, 
+  }
+  //see Besch 1968 and Dan's thesis THIS IS NOT REAL NUMBRES, 
     //JUST NEEDED AN ISOTOPE WITH I = 1/2 FOR TESTING!
-  
-  
-  //The idea is to adjust these parameters even though they will later be 
-  //switched to better units
-  //*********Inputs, constants*******
-  double laser_I_fe = 0.145; //mW/cm^2
-  double laser_I_ge = 0.200; //mW/cm^2
-  double laser_pol[3] = {0.0,0.0,1.0};
-  double detune = 0.0; //MHz
-  double gamma_1 = 0.2; 
-  //Units are Mhz ; Linewidth of laser on the g->e transition omega_1 in T&J
-  double gamma_2 = 0.2; 
-  //Units are Mhz ; Linewidth of laser on the f->e transition omega_2 in T&J
-  //*********************************
-  
   
   
   double I = (double)I2/2.0; //double to hold nuclear spin
@@ -138,19 +199,62 @@ int main(int argc, char* argv[]) {
 
   //Set the laser frequencies
   double excitedShift = ((I +Je)*(I+Je+1.0))-(I*(I+1.0))-(Je*(Je+1.0));
-   excitedShift *= 0.5 * Aj[1];
+  excitedShift *= 0.5 * Aj[1];
+  printf("\n\n****Excited Shift: %8.6G****\n\n",excitedShift);
   detune *= pow(10,-3); //puts detune in ns^-1
   double omega_2 = omega_Di - (0.5*Aj[0]*(((I+0.5)*(I+1.5))-(I*(I+1.0))-0.75));
   omega_2 += excitedShift + detune;
     
-  //double omega_1 = omega_Di -(0.5*Aj[0]*(((I-0.5)*(I+0.5))-(I*(I+1.0))-0.75));
-  //omega_1 +=  excitedShift + detune;  
-
-  //Frequency of laser tuned to the g->e transition (ns^-1)
-  double omega_1 = omega_2 - 0.23746474;
+  double omega_1 = omega_Di -(0.5*Aj[0]*(((I-0.5)*(I+0.5))-(I*(I+1.0))-0.75));
+  omega_1 +=  excitedShift + detune;  
   
+  //Frequency of laser tuned to the g->e transition (ns^-1)
+  double ge_freq = omega_Di - (0.5*Aj[0]*(((I-0.5)*(I+0.5))-(I*(I+1.0))-0.75)) + excitedShift;
+  double fe_freq = omega_Di - (0.5*Aj[0]*(((I+0.5)*(I+1.5))-(I*(I+1.0))-0.75)) + excitedShift;
+
+
+  if(moreInput) {
+    printf("These questions concern the laser tuned to the g->e transition\n");
+    printf("For reference, this transition has a natural frequency (including");
+    printf(" hyperfine but not Zeeman shifts) of \n%14.12G MHz\n",ge_freq*1000);
+    
+    printf("Enter detuning away from this frequency in MHz: ");
+    cin >> detune;
+    detune /= 1000.0; //detune now in ns^-1
+    omega_1 = ge_freq + detune;
+    printf("You entered a frequency of %14.12G MHz\n",omega_1*1000.0);
+    
+    printf("Enter linewidth for this laser in MHz: ");
+    cin >> gamma_1;
+    gamma_1 /= 1000.0; //linewidth no in ns^-1
+
+
+    printf("These questions concern the laser tuned to the f->e transition\n");
+    printf("For reference, this transition has a natural frequency (including");
+    printf(" hyperfine but not Zeeman shifts) of \n%14.12G MHz\n",fe_freq*1000);
+    
+    printf("Enter detuning away from this frequency in MHz: ");
+    cin >> detune;
+    detune /= 1000.0; //detune now in ns^-1
+    omega_2 = fe_freq + detune;
+    printf("You entered a frequency of %14.12G MHz\n",omega_2*1000.0);
+    
+    printf("Enter linewidth for this laser in MHz: ");
+    cin >> gamma_1;
+    gamma_2 /= 1000.0; //linewidth no in ns^-1
+
+    printf("\n\n\n");
+  }
+      
+
+
   double tau = 26.2; // ns
-  double gamma = 1.0/tau; //ns^-1
+  double I_sat = 2.0 * pow(M_PI,2.0) * hbar * speed_of_light;
+  I_sat /= (3.0 * pow(769.9,3.0) * tau);
+  I_sat *= pow(10,44); //I_sat = mW/cm^2
+  printf("I_sat = %8.6G mW/cm^2\n",I_sat);
+  double laser_I_avg = (laser_I_fe + laser_I_ge) / 2.0;
+  double gamma = sqrt(1.0 + (laser_I_avg/I_sat)) / tau; //ns^-1
   double mu_B = 1.39962417998; //MHz/G = Bohr magneton
   
   
@@ -158,7 +262,8 @@ int main(int argc, char* argv[]) {
   //****Now switch all units from more natural units to ns, g, cm, A, G
   laser_I_fe *= pow(10,-23); // g/ns^3
   laser_I_ge *= pow(10,-23); // g/ns^3
-  detune     *= pow(10,-3 ); //ns^-1
+  I_sat *= pow(10,-23); //g/ns^3
+  laser_I_avg *= pow(10,-23); //g/ns^3
   gamma_1   *= pow(10,-3 ); //ns^-1
   gamma_2   *= pow(10,-3 ); //ns^-1
   mu_B       *= pow(10,-3 ); //ns^-1/G
@@ -192,13 +297,14 @@ int main(int argc, char* argv[]) {
     cout << "Magnetic field: " << B_z << " G" << endl;
     
     printf("Laser 1 frequency %12.10G ns^-1 \t ",omega_1);
-    printf("linewidth = %4.2G ns^-1 \t Intensity = %G g/ns^3 \t ",gamma_1,laser_I_ge);
+    printf("linewidth = %4.2G ns^-1 \t Intensity = %G g/ns^3 \n ",gamma_1,laser_I_ge);
     printf("E-field = %10.8G g*cm/(A*ns^3) \n", laser_E_ge);
 
     printf("Laser 2 frequency %12.10G ns^-1 \t ",omega_2);
     printf("linewidth = %4.2G ns^-1 \t Intensity = %G g/ns^3 \t ",gamma_2,laser_I_fe);
     printf("E-field = %10.8G g*cm/(A*ns^3) \n", laser_E_fe);
 
+    printf("Satuartion intensity %8.6G g/ns^3\n",I_sat);
     printf("Number of excited states: %i\n",numEStates);
     printf("f States with 2F = %i --> %i\n",I2+1,numFStates);
     printf("g States with 2F = %i --> %i\n",I2-1,numGStates);
@@ -277,7 +383,7 @@ int main(int argc, char* argv[]) {
   }
 
   else file = stdout;
-  double updateFreq = max(dt * 1000.0,1000.0);
+  double updateFreq = max(dt * 1000.0,10000.0);
 
   FILE * eeFile = fopen("eeData.dat","w");
   FILE * ffFile = fopen("ffData.dat","w");
@@ -468,7 +574,7 @@ int main(int argc, char* argv[]) {
   double Def[numEStates][numFStates][3]; //[A * cm * s ]
   double Deg[numEStates][numGStates][3]; //[A * cm * s ]
 
-  bool debugCoupling = true;
+  bool debugCoupling = false;
   for(int i = 0; i < numEStates; i++) {  
     for(int j = 0; j < numFStates; j++) {
       for(int q = 0; q < 3; q++) {
@@ -580,7 +686,7 @@ int main(int argc, char* argv[]) {
   //Zeeman coherences are the coherences between states with the same F
   //but different M_f.
   bool hfCoherences_excited = false;
-  bool hfCoherences_ground = true;
+  bool hfCoherences_ground = false;
  
   //Hyperfine coherences are between states with the same M_f but different
   //F.
@@ -593,7 +699,7 @@ int main(int argc, char* argv[]) {
   //zrhoeg and zrhoef.
 
   for(double time = 0; time < tmax; time += dt) {  
-
+    
     if (production && fabs(time - update) < pow(10,-2)) {
       cout << time << endl;
       update = update + updateFreq;
@@ -813,6 +919,9 @@ int main(int argc, char* argv[]) {
     bool debugFLaser_ee = false;
     bool debugSpontDecay_ee = false;
     
+
+
+    //**************APPLY OPTICAL BLOCH EQUATION******************************
     //Excited state populations (Eq 32)
     for(int e = 0; e < numEStates; e++)  { 
       for(int ep = 0; ep < numEStates; ep++) {
@@ -873,7 +982,7 @@ int main(int argc, char* argv[]) {
 	      }
 	      
 	      temp = gsl_complex_sub(temp,temp2);
-	      temp = gsl_complex_mul_real(temp,laser_pol[iq]);
+	      temp = gsl_complex_mul_real(temp,laser_pol_ge[iq]);
 	      if (!production && debugGLaser_ee && iq == 2) {
 		fprintf(file,"\t after polarization = %12.9G \t + %12.9G i \n", 
 			GSL_REAL(temp), GSL_IMAG(temp));
@@ -905,7 +1014,7 @@ int main(int argc, char* argv[]) {
 			GSL_REAL(temp2), GSL_IMAG(temp2));
 	      }
 	      temp = gsl_complex_sub(temp,temp2);
-	      temp = gsl_complex_mul_real(temp,laser_pol[iq]);
+	      temp = gsl_complex_mul_real(temp,laser_pol_fe[iq]);
 	      
 	      if (!production && debugFLaser_ee) {
 		fprintf(file,"\t after polarization = %12.9G \t + %12.9G i \n", 
@@ -1012,7 +1121,7 @@ int main(int argc, char* argv[]) {
 				      gsl_complex_conjugate(zrhoef[epp][f]));
 	      
 	      temp = gsl_complex_sub(temp,temp2);
-	      temp = gsl_complex_mul_real(temp,laser_pol[iq]);
+	      temp = gsl_complex_mul_real(temp,laser_pol_fe[iq]);
 	      
 	      laserTerm_ff = gsl_complex_add(laserTerm_ff,temp);
 	    }
@@ -1097,7 +1206,7 @@ int main(int argc, char* argv[]) {
 				        Deg[epp][gp][iq],0.0), 
 				    gsl_complex_conjugate(zrhoeg[epp][g]));
 	    temp = gsl_complex_sub(temp,temp2);
-	    temp= gsl_complex_mul_real(temp,laser_pol[iq]);
+	    temp= gsl_complex_mul_real(temp,laser_pol_ge[iq]);
 	    laserTerm_gg = gsl_complex_add(laserTerm_gg,temp);
 	  }
 	}
@@ -1184,7 +1293,7 @@ int main(int argc, char* argv[]) {
 	  
 	  laser2_total = gsl_complex_sub(laser2_ff,laser2_ee);
 	  laser2_total = gsl_complex_mul_imag(
-			     laser2_total, laser_E_fe*laser_pol[q]/(2.0*hbar));
+			     laser2_total, laser_E_fe*laser_pol_fe[q]/(2.0*hbar));
 
 	  
 	  if (!production && debugLaser2_ef) {
@@ -1209,7 +1318,7 @@ int main(int argc, char* argv[]) {
 
 	    qsum = gsl_complex_add(qsum,temp);
 	  }
-	  qsum = gsl_complex_mul_real(qsum,laser_E_ge*laser_pol[q]);
+	  qsum = gsl_complex_mul_real(qsum,laser_E_ge*laser_pol_ge[q]);
 	  laser1_total = gsl_complex_add(laser1_total,qsum);
 	}
 	laser1_total = gsl_complex_div_imag(laser1_total,-2.0*hbar);
@@ -1233,7 +1342,6 @@ int main(int argc, char* argv[]) {
 	  cout << "ERROR:  TIME STEP NOT SMALL ENOUGH FOR EG COHERENCES" << endl;
 	  exit(1);
 	}
-p
 
 	dzrhoeg[e][g] = gsl_complex_mul( gsl_complex_rect(-real,-imag),
 					 zrhoeg[e][g]);
@@ -1259,7 +1367,7 @@ p
 	  laser1_total = gsl_complex_sub(laser1_gg,laser1_ee);
 	  laser1_total = gsl_complex_mul_imag(
 			     laser1_total,
-			     laser_E_ge*laser_pol[q]/(2.0*hbar));
+			     laser_E_ge*laser_pol_ge[q]/(2.0*hbar));
 
 	  dzrhoeg[e][g] = gsl_complex_add(dzrhoeg[e][g],laser1_total);
 	}
@@ -1287,7 +1395,7 @@ p
 		     e,fpp,q,Def[e][fpp][q],GSL_REAL(qsum));
 	    }
 	  }
-	  qsum = gsl_complex_mul_real(qsum,laser_E_fe*laser_pol[q]);
+	  qsum = gsl_complex_mul_real(qsum,laser_E_fe*laser_pol_fe[q]);
 	  laser2_total = gsl_complex_add(laser2_total,qsum);
 	}
 	//End laser 2 term
@@ -1341,7 +1449,7 @@ p
 		       GSL_IMAG(qsum));
 	      }
 	    }
-	    qsum = gsl_complex_mul_real(qsum, laser_E_ge*laser_pol[q]);
+	    qsum = gsl_complex_mul_real(qsum, laser_E_ge*laser_pol_ge[q]);
 	    laser1_total = gsl_complex_add(laser1_total,qsum);
 	  }
 	
@@ -1357,7 +1465,7 @@ p
 						       Def[epp][f][q]);
 	      qsum = gsl_complex_add(qsum, temp);
 	    }
-	    qsum = gsl_complex_mul_real(qsum, laser_E_fe*laser_pol[q]);
+	    qsum = gsl_complex_mul_real(qsum, laser_E_fe*laser_pol_fe[q]);
 	    laser2_total = gsl_complex_add(laser2_total,qsum);
 	  }
 	
@@ -1376,7 +1484,7 @@ p
 	}
       }//END FG COHERENCES
     }
-
+    //*********************************************************************
     
     //Update with all the new populations
     for(int i = 0; i < numEStates; i++) {
