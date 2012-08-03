@@ -1,8 +1,8 @@
 // Copyright 2012 Benjamin Fenker
 
 
-#ifndef NEWOBE_INCLUDE_OPTICAL_PUMPING_METHOD_H_
-#define NEWOBE_INCLUDE_OPTICAL_PUMPING_METHOD_H_
+#ifndef INCLUDE_OPTICAL_PUMPING_METHOD_H_
+#define INCLUDE_OPTICAL_PUMPING_METHOD_H_
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_errno.h>
 #include <vector>
@@ -45,11 +45,18 @@ class OpticalPumping_Method {
   double get_alignment();
   bool is_hermitian();
 
+  op_data_for_gsl data;
+  double *population;           // Necessary to work with GSL.  For OBE will
+  //  store the entire density matrix
+  int totalTerms;
 
   // Virtual methods for subclasses to override
   // The =0 defines it as a pure virtual function without an implementation.
   // Any subclass MUST fully implement this function
   virtual void update_population(double dt) = 0;
+  static int update_population_gsl(double t, const double y[], double f[],
+                                   void *params);
+
   //  virtual int update_population_gsl(double t, const double y[],
   //                                double f[], void *params) = 0;
   void print_couplings(FILE * des);
@@ -108,4 +115,4 @@ class OpticalPumping_Method {
   vector<vector<gsl_complex> > delta_eg;
   vector<vector<gsl_complex> > delta_fg;
 };
-#endif  // NEWOBE_INCLUDE_OPTICAL_PUMPING_METHOD_H_
+#endif  // INCLUDE_OPTICAL_PUMPING_METHOD_H_

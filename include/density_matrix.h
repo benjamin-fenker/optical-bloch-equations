@@ -1,7 +1,7 @@
 // Copyright 2012 Benjamin Fenker
 
-#ifndef NEWOBE_INCLUDE_DENSITY_MATRIX_H_
-#define NEWOBE_INCLUDE_DENSITY_MATRIX_H_
+#ifndef INCLUDE_DENSITY_MATRIX_H_
+#define INCLUDE_DENSITY_MATRIX_H_
 
 #include <vector>
 #include "./optical_pumping_method.h"
@@ -13,9 +13,10 @@ class Density_Matrix: public OpticalPumping_Method {
  public:
   Density_Matrix(atom_data atom, magnetic_field_data field, Laser_data laser_fe,
                  Laser_data laser_ge, coherence_flags flags);
+  ~Density_Matrix();
   void update_population(double dt);
-  // int update_population_gsl(double t, const double y[],
-  //                         double f[], void *params);
+  static int update_population_gsl(double t, const double y[], double f[],
+                                   void *params);
 
   void setup_dipole_moments(double gamma);
   double set_dipole_moment(double gamma, double omega_ex, double omega_gr);
@@ -35,4 +36,4 @@ class Density_Matrix: public OpticalPumping_Method {
   bool es_Zeeman, gs_Zeeman, es_hyperfine;
 };
 
-#endif  // NEWOBE_INCLUDE_DENSITY_MATRIX_H_
+#endif  // INCLUDE_DENSITY_MATRIX_H_

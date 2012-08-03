@@ -35,7 +35,7 @@ OpticalPumping_Method::OpticalPumping_Method(atom_data atom,
     delta_fg(numFStates, vector<gsl_complex>(numGStates,
                                                  gsl_complex_rect(0.0, 0.0))) {
   printf("OpticalPumping_Method::OpticalPumping_Method(...)\n");
-
+  printf("G = %d F = %d E = %d\n", numGStates, numFStates, numEStates);
   for (int i = 0; i < 3; i++) {
     printf("%4.2G\t%4.2G\n", laser_ge.polarization[i],
            laser_fe.polarization[i]);
@@ -47,6 +47,18 @@ OpticalPumping_Method::OpticalPumping_Method(atom_data atom,
   setup_ef_coupling(atom);
   print_couplings(stdout);
   setup_pop_uniform_ground();
+
+  data.numGStates = atom.numGStates;
+  data.numFStates = atom.numFStates;
+  data.numEStates = atom.numEStates;
+  data.atom = atom;
+  data.laser_ge = set_laser_ge;
+  data.laser_fe = set_laser_fe;
+  data.a_eg = a_eg;
+  data.a_ef = a_ef;
+  data.nu_E = nu_E;
+  data.nu_F = nu_F;
+  data.nu_G = nu_G;
   // print_density_matrix(stdout);
   // print_data(stdout, 0.0);
   // for (int e = 0; e < numEStates; e++) printf("%15.10G\n",nu_E[e]);
@@ -402,3 +414,9 @@ void OpticalPumping_Method::print_density_matrix(FILE *des) {
   }
 }
 
+int OpticalPumping_Method::update_population_gsl(double t, const double y[],
+                                                 double f[], void *params) {
+  printf("OpticalPumping_Method::update_population_gsl\n");
+  printf("Nothing is happening!\n");
+  return -2;
+}

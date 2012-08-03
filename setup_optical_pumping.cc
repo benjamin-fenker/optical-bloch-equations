@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 
   string isotope = "37K";
   int Je2 = 1;  // D1(1) or D2(3) line
-  double laser_fe_I = 0.00 * (_mW/_cm2);  // mW/cm^2
+  double laser_fe_I = 0.200 * (_mW/_cm2);  // mW/cm^2
   double laser_ge_I = 0.200 * (_mW/_cm2);  // mW/cm^2
 
   double laser_fe_pol[3] = {0.0, 0.00, 1.0};  // sigma^- pi sigma^+

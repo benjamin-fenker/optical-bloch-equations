@@ -1,7 +1,7 @@
 // Copyright Benjamin Fenker 2012
 
-#ifndef NEWOBE_INCLUDE_UNITS_H_
-#define NEWOBE_INCLUDE_UNITS_H_
+#ifndef INCLUDE_UNITS_H_
+#define INCLUDE_UNITS_H_
 
 /* Length [m] */
 #define _m (1e0)                /* meters */
@@ -63,4 +63,4 @@
 #define _planck_hbar (1.05457162825e-34) /* m^3 / kg s^2 */
 #define _epsilon_0 (8.854e-12)           /* s^4 A^2 / kg m^3 */
 #define _elementary_charge (1.60217646e-19) /* C */
-#endif  // NEWOBE_INCLUDE_UNITS_H_
+#endif  // INCLUDE_UNITS_H_

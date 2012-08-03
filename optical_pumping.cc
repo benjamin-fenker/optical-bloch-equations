@@ -6,7 +6,7 @@
 #include <gsl/gsl_const_mksa.h>
 #include <gsl/gsl_const_cgsm.h>
 #include <gsl/gsl_const_num.h>
-#include <gsl/gsl_errno.h>
+#include <gsl/gsl_errno.h>      // GSL Reserves error codes -2 to 32 (succes = 0)
 #include <gsl/gsl_matrix.h>
 #include <gsl/gsl_odeiv2.h>
 
@@ -21,7 +21,6 @@
 
 using std::string;
 using std::max;
-
 
 int OpticalPumping::pump(string isotope, string method, double tmax,
                          double tStep, bool zCoherences, bool hfCoherences_ex,
@@ -125,6 +124,14 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // ***********************************************************************
 
   // Setup print statements to only print a reasonable number of times
+  // ******CAUTION******
+  // For very long times, the program will not correctly print out the small
+  // amplitude, high frequency oscillations.  This is because the frequency of
+  // the oscillation is higher than the frequency of print statements!
+  // One thing to do for testing is to increase max out to some huge number
+  // allowing the print frquency to be higher, matching the physics frequency
+  // ******CAUTION******
+
   const int max_out = 1000;  // Maximum number of time steps to write to a file
   double print_frequency;  // Number of ns between print statements
   int total_print;  // Total number of print statements
@@ -149,7 +156,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   } else {
     file = stdout;
   }
-  double updateFreq = max(tStep * 1000.0, 10000.0);
+  double updateFreq = max(tStep * 1000.0, 1000.0)*_ns;
   // Sets frequency that programs informs user that its still working
 
   /*
@@ -165,10 +172,17 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   printf("fe_freq = %14.10G\t ge_freq = %14.10G\n", laser_fe.nu/_MHz,
          laser_ge.nu/_MHz);
   OpticalPumping_Method *equ;
+
+  int (*update_func)(double, const double[], double[], void*);
+
   if (strcmp(method.c_str(), "R") == 0) {
     equ = new Rate_Equations(atom, field, laser_fe, laser_ge);
+    update_func = &Rate_Equations::update_population_gsl;
+    //    int (*update_func)(double, const double[], double[], void*) =
+    //      &Rate_Equations::update_population_gsl;
   } else if (strcmp(method.c_str(), "O") == 0) {
     equ = new Density_Matrix(atom, field, laser_fe, laser_ge, flags);
+    update_func = &Density_Matrix::update_population_gsl;
   } else {
     printf("Failed to initialize the optical pumping method\t");
     printf("Method = %s.  Aborting.", method.c_str());
@@ -178,14 +192,15 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   double time = 0.0;
   double nextPrint = 0.0;
   double nextUpdate = 0.0;
+  printf("updateFreq = %8.6G\n", updateFreq);
   while (time < tmax) {
-    if ((fabs(time - nextUpdate))/_ns < pow(10, -4)) {
-      printf(" t = %8.6G ns\t", time/_ns);
+    if ((fabs(time - nextUpdate))/_ns < pow(10, -2)) {
+      printf(" t = %8.6G ns\n", time/_ns);
       nextUpdate += updateFreq;
     }
-    if ((fabs(time - nextPrint))/_ns < pow(10, -4)) {
+    if ((fabs(time - nextPrint))/_ns < pow(10, -2)) {
       equ->print_data(file, time);
-      // equ->print_density_matrix(stdout);
+      //equ->print_density_matrix(stdout);
       nextPrint += print_frequency;
     }
     equ->update_population(tStep);
@@ -201,36 +216,75 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     }
     time += tStep;
   }
-
-  // Testing GSL ODE stuff
-  // See first page in GSL manual - section 26.6
-  double mu = 10.0;
-  int (*update_func)(double, const double[], double[], void*) =
-    &Rate_Equations::update_population_gsl;
-  //  int (*jacob_func)(double, const double[], double*, double*,
-  //                                void*) =
-  //  &Rate_Equations::jacobian;
-  gsl_odeiv2_system sys = {update_func, NULL, 2, &mu};
+  
+  /*
+  printf("\n");
+  gsl_odeiv2_system sys = {update_func, NULL, equ->totalTerms, &(equ->data)};
   gsl_odeiv2_driver *d = gsl_odeiv2_driver_alloc_y_new(&sys,
                                                        gsl_odeiv2_step_rk8pd,
-                                                       1e-6, 1e-6, 0.0);
-  int i;
-  double t = 0.0, t1 = 100.0;
-  double y[2] = {1.0, 0.0};
-  for (i = 1; i < 100; i++) {
-    double ti = i*t1/100.0;
-    int status = gsl_odeiv2_driver_apply(d, &t, ti, y);
+                                                       1e-6, 1e-6, 0);
+  double i;
+  double t = 0.0;
+
+  fprintf(file, "%8.6G   ", t/_us);
+  if (strcmp(method.c_str(), "R") == 0) {
+    for (int j = 0; j < equ->totalTerms; j++) {
+      fprintf(file, "%5.3G   ", equ->population[j]);
+    }
+  }
+  if (strcmp(method.c_str(), "O") == 0) {
+    int index;
+    for (int g = 0; g < atom.numGStates; g++) {
+      index = g*((atom.numGStates*2)+2);
+      fprintf(file, "%5.3G    ", equ->population[index]);
+    }
+    int terms = atom.numGStates * atom.numGStates * 2;
+    for (int f = 0; f < atom.numFStates; f++) {
+      index = terms + f*((atom.numFStates*2)+2);
+      fprintf(file, "%5.3G    ", equ->population[index]);
+    }
+    terms += (atom.numFStates * atom.numFStates * 2);
+    for (int e = 0; e < atom.numEStates; e++) {
+      index = terms + e*((atom.numEStates*2)+2);
+      fprintf(file, "%5.3G   ", equ->population[index]);
+    }
+  }
+  fprintf(file, "\n");
+  printf("Starting loop\n tStep = %5.3G   tmax = %5.3G\n", tStep, tmax);
+  for (i = tStep; i < tmax; i += print_frequency) {
+    double ti = i;
+    int status = gsl_odeiv2_driver_apply(d, &t, ti, equ->population);
     if (status != GSL_SUCCESS) {
       printf("error, return value = %d\n", status);
       break;
     }
-    // printf("%.5e %.5e %.5e\n", t, y[0], y[1]);
+    fprintf(file, "%8.6G   ", t/_us);
+    if (strcmp(method.c_str(), "R") == 0) {
+      for (int j = 0; j < equ->totalTerms; j++) {
+        fprintf(file, "%5.3G   ", equ->population[j]);
+      }
+    }
+    if (strcmp(method.c_str(), "O") == 0) {
+      int index;
+      for (int g = 0; g < atom.numGStates; g++) {
+        index = g*((atom.numGStates*2)+2);
+        fprintf(file, "%5.3G    ", equ->population[index]);
+      }
+      int terms = atom.numGStates * atom.numGStates * 2;
+      for (int f = 0; f < atom.numFStates; f++) {
+        index = terms + f*((atom.numFStates*2)+2);
+        fprintf(file, "%5.3G    ", equ->population[index]);
+      }
+      terms += (atom.numFStates * atom.numFStates * 2);
+      for (int e = 0; e < atom.numEStates; e++) {
+        index = terms + e*((atom.numEStates*2)+2);
+        fprintf(file, "%5.3G   ", equ->population[index]);
+      }
+    }
+    fprintf(file, "\n");
   }
   gsl_odeiv2_driver_free(d);
-  // Done testing gsl ODE stuff
-
-
-
+  */
   delete[] ground_IzJz_Decomp;
   delete[] excited_IzJz_Decomp;
   return 0;
