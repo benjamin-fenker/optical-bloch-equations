@@ -1,7 +1,7 @@
 // Copyright 2012 Benjamin Fenker
 
-#ifndef NEWOBE_INCLUDE_RATE_EQUATIONS_H_
-#define NEWOBE_INCLUDE_RATE_EQUATIONS_H_
+#ifndef INCLUDE_RATE_EQUATIONS_H_
+#define INCLUDE_RATE_EQUATIONS_H_
 
 #include <vector>
 #include "./optical_pumping_method.h"
@@ -19,6 +19,7 @@ class Rate_Equations: public OpticalPumping_Method {
  public:
   Rate_Equations(atom_data atom, magnetic_field_data field, Laser_data laser_fe,
                  Laser_data laser_ge);
+  ~Rate_Equations();
   void setup_transition_rates(double linewidth);
   double set_transition_rate(double laser_power, double sat_intensity,
                              double atom_lw, double laser_lw,
@@ -36,4 +37,4 @@ class Rate_Equations: public OpticalPumping_Method {
   vector<double> dPop_e;
 };
 
-#endif  // NEWOBE_INCLUDE_RATE_EQUATIONS_H_
+#endif  // INCLUDE_RATE_EQUATIONS_H_

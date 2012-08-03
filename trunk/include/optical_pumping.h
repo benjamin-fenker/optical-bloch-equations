@@ -5,8 +5,8 @@
 #include <iomanip>
 #include <string>
 
-#ifndef NEWOBE_INCLUDE_OPTICAL_PUMPING_H_
-#define NEWOBE_INCLUDE_OPTICAL_PUMPING_H_
+#ifndef INCLUDE_OPTICAL_PUMPING_H_
+#define INCLUDE_OPTICAL_PUMPING_H_
 
 using std::string;
 
@@ -19,4 +19,4 @@ class OpticalPumping {
            double laser_fe_linewidth, double laser_ge_linewidth,
            double laser_fe_pol[], double laser_ge_pol[], double B_z);
 };
-#endif  // NEWOBE_INCLUDE_OPTICAL_PUMPING_H_
+#endif  // INCLUDE_OPTICAL_PUMPING_H_

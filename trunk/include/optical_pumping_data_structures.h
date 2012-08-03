@@ -1,8 +1,11 @@
 // Copyright 2012 Benjamin Fenker
 
-#ifndef NEWOBE_INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
-#define NEWOBE_INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
+#ifndef INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
+#define INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
 
+#include <vector>
+
+using std::vector;
 // Struct to hold atomic data and make function calls clearer
 struct atom_data {
   int numEStates, numFStates, numGStates;
@@ -43,4 +46,22 @@ class Laser_data {
   double polarization[3];
   double saturation_intensity;
 };
-#endif  // NEWOBE_INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
+
+struct op_data_for_gsl {
+  // This struct is not designed safely!!!
+  // These are used in both RE and OBE codes
+  int numGStates, numFStates, numEStates;
+  int gStart, gEnd, fStart, fEnd, eStart, eEnd;
+  atom_data atom;
+  Laser_data laser_ge, laser_fe;
+  vector<vector<vector<double> > > a_eg, a_ef;
+  vector<double> nu_E, nu_F, nu_G;
+
+  // These are required for RE but not allowed in OBE!!
+  vector<vector<double> > transition_rate_eg, transition_rate_ef;
+
+  // These are require for OBE but not allowed in RE!!
+  vector<vector<double> > dipole_moment_eg, dipole_moment_ef;
+};
+
+#endif  // INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_

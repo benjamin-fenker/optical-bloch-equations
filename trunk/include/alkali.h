@@ -6,8 +6,8 @@
 #include <string>
 #include "./optical_pumping_data_structures.h"
 
-#ifndef NEWOBE_INCLUDE_ALKALI_H_
-#define NEWOBE_INCLUDE_ALKALI_H_
+#ifndef INCLUDE_ALKALI_H_
+#define INCLUDE_ALKALI_H_
 
 using std::string;
 
@@ -27,4 +27,4 @@ class Alkali {
   double getGamma(double tau, double laser_power);
 };
 
-#endif  // NEWOBE_INCLUDE_ALKALI_H_
+#endif  // INCLUDE_ALKALI_H_

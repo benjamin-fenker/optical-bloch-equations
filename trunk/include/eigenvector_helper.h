@@ -1,7 +1,7 @@
 // Copyright Benjamin Fenker 2012
 
-#ifndef NEWOBE_INCLUDE_EIGENVECTOR_HELPER_H_
-#define NEWOBE_INCLUDE_EIGENVECTOR_HELPER_H_
+#ifndef INCLUDE_EIGENVECTOR_HELPER_H_
+#define INCLUDE_EIGENVECTOR_HELPER_H_
 
 #include "./optical_pumping_data_structures.h"
 
@@ -14,4 +14,4 @@ class Eigenvector_Helper {
   double calc_gj(int J2, int L2, int S2);
   double calc_gf(int F2, int J2, int I2, int L2, int S2, double g_I);
 };
-#endif  // NEWOBE_INCLUDE_EIGENVECTOR_HELPER_H_
+#endif  // INCLUDE_EIGENVECTOR_HELPER_H_
