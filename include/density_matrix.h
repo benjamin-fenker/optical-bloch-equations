@@ -13,7 +13,7 @@ class Density_Matrix: public OpticalPumping_Method {
  public:
   Density_Matrix(atom_data atom, magnetic_field_data field, Laser_data laser_fe,
                  Laser_data laser_ge, coherence_flags flags);
-  ~Density_Matrix();
+  //  ~Density_Matrix();
   void update_population(double dt);
   static int update_population_gsl(double t, const double y[], double f[],
                                    void *params);
