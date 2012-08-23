@@ -27,8 +27,8 @@ int main(int argc, char* argv[]) {
   double laser_fe_I = 0.200 * (_mW/_cm2);  // mW/cm^2
   double laser_ge_I = 0.200 * (_mW/_cm2);  // mW/cm^2
 
-  double laser_fe_pol[3] = {0.00, 0.0, 1.0};  // sigma^- pi sigma^+
-  double laser_ge_pol[3] = {0.00, 0.0, 1.0};  // sigma^- pi sigma^+
+  double laser_fe_pol[3] = {0.90, 0.05, 0.05};  // sigma^- pi sigma^+
+  double laser_ge_pol[3] = {0.90, 0.05, 0.05};  // sigma^- pi sigma^+
 
   double laser_fe_detune = 0.1 * _MHz;  // MHz
   double laser_ge_detune = 0.1 * _MHz;  // MHz
