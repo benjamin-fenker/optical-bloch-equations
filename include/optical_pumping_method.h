@@ -80,7 +80,7 @@ class OpticalPumping_Method {
 
   // Arrays to hold the frequency of each state.  NOT ANGULAR FREQUENCY
   // The energy difference between two states will be given by:
-  // \deltaE = hbar(nu_1 - nu_2) where hbar is planck's constant
+  // \deltaE = h(nu_1 - nu_2) where h is planck's constant
   vector<double> nu_E;
   vector<double> nu_F;
   vector<double> nu_G;
