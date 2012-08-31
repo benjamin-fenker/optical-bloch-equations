@@ -3,11 +3,14 @@
 #include <stdio.h>
 #include <math.h>
 #include <vector>
+#include "stdlib.h"
 #include "include/density_matrix.h"
 #include "include/units.h"
 
 using std::vector;
 using std::min;
+extern bool op_verbose;
+
 Density_Matrix::Density_Matrix(atom_data atom, magnetic_field_data field,
                                Laser_data set_laser_fe, Laser_data set_laser_ge,
                                coherence_flags flags)
@@ -26,12 +29,12 @@ Density_Matrix::Density_Matrix(atom_data atom, magnetic_field_data field,
                                             gsl_complex_rect(0.0, 0.0))),
     ddelta_fg(numFStates, vector<gsl_complex>(numGStates,
                                             gsl_complex_rect(0.0, 0.0))) {
-  printf("DensityMatrix::Density_Matrix(...)\n");
+  printf("DensityMatrix::Density_Matrix(...)\n\n");
   es_Zeeman = flags.zCoherences;
   gs_Zeeman = flags.zCoherences;
   es_hyperfine = flags.hfCoherences_ex;
   setup_dipole_moments(atom.linewidth);
-  print_rabi_frequencies(stdout);
+  if (op_verbose) print_rabi_frequencies(stdout);
 }
 
 /*
@@ -124,6 +127,13 @@ void Density_Matrix::update_population(double dt) {
           q_sum = gsl_complex_mul_imag(q_sum, 0.5/ _planck_hbar);
           drho_ee[e][ep] = gsl_complex_add(drho_ee[e][ep], q_sum);
         } // End F-Laser term (no loop or if, just an arbitrary block
+        { // Spontaneous decay term
+          double angFrequency = 2*M_PI*fabs(nu_E[e] - nu_E[ep]);
+          gsl_complex sp_decay = gsl_complex_rect(data.atom.linewidth,
+                                                  angFrequency);
+          sp_decay = gsl_complex_mul(sp_decay, rho_ee[e][ep]);
+          drho_ee[e][ep] = gsl_complex_sub(drho_ee[e][ep], sp_decay);
+        } // End spontaneous decay term
       }   // End if coherences
     }     // End ep
   }       // End e
@@ -158,10 +168,36 @@ void Density_Matrix::update_population(double dt) {
         oCoherences = gsl_complex_mul_imag(oCoherences,
                                            laser_ge.field/(2*_planck_hbar));
         drho_gg[g][gp] = gsl_complex_add(drho_gg[g][gp], oCoherences);
+        { // Spontaneous decay term
+          gsl_complex spon_decay = gsl_complex_rect(0.0, 0.0);
+          for (int e = 0; e < numEStates; e++) {
+            for (int ep = 0; ep < numEStates; ep++) {
+              if (MFe2_Vector[e] - MFe2_Vector[ep] ==
+                  MFg2_Vector[g] - MFg2_Vector[gp]) {
+                int q = MFe2_Vector[e] - MFg2_Vector[g];
+                if (q%2 != 0) {
+                  printf("G - spontaneous decay: q2 not even\n");
+                  exit(1);
+                }
+                q = (q/2) + 1;    // Converts q from twice the difference in M_f
+                // to an appropriate index
+                double coupling = a_eg[e][g][q] * a_eg[ep][gp][q];
+                gsl_complex left = gsl_complex_mul_real(rho_ee[e][ep], coupling);
+                spon_decay = gsl_complex_add(spon_decay, left);
+              } // End if M_f sublevels satisfy m_e - m_e` = m_f - m_f`
+            }   // End ep sum
+          }     // End e sum
+          spon_decay = gsl_complex_mul_real(spon_decay, data.atom.linewidth);
+          double angFrequency = 2*M_PI*fabs(nu_G[gp] - nu_G[g]);
+          gsl_complex right = gsl_complex_mul_imag(rho_gg[g][gp],
+                                                   angFrequency);
+          spon_decay = gsl_complex_sub(spon_decay, right);
+          drho_gg[g][gp] = gsl_complex_add(drho_gg[g][gp], spon_decay);
+        } // End spontaneous decay term
       } // End if coherences
     }   // End gp
   }     // End g
-
+  
   // F-Ground states rho_ff:  Equation 33
   // Zeeman coherences are when f != f`
   for (int f = 0; f < numFStates; f++) {
@@ -192,6 +228,32 @@ void Density_Matrix::update_population(double dt) {
         oCoherences = gsl_complex_mul_imag(oCoherences,
                                            laser_fe.field/(2*_planck_hbar));
         drho_ff[f][fp] = gsl_complex_add(drho_ff[f][fp], oCoherences);
+        { // Spontaneous decay term
+          gsl_complex spon_decay = gsl_complex_rect(0.0, 0.0);
+          for (int e = 0; e < numEStates; e++) {
+            for (int ep = 0; ep < numEStates; ep++) {
+              if (MFe2_Vector[e] - MFe2_Vector[ep] ==
+                  MFf2_Vector[f] - MFf2_Vector[fp]) {
+                int q = MFe2_Vector[e] - MFf2_Vector[f];
+                if (q%2 != 0) {
+                  printf("F - spontaneous decay: q2 not even\n");
+                  exit(1);
+                }
+                q = (q/2) + 1;    // Converts q from twice the difference in M_f
+                // to an appropriate index
+                double coupling = a_ef[e][f][q] * a_ef[ep][fp][q];
+                gsl_complex left = gsl_complex_mul_real(rho_ee[e][ep], coupling);
+                spon_decay = gsl_complex_add(spon_decay, left);
+              } // End if M_f sublevels satisfy m_e - m_e` = m_f - m_f`
+            }   // End ep sum
+          }     // End e sum
+          spon_decay = gsl_complex_mul_real(spon_decay, data.atom.linewidth);
+          double angFrequency = 2*M_PI*fabs(nu_F[fp] - nu_F[f]);
+          gsl_complex right = gsl_complex_mul_imag(rho_ff[f][fp],
+                                                   angFrequency);
+          spon_decay = gsl_complex_sub(spon_decay, right);
+          drho_ff[f][fp] = gsl_complex_add(drho_ff[f][fp], spon_decay);
+        } // End spontaneous decay term
       } // End if doing coherences
     }   // End fp loop
   }     // End f loop
@@ -230,7 +292,8 @@ void Density_Matrix::update_population(double dt) {
 
       // Detuning term -i(\omega_eg - \omega_1)*\delta_eg
       double detune_d = -2*M_PI*((nu_E[e] - nu_G[g]) - laser_ge.nu);
-      gsl_complex detune_g = gsl_complex_rect(0.0, detune_d);
+      double linewidth = -M_PI*(data.atom.linewidth + laser_ge.linewidth);
+      gsl_complex detune_g = gsl_complex_rect(linewidth, detune_d);
       detune_g = gsl_complex_mul(detune_g, delta_eg[e][g]);
       ddelta_eg[e][g] = gsl_complex_add(ddelta_eg[e][g], detune_g);
     } //  End g
@@ -270,7 +333,8 @@ void Density_Matrix::update_population(double dt) {
 
       // Detuning term -i(\omega_ef - \omega_1)*\delta_ef
       double detune_d = -2*M_PI*((nu_E[e] - nu_F[f]) - laser_fe.nu);
-      gsl_complex detune_f = gsl_complex_rect(0.0, detune_d);
+      double linewidth = -M_PI*(data.atom.linewidth + laser_fe.linewidth);
+      gsl_complex detune_f = gsl_complex_rect(linewidth, detune_d);
       detune_f = gsl_complex_mul(detune_f, delta_ef[e][f]);
       ddelta_ef[e][f] = gsl_complex_add(ddelta_ef[e][f], detune_f);
     } //  End f
@@ -306,17 +370,16 @@ void Density_Matrix::update_population(double dt) {
 }
 
 void Density_Matrix::setup_dipole_moments(double gamma) {
-  printf("Density_Matrix::setup_dipole_moments(double gamma)\n");
   for (int e = 0; e < numEStates; e++) {
     double ang_freq_ex = nu_E[e] * 2.0 * M_PI;
     for (int g = 0; g < numGStates; g++) {
-      printf("e = %d <---> g = %d \t", e, g);
+      if (op_verbose) printf("e = %d <---> g = %d \t", e, g);
       double ang_freq_gr = nu_G[g] * 2.0 * M_PI;
       dipole_moment_eg[e][g] = set_dipole_moment(gamma, ang_freq_ex,
                                                 ang_freq_gr);
     }
     for (int f = 0; f < numFStates; f++) {
-      printf("e = %d <---> f = %d\t", e, f);
+      if (op_verbose) printf("e = %d <---> f = %d\t", e, f);
       double ang_freq_gr = nu_F[f] * 2.0 * M_PI;
       dipole_moment_ef[e][f] = set_dipole_moment(gamma, ang_freq_ex,
                                                  ang_freq_gr);
@@ -333,9 +396,13 @@ double Density_Matrix::set_dipole_moment(double gamma, double omega_ex,
   double num = 3*M_PI*_epsilon_0*_planck_hbar*pow(_speed_of_light, 3.0) * gamma;
   double den = pow(omega_ex-omega_gr, 3.0);
   double dipole = sqrt(num/den);
-  printf("gamma = %5.3G MHz\t delta_omega = %8.6G MHz\t", gamma/_MHz,
-         fabs(omega_ex-omega_gr)/_MHz);
-  printf("dipole moment = %8.6G e*nm\n", dipole/(_elementary_charge*_nm));
+  if (op_verbose) {
+    printf("gamma = %5.3G MHz\t delta_omega = %8.6G MHz\t", gamma/_MHz,
+           fabs(omega_ex-omega_gr)/_MHz);
+    printf("dipole moment = %8.6G e*nm\t", dipole/(_elementary_charge*_nm));
+    printf("laser rate = %8.6G MHz\n",
+           (dipole*data.laser_fe.field/(2*_planck_hbar))/_MHz);
+  }
   return dipole;
 }
 

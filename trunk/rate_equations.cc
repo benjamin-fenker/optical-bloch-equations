@@ -5,6 +5,7 @@
 #include "include/units.h"
 
 using std::vector;
+extern bool op_verbose;
 
 Rate_Equations::Rate_Equations(atom_data atom, magnetic_field_data field,
                                Laser_data set_laser_fe, Laser_data set_laser_ge)
@@ -13,10 +14,8 @@ Rate_Equations::Rate_Equations(atom_data atom, magnetic_field_data field,
     transition_rate_ef(atom.numEStates, vector<double>(atom.numFStates, 0.0)),
     dPop_g(atom.numGStates, 0.0), dPop_f(atom.numFStates, 0.0),
     dPop_e(atom.numEStates, 0.0) {
-  printf("Rate_Equations::Rate_Equations(...)\n");
-  print_couplings(stdout);
+  printf("Rate_Equations::Rate_Equations(...)\n\n");
   setup_transition_rates(atom.linewidth);
-
   totalTerms = atom.numFStates+atom.numGStates+atom.numEStates;
 
 
@@ -44,78 +43,78 @@ Rate_Equations::~Rate_Equations() {
   delete population;
 }
 
-int Rate_Equations::update_population_gsl(double t, const double y[],
-                                                 double f[], void *params) {
-  op_data_for_gsl data = *(reinterpret_cast<op_data_for_gsl *>(params));
-  //  printf("t = %5.3G   tau = %5.3G ns\t", t, data.atom.tau/_ns);
-
-  // Markers to keep track of where I am in the array!
-  //  printf("g: %d --> %d\tf: %d --> %d\t e: %d-->%d\n", gStart, gEnd,
-  //      fStart, fEnd, eStart, eEnd);
-  for (int i = data.gStart; i < data.eEnd; i++) f[i] = 0.0;
-  // This follows exactly what is done in Nafcha 1995 and DM's thesis.
-  // I use the expressions from Nafcha as they are more clear where frequency
-  // and angular frequency are concerned
-  bool debug = false;
-  double delta_laser, delta_spon;
-  // Laser interaction:  stimulated emission and absoprtion
-  for (int q = 0; q < 3; q++) {
-    for (int e = data.eStart; e < data.eEnd; e++) {
-      int e_eff = e - data.eStart;
-      // g <---> e
-      for (int g = data.gStart; g < data.gEnd; g++) {
-        int g_eff = g - data.gStart;
-        if (data.laser_ge.polarization[q] > 0.0) {
-          double pop_diff = y[g] - y[e];
-          if (debug) printf("|g=%d> <--> |e%d\t", g_eff, e_eff);
-          if (debug) printf(" popdiff = %8.6G\t tran_rate = %8.6G ns^-1\t",
-                            pop_diff,
-                            data.transition_rate_eg[e_eff][g_eff]/(1/_ns));
-          if (debug) printf("a^2 = %5.3G\t polarization = %5.3G\t",
-                            pow(data.a_eg[e_eff][g_eff][q], 2.0),
-                            data.laser_ge.polarization[q]);
-          delta_laser = pop_diff * data.transition_rate_eg[e_eff][g_eff];
-          delta_laser *= pow(data.a_eg[e_eff][g_eff][q], 2.0);
-          delta_laser *= data.laser_ge.polarization[q];
-          if (debug) printf("delta_laser = %8.6G ns^-1\t", delta_laser/(1/_ns));
-          f[e] += delta_laser;
-          f[g] -= delta_laser;
-        }
-        // Spontaneous emission
-        delta_spon = y[e] * pow(data.a_eg[e_eff][g_eff][q], 2.0);
-        delta_spon /= data.atom.tau;
-        f[e] -= delta_spon;
-        f[g] += delta_spon;
-      }
-      // f <---> e
-      for (int fi = data.fStart; fi < data.fEnd; fi++) {
-        int f_eff = fi - data.fStart;
-        if (data.laser_fe.polarization[q] > 0.0) {
-          double pop_diff = y[fi] - y[e];
-          if (debug) printf("|f=%d> <--> |e=%d\t ", fi, e);
-          if (debug) printf("popDiff = %8.6G\t tran_rate = %8.6G ns^-1\t",
-                            pop_diff,
-                            data.transition_rate_ef[e_eff][f_eff]/(1/_ns));
-          if (debug) printf("a^2 = %5.3G\t polarization = %5.3G\t",
-                            pow(data.a_ef[e_eff][f_eff][q], 2.0),
-                            data.laser_fe.polarization[q]);
-          delta_laser = pop_diff * data.transition_rate_ef[e_eff][f_eff];
-          delta_laser *=  pow(data.a_ef[e_eff][f_eff][q], 2.0);
-          delta_laser *=  data.laser_fe.polarization[q];
-          if (debug) printf("delta_laser = %8.6G ns^-1\t", delta_laser/(1/_ns));
-          f[e] += delta_laser;
-          f[fi] -= delta_laser;
-        }
-        // Spontaneous emission
-        delta_spon = y[e] * pow(data.a_ef[e_eff][f_eff][q], 2.0);
-        delta_spon /= data.atom.tau;
-        f[e] -= delta_spon;
-        f[fi] += delta_spon;
-      }
-    }
-  }
-  return GSL_SUCCESS;
-}
+//int Rate_Equations::update_population_gsl(double t, const double y[],
+//                                                 double f[], void *params) {
+//  op_data_for_gsl data = *(reinterpret_cast<op_data_for_gsl *>(params));
+//  //  printf("t = %5.3G   tau = %5.3G ns\t", t, data.atom.tau/_ns);
+//
+//  // Markers to keep track of where I am in the array!
+//  //  printf("g: %d --> %d\tf: %d --> %d\t e: %d-->%d\n", gStart, gEnd,
+//  //      fStart, fEnd, eStart, eEnd);
+//  for (int i = data.gStart; i < data.eEnd; i++) f[i] = 0.0;
+//  // This follows exactly what is done in Nafcha 1995 and DM's thesis.
+//  // I use the expressions from Nafcha as they are more clear where frequency
+//  // and angular frequency are concerned
+//  bool debug = false;
+//  double delta_laser, delta_spon;
+//  // Laser interaction:  stimulated emission and absoprtion
+//  for (int q = 0; q < 3; q++) {
+//    for (int e = data.eStart; e < data.eEnd; e++) {
+//      int e_eff = e - data.eStart;
+//      // g <---> e
+//      for (int g = data.gStart; g < data.gEnd; g++) {
+//        int g_eff = g - data.gStart;
+//        if (data.laser_ge.polarization[q] > 0.0) {
+//          double pop_diff = y[g] - y[e];
+//          if (debug) printf("|g=%d> <--> |e%d\t", g_eff, e_eff);
+//          if (debug) printf(" popdiff = %8.6G\t tran_rate = %8.6G ns^-1\t",
+//                            pop_diff,
+//                            data.transition_rate_eg[e_eff][g_eff]/(1/_ns));
+//          if (debug) printf("a^2 = %5.3G\t polarization = %5.3G\t",
+//                            pow(data.a_eg[e_eff][g_eff][q], 2.0),
+//                            data.laser_ge.polarization[q]);
+//          delta_laser = pop_diff * data.transition_rate_eg[e_eff][g_eff];
+//          delta_laser *= pow(data.a_eg[e_eff][g_eff][q], 2.0);
+//          delta_laser *= data.laser_ge.polarization[q];
+//          if (debug) printf("delta_laser = %8.6G ns^-1\t", delta_laser/(1/_ns));
+//          f[e] += delta_laser;
+//          f[g] -= delta_laser;
+//        }
+//        // Spontaneous emission
+//        delta_spon = y[e] * pow(data.a_eg[e_eff][g_eff][q], 2.0);
+//        delta_spon /= data.atom.tau;
+//        f[e] -= delta_spon;
+//        f[g] += delta_spon;
+//      }
+//      // f <---> e
+//      for (int fi = data.fStart; fi < data.fEnd; fi++) {
+//        int f_eff = fi - data.fStart;
+//        if (data.laser_fe.polarization[q] > 0.0) {
+//          double pop_diff = y[fi] - y[e];
+//          if (debug) printf("|f=%d> <--> |e=%d\t ", fi, e);
+//          if (debug) printf("popDiff = %8.6G\t tran_rate = %8.6G ns^-1\t",
+//                            pop_diff,
+//                            data.transition_rate_ef[e_eff][f_eff]/(1/_ns));
+//          if (debug) printf("a^2 = %5.3G\t polarization = %5.3G\t",
+//                            pow(data.a_ef[e_eff][f_eff][q], 2.0),
+//                            data.laser_fe.polarization[q]);
+//          delta_laser = pop_diff * data.transition_rate_ef[e_eff][f_eff];
+//          delta_laser *=  pow(data.a_ef[e_eff][f_eff][q], 2.0);
+//          delta_laser *=  data.laser_fe.polarization[q];
+//          if (debug) printf("delta_laser = %8.6G ns^-1\t", delta_laser/(1/_ns));
+//          f[e] += delta_laser;
+//          f[fi] -= delta_laser;
+//        }
+//        // Spontaneous emission
+//        delta_spon = y[e] * pow(data.a_ef[e_eff][f_eff][q], 2.0);
+//        delta_spon /= data.atom.tau;
+//        f[e] -= delta_spon;
+//        f[fi] += delta_spon;
+//      }
+//    }
+//  }
+//  return GSL_SUCCESS;
+//}
 
 
 void Rate_Equations::update_population(double dt) {
@@ -194,14 +193,17 @@ void Rate_Equations::reset_dPop() {
 }
 
 void Rate_Equations::setup_transition_rates(double linewidth) {
-  printf("G = %d F = %d E = %d\n", numGStates, numFStates, numEStates);
-  printf("Laser_g %8.6G MHz\t Laser_f %8.6G MHz\n", laser_ge.nu/_MHz,
-         laser_fe.nu/_MHz);
+  if (op_verbose) {
+    printf("Laser_g %8.6G MHz\t Laser_f %8.6G MHz\n", laser_ge.nu/_MHz,
+           laser_fe.nu/_MHz);
+  }
   for (int e = 0; e < numEStates; e++) {
     for (int g = 0; g < numGStates; g++) {
       double transition_freq = nu_E[e] - nu_G[g];
-      printf("|g=%d>-->|e=%d\t nu_eg = %14.10G MHz\tnu_L = %14.10G MHz\t", g, e,
-             transition_freq/_MHz, laser_ge.nu/_MHz);
+      if (op_verbose) {
+        printf("|g=%d>-->|e=%d\t nu_eg = %14.10G MHz\tnu_L = %14.10G MHz\t",
+               g, e, transition_freq/_MHz, laser_ge.nu/_MHz);
+      }
       transition_rate_eg[e][g] = set_transition_rate(
                                        laser_ge.power,
                                         laser_ge.saturation_intensity,
@@ -210,8 +212,10 @@ void Rate_Equations::setup_transition_rates(double linewidth) {
     }
     for (int f = 0; f < numFStates; f++) {
       double transition_freq = nu_E[e] - nu_F[f];
-      printf("|f=%d>-->|e=%d\t nu_eg = %14.10G MHz\tnu_L = %14.10G MHz\t", f, e,
-             transition_freq/_MHz, laser_fe.nu/_MHz);
+      if (op_verbose) {
+        printf("|f=%d>-->|e=%d\t nu_eg = %14.10G MHz\tnu_L = %14.10G MHz\t",
+               f, e, transition_freq/_MHz, laser_fe.nu/_MHz);
+      }
       transition_rate_ef[e][f] = set_transition_rate(
                                      laser_fe.power,
                                      laser_fe.saturation_intensity,
@@ -231,13 +235,15 @@ double Rate_Equations::set_transition_rate(double laser_power,
   // Note that Nafcha's linewidths of FWHM/2.  My linewidths are defined as the
   // FWHM of the laser
   double rate = laser_power / (4.0 * M_PI * pow(tau, 2.0) * sat_intensity);
-  double lorentzian = pow(laser_freq- atom_freq, 2.0) +
-    4.0 * pow(laser_lw + atom_lw, 2.0);
+  double lorentzian = 4.0*pow(laser_freq - atom_freq, 2.0) +
+    pow(laser_lw + atom_lw, 2.0);
   // lorentzian = pow(laser_lw + atom_lw, 2.0);
   // Uncommenting the line above turns off the detuning factor
   lorentzian = (laser_lw + atom_lw)/lorentzian;
   rate *= lorentzian;
-  printf("Detune = %8.6G MHz\tLorentzian = %8.6G ns\t rate = %8.6G MHz\n",
-         (fabs(laser_freq-atom_freq))/_MHz, lorentzian/_ns, rate/_MHz);
+  if (op_verbose) {
+    printf("Detune = %8.6G MHz\tLorentzian = %8.6G ns\t rate = %8.6G MHz\n",
+           (fabs(laser_freq-atom_freq))/_MHz, lorentzian/_ns, rate/_MHz);
+  }
   return rate;
 }

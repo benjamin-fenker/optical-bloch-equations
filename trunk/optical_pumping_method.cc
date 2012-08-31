@@ -6,6 +6,7 @@
 #include "include/optical_pumping_method.h"
 #include "include/units.h"
 using std::vector;
+extern bool op_verbose;
 OpticalPumping_Method::OpticalPumping_Method() {}
 OpticalPumping_Method::OpticalPumping_Method(atom_data atom,
                                              magnetic_field_data field,
@@ -34,18 +35,16 @@ OpticalPumping_Method::OpticalPumping_Method(atom_data atom,
                                                  gsl_complex_rect(0.0, 0.0))),
     delta_fg(numFStates, vector<gsl_complex>(numGStates,
                                                  gsl_complex_rect(0.0, 0.0))) {
-  printf("OpticalPumping_Method::OpticalPumping_Method(...)\n");
-  printf("G = %d F = %d E = %d\n", numGStates, numFStates, numEStates);
-  for (int i = 0; i < 3; i++) {
-    printf("%4.2G\t%4.2G\n", laser_ge.polarization[i],
-           laser_fe.polarization[i]);
+  printf("\nOpticalPumping_Method::OpticalPumping_Method(...)\n");
+  if (op_verbose) {
+    printf("G = %d F = %d E = %d\n", numGStates, numFStates, numEStates);
   }
   setup_quantum_numbers(atom);
   setup_frequencies_excited(atom, field);
   setup_frequencies_ground(atom, field);
   setup_eg_coupling(atom);
   setup_ef_coupling(atom);
-  print_couplings(stdout);
+  if (op_verbose) print_couplings(stdout);
   setup_pop_uniform_ground();
 
   data.numGStates = atom.numGStates;
@@ -67,7 +66,7 @@ OpticalPumping_Method::OpticalPumping_Method(atom_data atom,
 OpticalPumping_Method::~OpticalPumping_Method() {}
 
 void OpticalPumping_Method::setup_quantum_numbers(int I2, int Je2) {
-  bool debug = true;
+  bool debug = false;
   int Fe2 = abs(I2 - Je2);
   int MFe2 = -Fe2;
   for (int e = 0; e < numEStates; e++) {
@@ -147,7 +146,7 @@ double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
                                             double hyperfine_const,
                                             double mu_B, double g_I,
                                             double B_z) {
-  bool debug = true;
+  bool debug = false;
   Eigenvector_Helper alk;
   double g_f = alk.calc_gf(F2, J2, I2, L2, 1, g_I);
 

@@ -19,10 +19,11 @@ using std::string;
 void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
                                double B_x, double g_I, double Aj,
                                double *arrayToFill) {
+  extern bool op_verbose;
   // bool debug = true;
   bool debug = false;
   printf("Decomposing nuclear spin I = %i/2 for the L = %i ; ", I2, L);
-  printf("J = %i/2 state.  Aj = %6.4G MHz", J2, Aj/_MHz);
+  printf("J = %i/2 state.  Aj = %6.4G MHz\t", J2, Aj/_MHz);
   printf("B = %6.4G z + %6.4G x G\n", B_z/_G, B_x/_G);
   int numBasisStates = (I2 + 1)*(J2+1);
   // genAtomicState::numBasisStates = numBasisStates;
@@ -36,7 +37,7 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
     Jz2[i] = -J2+ 2*(i/2/(I2+1));
     Jz2[i+1] = 0.0;
   }
-  printf("\n");
+  if (op_verbose) printf("\n");
 
   double *I_z = new double[2*numBasisStates*numBasisStates];
   double *J_z = new double[2*numBasisStates*numBasisStates];
@@ -348,18 +349,18 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
   */
   for (int i = 0; i < numBasisStates; i++) {
     double eval_i = gsl_vector_get(eval, i);
-    printf("%12.10G   ", eval_i/_MHz);
+    if (op_verbose) printf("%12.10G   ", eval_i/_MHz);
   }
-  printf("\n\n");
+  if (op_verbose) printf("\n\n");
   for (int i = 0; i < numBasisStates; i++) {
     for (int j = 0; j < numBasisStates; j++) {
       gsl_vector_complex_view evec_j = gsl_matrix_complex_column(evec, j);
       gsl_complex ev = gsl_vector_complex_get(&evec_j.vector, i);
-      printf("%12.10G   ", GSL_REAL(ev));
+      if (op_verbose) printf("%12.10G   ", GSL_REAL(ev));
     }
-    printf("\n");
+    if (op_verbose) printf("\n");
   }
-  printf("\n");
+  if (op_verbose) printf("\n");
 
   delete[] Iz2;
   delete[] Jz2;
@@ -421,6 +422,6 @@ double Eigenvector_Helper::calc_gf(int F2, int J2, int I2, int L2,
     num = ((F*(F+1.0)) - (J*(J+1.0)) + (I*(I+1.0)))*g_Ip;
     g_F += (num/den);
   }
-  printf("g_F = %6.4G\t", g_F);
+  //  printf("g_F = %6.4G\t", g_F);
   return g_F;
 }
