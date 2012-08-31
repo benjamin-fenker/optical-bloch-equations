@@ -9,6 +9,7 @@
 
 using std::string;
 
+bool op_verbose = false;
 
 int main(int argc, char* argv[]) {
   printf("\n");
@@ -16,7 +17,7 @@ int main(int argc, char* argv[]) {
   double tmax = 1.0 * _ns;  // ns
   double dt = 1.0 * _ns;  // ns
 
-  string method = "O";  // O for OBE and R fro Rate Equations
+  string method = "R";  // O for OBE and R fro Rate Equations
 
   bool zCoherences = false;
   bool hfCoherences_ex = false;
@@ -27,8 +28,8 @@ int main(int argc, char* argv[]) {
   double laser_fe_I = 0.200 * (_mW/_cm2);  // mW/cm^2
   double laser_ge_I = 0.200 * (_mW/_cm2);  // mW/cm^2
 
-  double laser_fe_pol[3] = {0.00, 0.0, 1.0};  // sigma^- pi sigma^+
-  double laser_ge_pol[3] = {0.00, 0.0, 1.0};  // sigma^- pi sigma^+
+  double laser_fe_pol[3] = {0.05, 0.05, 0.95};  // sigma^- pi sigma^+
+  double laser_ge_pol[3] = {0.05, 0.05, 0.95};  // sigma^- pi sigma^+
 
   double laser_fe_detune = 0.1 * _MHz;  // MHz
   double laser_ge_detune = 0.1 * _MHz;  // MHz
@@ -85,6 +86,6 @@ int main(int argc, char* argv[]) {
                            laser_ge_I, laser_fe_detune, laser_ge_detune,
                            laser_fe_linewidth, laser_ge_linewidth, laser_fe_pol,
                            laser_ge_pol, B_z);
-  printf("Completed with status = %d\n\n", status);
+  printf("\nCompleted with status = %d\n\n", status);
   return status;
 }
