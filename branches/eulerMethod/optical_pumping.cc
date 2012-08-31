@@ -138,12 +138,9 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   if (tmax/tStep <= max_out) {
     print_frequency = tStep;
     total_print = static_cast<int>(tmax/tStep);
-    printf("(if) total_print = %d\n", total_print);
   } else {
     print_frequency = tmax / static_cast<double>(max_out);
-    printf("print_frequency = %6.4G ns\n", print_frequency/_ns);
     total_print = max_out;
-    printf("(else)total_print = %d\n", total_print);
   }
   // Setup File I/O for later use
   FILE * file;
@@ -152,11 +149,13 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     fprintf(file, "%d \t ", atom.numEStates+atom.numFStates+atom.numGStates);
     fprintf(file, "%d \t %6.2G \t %d \t %d \t ", atom.numEStates, 1.0,
             total_print, atom.I2);
-    fprintf(file, "%d 4.0\n", atom.Je2);
+    fprintf(file, "%d \t 4.0\n", atom.Je2);
+    fprintf(file, "%s\n", method.c_str());
   } else {
     file = stdout;
   }
   double updateFreq = max(tStep * 1000.0, 1000.0)*_ns;
+  updateFreq = 50*_us;
   // Sets frequency that programs informs user that its still working
 
   /*
@@ -169,8 +168,6 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   */
   // End set up output
 
-  printf("fe_freq = %14.10G\t ge_freq = %14.10G\n", laser_fe.nu/_MHz,
-         laser_ge.nu/_MHz);
   OpticalPumping_Method *equ;
 
   int (*update_func)(double, const double[], double[], void*);
@@ -192,7 +189,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   double time = 0.0;
   double nextPrint = 0.0;
   double nextUpdate = 0.0;
-  printf("updateFreq = %8.6G\n", updateFreq);
+  // printf("updateFreq = %8.6G\n", updateFreq);
   while (time < tmax) {
     if ((fabs(time - nextUpdate))/_ns < pow(10, -2)) {
       printf(" t = %8.6G ns\n", time/_ns);

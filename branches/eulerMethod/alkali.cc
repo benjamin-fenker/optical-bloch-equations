@@ -98,7 +98,7 @@ int Alkali::getNumberOfGroundStates_g(int I2) { return I2; }
 double Alkali::getLaserFrequency(double nu_excited, int Fg2, int I2,
                                  int Je2, int Fe2, double Aj_g,
                                  double Aj_e, double detune) {
-  bool debug = true;
+  bool debug = false;
   // Zero detuning corresponds to a transition from F = Fg2, Mf = 0 to
   // F = FeMax, Mf = 0.
 

@@ -9,6 +9,8 @@
 
 using std::vector;
 using std::min;
+extern bool op_verbose;
+
 Density_Matrix::Density_Matrix(atom_data atom, magnetic_field_data field,
                                Laser_data set_laser_fe, Laser_data set_laser_ge,
                                coherence_flags flags)
@@ -27,12 +29,12 @@ Density_Matrix::Density_Matrix(atom_data atom, magnetic_field_data field,
                                             gsl_complex_rect(0.0, 0.0))),
     ddelta_fg(numFStates, vector<gsl_complex>(numGStates,
                                             gsl_complex_rect(0.0, 0.0))) {
-  printf("DensityMatrix::Density_Matrix(...)\n");
+  printf("DensityMatrix::Density_Matrix(...)\n\n");
   es_Zeeman = flags.zCoherences;
   gs_Zeeman = flags.zCoherences;
   es_hyperfine = flags.hfCoherences_ex;
   setup_dipole_moments(atom.linewidth);
-  print_rabi_frequencies(stdout);
+  if (op_verbose) print_rabi_frequencies(stdout);
 }
 
 /*
@@ -368,17 +370,16 @@ void Density_Matrix::update_population(double dt) {
 }
 
 void Density_Matrix::setup_dipole_moments(double gamma) {
-  printf("Density_Matrix::setup_dipole_moments(double gamma)\n");
   for (int e = 0; e < numEStates; e++) {
     double ang_freq_ex = nu_E[e] * 2.0 * M_PI;
     for (int g = 0; g < numGStates; g++) {
-      printf("e = %d <---> g = %d \t", e, g);
+      if (op_verbose) printf("e = %d <---> g = %d \t", e, g);
       double ang_freq_gr = nu_G[g] * 2.0 * M_PI;
       dipole_moment_eg[e][g] = set_dipole_moment(gamma, ang_freq_ex,
                                                 ang_freq_gr);
     }
     for (int f = 0; f < numFStates; f++) {
-      printf("e = %d <---> f = %d\t", e, f);
+      if (op_verbose) printf("e = %d <---> f = %d\t", e, f);
       double ang_freq_gr = nu_F[f] * 2.0 * M_PI;
       dipole_moment_ef[e][f] = set_dipole_moment(gamma, ang_freq_ex,
                                                  ang_freq_gr);
@@ -395,9 +396,13 @@ double Density_Matrix::set_dipole_moment(double gamma, double omega_ex,
   double num = 3*M_PI*_epsilon_0*_planck_hbar*pow(_speed_of_light, 3.0) * gamma;
   double den = pow(omega_ex-omega_gr, 3.0);
   double dipole = sqrt(num/den);
-  printf("gamma = %5.3G MHz\t delta_omega = %8.6G MHz\t", gamma/_MHz,
-         fabs(omega_ex-omega_gr)/_MHz);
-  printf("dipole moment = %8.6G e*nm\n", dipole/(_elementary_charge*_nm));
+  if (op_verbose) {
+    printf("gamma = %5.3G MHz\t delta_omega = %8.6G MHz\t", gamma/_MHz,
+           fabs(omega_ex-omega_gr)/_MHz);
+    printf("dipole moment = %8.6G e*nm\t", dipole/(_elementary_charge*_nm));
+    printf("laser rate = %8.6G MHz\n",
+           (dipole*data.laser_fe.field/(2*_planck_hbar))/_MHz);
+  }
   return dipole;
 }
 
