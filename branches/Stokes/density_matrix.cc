@@ -75,7 +75,7 @@ void Density_Matrix::update_population(double dt) {
           (es_hyperfine && es_Zeeman)) {
         { // G-laser term
           gsl_complex q_sum = gsl_complex_rect(0.0, 0.0);
-          for (int q = 0; q < 3; q++) {
+          for (int q = 0; q < 2; q++) {
             gsl_complex g_sum = gsl_complex_rect(0.0, 0.0);
             for (int gpp = 0; gpp < numGStates; gpp++) {
               gsl_complex left = gsl_complex_rect(dipole_moment_eg[e][gpp],
@@ -93,16 +93,15 @@ void Density_Matrix::update_population(double dt) {
               left = gsl_complex_sub(left, right);
               g_sum = gsl_complex_add(g_sum, left);
             }
-            g_sum = gsl_complex_mul_real(g_sum, laser_ge.polarization[q]);
+            g_sum = gsl_complex_mul_real(g_sum, laser_ge.field[q]);
             q_sum = gsl_complex_add(q_sum, g_sum);
           }
-          q_sum = gsl_complex_mul_real(q_sum, laser_ge.field);
           q_sum = gsl_complex_mul_imag(q_sum, 0.5/ _planck_hbar);
           drho_ee[e][ep] = gsl_complex_add(drho_ee[e][ep], q_sum);
         } // End G-laser term
         { // F-laser term
           gsl_complex q_sum = gsl_complex_rect(0.0, 0.0);
-          for (int q = 0; q < 3; q++) {
+          for (int q = 0; q < 2; q++) {
             gsl_complex f_sum = gsl_complex_rect(0.0, 0.0);
             for (int fpp = 0; fpp < numFStates; fpp++) {
               gsl_complex left = gsl_complex_rect(dipole_moment_ef[e][fpp],
@@ -120,10 +119,9 @@ void Density_Matrix::update_population(double dt) {
               left = gsl_complex_sub(left, right);
               f_sum = gsl_complex_add(f_sum, left);
             }
-            f_sum = gsl_complex_mul_real(f_sum, laser_fe.polarization[q]);
+            f_sum = gsl_complex_mul_real(f_sum, laser_fe.field[q]);
             q_sum = gsl_complex_add(q_sum, f_sum);
           }
-          q_sum = gsl_complex_mul_real(q_sum, laser_fe.field);
           q_sum = gsl_complex_mul_imag(q_sum, 0.5/ _planck_hbar);
           drho_ee[e][ep] = gsl_complex_add(drho_ee[e][ep], q_sum);
         } // End F-Laser term (no loop or if, just an arbitrary block
@@ -144,7 +142,7 @@ void Density_Matrix::update_population(double dt) {
     for (int gp = 0; gp < numGStates; gp++) {
       gsl_complex oCoherences = gsl_complex_rect(0.0, 0.0);
       if ((g == gp) || gs_Zeeman) {
-        for (int q = 0; q < 3; q++) {
+        for (int q = 0; q < 2; q++) {
           gsl_complex qTerm = gsl_complex_rect(0.0, 0.0);
           for (int epp = 0; epp < numEStates; epp++) {
             gsl_complex left, right;  // First and second halves in
@@ -161,12 +159,12 @@ void Density_Matrix::update_population(double dt) {
                                     gsl_complex_conjugate(delta_eg[epp][g]));
             left = gsl_complex_sub(left, right);
             qTerm = gsl_complex_add(qTerm, left);
-          }
-          qTerm = gsl_complex_mul_real(qTerm, laser_ge.polarization[q]);
+          } // End epp loop
+          qTerm = gsl_complex_mul_real(qTerm, laser_ge.field[q]);
           oCoherences = gsl_complex_add(oCoherences, qTerm);
-        }
+        } // End q-loop
         oCoherences = gsl_complex_mul_imag(oCoherences,
-                                           laser_ge.field/(2*_planck_hbar));
+                                           1.0/(2*_planck_hbar));
         drho_gg[g][gp] = gsl_complex_add(drho_gg[g][gp], oCoherences);
         { // Spontaneous decay term
           gsl_complex spon_decay = gsl_complex_rect(0.0, 0.0);
@@ -204,7 +202,7 @@ void Density_Matrix::update_population(double dt) {
     for (int fp = 0; fp < numFStates; fp++) {
       gsl_complex oCoherences = gsl_complex_rect(0.0, 0.0);
       if ((f == fp) || gs_Zeeman) {
-        for (int q = 0; q < 3; q++) {
+        for (int q = 0; q < 2; q++) {
           gsl_complex qTerm = gsl_complex_rect(0.0, 0.0);
           for (int epp = 0; epp < numEStates; epp++) {
             gsl_complex left, right;  // First and second halves in
@@ -221,12 +219,12 @@ void Density_Matrix::update_population(double dt) {
                                     gsl_complex_conjugate(delta_ef[epp][f]));
             left = gsl_complex_sub(left, right);
             qTerm = gsl_complex_add(qTerm, left);
-          }
-          qTerm = gsl_complex_mul_real(qTerm, laser_fe.polarization[q]);
+          } // End epp-loop
+          qTerm = gsl_complex_mul_real(qTerm, laser_fe.field[q]);
           oCoherences = gsl_complex_add(oCoherences, qTerm);
-        }
+        } // End q-loop
         oCoherences = gsl_complex_mul_imag(oCoherences,
-                                           laser_fe.field/(2*_planck_hbar));
+                                           1.0/(2*_planck_hbar));
         drho_ff[f][fp] = gsl_complex_add(drho_ff[f][fp], oCoherences);
         { // Spontaneous decay term
           gsl_complex spon_decay = gsl_complex_rect(0.0, 0.0);
@@ -264,8 +262,7 @@ void Density_Matrix::update_population(double dt) {
     for (int g = 0; g < numGStates; g++) {
       if (debug_eg) printf("e = %d, g = %d\n", e, g);
       gsl_complex gLaser_term = gsl_complex_rect(0.0, 0.0);
-      for (int q = 0; q < 3; q++) {
-        if (laser_ge.polarization[q] > 0.0) {
+      for (int q = 0; q < 2; q++) {
           if (debug_eg) printf("\t q = %d\n", q);
           gsl_complex gsum = gsl_complex_rect(0.0, 0.0);
           gsl_complex esum = gsl_complex_rect(0.0, 0.0);
@@ -274,19 +271,17 @@ void Density_Matrix::update_population(double dt) {
             temp = gsl_complex_mul_real(temp, a_eg[e][gpp][q]);
             temp = gsl_complex_mul(temp, rho_gg[gpp][g]);
             gsum = gsl_complex_add(gsum, temp);
-          }
+          } // End gpp-loop
           for (int epp = 0; epp < numEStates; epp++) {
             gsl_complex temp = gsl_complex_rect(dipole_moment_eg[epp][g], 0.0);
             temp = gsl_complex_mul_real(temp, a_eg[epp][g][q]);
             temp = gsl_complex_mul(temp, rho_ee[e][epp]);
             esum = gsl_complex_add(esum, temp);
-          }
+          } // End epp-loop
           gsum = gsl_complex_sub(gsum, esum);
-          gsum = gsl_complex_mul_real(gsum, laser_ge.polarization[q]);
+          gsum = gsl_complex_mul_real(gsum, laser_ge.field[q]);
           gLaser_term = gsl_complex_add(gLaser_term, gsum);
-        }
-      }
-      gLaser_term = gsl_complex_mul_real(gLaser_term, laser_ge.field);
+      } // End q-loop
       gLaser_term = gsl_complex_mul_imag(gLaser_term, 1.0/(2.0*_planck_hbar));
       ddelta_eg[e][g] = gsl_complex_add(ddelta_eg[e][g], gLaser_term);
 
@@ -305,8 +300,7 @@ void Density_Matrix::update_population(double dt) {
     for (int f = 0; f < numFStates; f++) {
       if (debug_ef) printf("e = %d, f = %d\n", e, f);
       gsl_complex fLaser_term = gsl_complex_rect(0.0, 0.0);
-      for (int q = 0; q < 3; q++) {
-        if (laser_fe.polarization[q] > 0.0) {
+      for (int q = 0; q < 2; q++) {
           if (debug_ef) printf("\t q = %d\n", q);
           gsl_complex fsum = gsl_complex_rect(0.0, 0.0);
           gsl_complex esum = gsl_complex_rect(0.0, 0.0);
@@ -315,19 +309,17 @@ void Density_Matrix::update_population(double dt) {
             temp = gsl_complex_mul_real(temp, a_ef[e][fpp][q]);
             temp = gsl_complex_mul(temp, rho_ff[fpp][f]);
             fsum = gsl_complex_add(fsum, temp);
-          }  
+          } // End fpp-loop
           for (int epp = 0; epp < numEStates; epp++) {
             gsl_complex temp = gsl_complex_rect(dipole_moment_ef[epp][f], 0.0);
             temp = gsl_complex_mul_real(temp, a_ef[epp][f][q]);
             temp = gsl_complex_mul(temp, rho_ee[e][epp]);
             esum = gsl_complex_add(esum, temp);
-          }
+          } // End epp-loop
           fsum = gsl_complex_sub(fsum, esum);
-          fsum = gsl_complex_mul_real(fsum, laser_fe.polarization[q]);
+          fsum = gsl_complex_mul_real(fsum, laser_fe.field[q]);
           fLaser_term = gsl_complex_add(fLaser_term, fsum);
-        }
-      }
-      fLaser_term = gsl_complex_mul_real(fLaser_term, laser_fe.field);
+      }	// End q-loop
       fLaser_term = gsl_complex_mul_imag(fLaser_term, 1.0/(2.0*_planck_hbar));
       ddelta_ef[e][f] = gsl_complex_add(ddelta_ef[e][f], fLaser_term);
 
@@ -401,7 +393,7 @@ double Density_Matrix::set_dipole_moment(double gamma, double omega_ex,
            fabs(omega_ex-omega_gr)/_MHz);
     printf("dipole moment = %8.6G e*nm\t", dipole/(_elementary_charge*_nm));
     printf("laser rate = %8.6G MHz\n",
-           (dipole*data.laser_fe.field/(2*_planck_hbar))/_MHz);
+           (dipole*data.laser_fe.field[1]/(2*_planck_hbar))/_MHz);
   }
   return dipole;
 }
@@ -411,13 +403,14 @@ void Density_Matrix::print_rabi_frequencies(FILE * des) {
   // equation has the angular frequency!  I will also print the period to avoid
   // confusion.
   fprintf(des, "*****Rabi Frequencies*****\n");
-  for (int q = 0; q < 3; q++) {
-    if (laser_fe.polarization[q] > 0.0 || laser_ge.polarization[q] > 0.0)
+  for (int q = 0; q < 2; q++) {
+    if (laser_fe.field[q] > 0.0 || laser_ge.field[q] > 0.0)
       fprintf(des, "***** q = %d *****\n", q-1);
     for (int e = 0; e < numEStates; e++) {
-      if (laser_ge.polarization[q] > 0.0) {
+      if (laser_ge.field[q] > 0.0) {
         for (int g = 0; g < numGStates; g++) {
-          double rabi = dipole_moment_eg[e][g] * a_eg[e][g][q] * laser_ge.field;
+          double rabi = dipole_moment_eg[e][g] * a_eg[e][g][q] *
+	    laser_ge.field[q];
           rabi = rabi / _planck_hbar;
           double detune = 2*M_PI*(laser_ge.nu - (nu_E[e] - nu_G[g]));
           rabi = sqrt(pow(rabi, 2.0) + pow(detune, 2.0));
@@ -430,9 +423,10 @@ void Density_Matrix::print_rabi_frequencies(FILE * des) {
           fprintf(des, "period = %8.6G us\n", period/_us);
         }
       }
-      if (laser_fe.polarization[q] > 0.0) {
+      if (laser_fe.field[q] > 0.0) {
         for (int f = 0; f < numFStates; f++) {
-          double rabi = dipole_moment_ef[e][f] * a_ef[e][f][q] * laser_fe.field;
+          double rabi = dipole_moment_ef[e][f] * a_ef[e][f][q] *
+	    laser_fe.field[q];
           rabi = rabi / _planck_hbar;
           double detune = 2*M_PI*(laser_fe.nu - (nu_E[e] - nu_F[f]));
           rabi = sqrt(pow(rabi, 2.0) + pow(detune, 2.0));
