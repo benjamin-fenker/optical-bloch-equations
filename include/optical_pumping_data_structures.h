@@ -28,22 +28,31 @@ struct coherence_flags {
 };
 
 class Laser_data {
+ private:
+  void set_field_components();
+  void set_intensity_components();
  public:
   Laser_data();
+  // Old constructor with polarizations
+  // Laser_data(double nu, double power, double detune, double linewidth,
+  //           double polarization[], double tau);
   Laser_data(double nu, double power, double detune, double linewidth,
-             double polarization[], double tau);
+	     double s3_over_s0, double tau);
   void set_saturation_intensity(double tau);
-  void set_E_field_circular();
-  void set_E_field_linear();
   // and set I_sat in mW/cm^2
   double nu;  // Frequency of laser.  Energy = h * nu
-  double power, field;
+  double power, intensity[2], field[2];  // sigma^- , sigma^+ for each
+  // power is the total laser power while intensity is the power in each
+  // component
+  double stokes[4];  // Stokes parameters as in Jackson
+  // I only anticipate using [0] and [3] as those are the parameters that define
+  // the polarization.
   double detune;
   double linewidth;  // linewidth = FWHM
   // linewidth will represent linewidth in frequency with linewidth in energy
   // = h * linewidth (as opposed to linewidth in angular frequency with
   // energy linewidth = hbar * linewidth)
-  double polarization[3];
+  //  double polarization[3]; Don't want a seperate parameter anymore
   double saturation_intensity;
 };
 
