@@ -42,19 +42,20 @@ void Laser_data::set_field_components() {
     printf("Stokes vectors not possible.  Aborting\n");
     exit(1);
   }
-  field[0] = sqrt((stokes[0] - stokes[3]) / 2.0);
-  field[1] = sqrt((stokes[0] + stokes[3]) / 2.0);
+  field[0] = sqrt((stokes[0] - stokes[3]) / 2.0); // l_z = -1
+  field[1] = 0.0;				  // l_z = 0
+  field[2] = sqrt((stokes[0] + stokes[3]) / 2.0); // l_z = +1
 }
 
 void Laser_data::set_intensity_components() {
   // intensity[0] = sigma^- and intensity[1] = sigma^+ are the two basis
   // vectors. No capability at this time to do x-hat and y-hat basis
-  if ((field[0] < 0.0 || field[1] < 0.0) ||
-      (field[0] <= 0.0 && field[1] <= 0.0)) {
+  if ((field[0] < 0.0 || field[2] < 0.0) ||
+      (field[0] <= 0.0 && field[2] <= 0.0)) {
     printf("Electric field not possible.  Aborting\n");
     exit(1);
   }
-  for (int i = 0; i < 2; i++) {
+  for (int i = 0; i < 3; i++) {
     intensity[i] = 0.5 * _epsilon_0 * _speed_of_light * pow(field[i], 2.0);
     printf("intensity[%d] = %8.6G mW/cm2\n", i, intensity[i]/(_mW/_cm2));
   }

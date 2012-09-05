@@ -52,6 +52,7 @@ int Density_Matrix::update_population_gsl(double t, const double y[],
 
 void Density_Matrix::update_population(double dt) {
   reset_dPop();
+  //  printf("DENSITY MATRIX!!!\n");
   // The bare minimum is to include only diagonal matrix elements as well
   // as the optical coherences.  Spontaneous decay will be included as well
   /*
@@ -75,7 +76,7 @@ void Density_Matrix::update_population(double dt) {
           (es_hyperfine && es_Zeeman)) {
         { // G-laser term
           gsl_complex q_sum = gsl_complex_rect(0.0, 0.0);
-          for (int q = 0; q < 2; q++) {
+          for (int q = 0; q < 3; q +=2) { // Only q = 0, 2 will have lasers
             gsl_complex g_sum = gsl_complex_rect(0.0, 0.0);
             for (int gpp = 0; gpp < numGStates; gpp++) {
               gsl_complex left = gsl_complex_rect(dipole_moment_eg[e][gpp],
@@ -101,7 +102,7 @@ void Density_Matrix::update_population(double dt) {
         } // End G-laser term
         { // F-laser term
           gsl_complex q_sum = gsl_complex_rect(0.0, 0.0);
-          for (int q = 0; q < 2; q++) {
+          for (int q = 0; q < 3; q += 2) { // Only q = 0, 2 will have lasers
             gsl_complex f_sum = gsl_complex_rect(0.0, 0.0);
             for (int fpp = 0; fpp < numFStates; fpp++) {
               gsl_complex left = gsl_complex_rect(dipole_moment_ef[e][fpp],
@@ -142,7 +143,7 @@ void Density_Matrix::update_population(double dt) {
     for (int gp = 0; gp < numGStates; gp++) {
       gsl_complex oCoherences = gsl_complex_rect(0.0, 0.0);
       if ((g == gp) || gs_Zeeman) {
-        for (int q = 0; q < 2; q++) {
+        for (int q = 0; q < 3; q +=2) { // Only q = 0, 2 will have lasers
           gsl_complex qTerm = gsl_complex_rect(0.0, 0.0);
           for (int epp = 0; epp < numEStates; epp++) {
             gsl_complex left, right;  // First and second halves in
@@ -202,7 +203,7 @@ void Density_Matrix::update_population(double dt) {
     for (int fp = 0; fp < numFStates; fp++) {
       gsl_complex oCoherences = gsl_complex_rect(0.0, 0.0);
       if ((f == fp) || gs_Zeeman) {
-        for (int q = 0; q < 2; q++) {
+        for (int q = 0; q < 3; q += 2) { // Only q = 0, 2 will have lasers
           gsl_complex qTerm = gsl_complex_rect(0.0, 0.0);
           for (int epp = 0; epp < numEStates; epp++) {
             gsl_complex left, right;  // First and second halves in
@@ -262,7 +263,7 @@ void Density_Matrix::update_population(double dt) {
     for (int g = 0; g < numGStates; g++) {
       if (debug_eg) printf("e = %d, g = %d\n", e, g);
       gsl_complex gLaser_term = gsl_complex_rect(0.0, 0.0);
-      for (int q = 0; q < 2; q++) {
+      for (int q = 0; q < 3; q += 2) { // Only q = 0, 2 will have lasers
           if (debug_eg) printf("\t q = %d\n", q);
           gsl_complex gsum = gsl_complex_rect(0.0, 0.0);
           gsl_complex esum = gsl_complex_rect(0.0, 0.0);
@@ -300,7 +301,7 @@ void Density_Matrix::update_population(double dt) {
     for (int f = 0; f < numFStates; f++) {
       if (debug_ef) printf("e = %d, f = %d\n", e, f);
       gsl_complex fLaser_term = gsl_complex_rect(0.0, 0.0);
-      for (int q = 0; q < 2; q++) {
+      for (int q = 0; q < 3; q +=2) { // Only q = 0, 2 will have lasers
           if (debug_ef) printf("\t q = %d\n", q);
           gsl_complex fsum = gsl_complex_rect(0.0, 0.0);
           gsl_complex esum = gsl_complex_rect(0.0, 0.0);
@@ -403,7 +404,7 @@ void Density_Matrix::print_rabi_frequencies(FILE * des) {
   // equation has the angular frequency!  I will also print the period to avoid
   // confusion.
   fprintf(des, "*****Rabi Frequencies*****\n");
-  for (int q = 0; q < 2; q++) {
+  for (int q = 0; q < 3; q++) {
     if (laser_fe.field[q] > 0.0 || laser_ge.field[q] > 0.0)
       fprintf(des, "***** q = %d *****\n", q-1);
     for (int e = 0; e < numEStates; e++) {

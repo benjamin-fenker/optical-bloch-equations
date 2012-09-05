@@ -104,7 +104,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   printf(", Intensity = %5.2G mW/cm^2\t", laser_ge.power/(_mW/_cm2));
   printf(", s3 = %5.3G --> I = <%8.6G, %8.6G> mW/cm^2\t", laser_ge.stokes[3],
 	 laser_ge.intensity[0]/(_mW/_cm2), laser_ge.intensity[1]/(_mW/_cm2));
-  printf(", E = <%8.6G, %8.6G> V/m\n", laser_ge.field[0], laser_ge.field[1]);
+  printf(", E = <%8.6G, %8.6G, %8.6G> V/m\n", laser_ge.field[0],
+	 laser_ge.field[1], laser_ge.field[2]);
   //  printf("Field = %8.6G V/m\n", laser_ge.field/(_V/_m));
   
   printf("\nLaser f->e data.  Laser 1: Detuned %5.2G MHz from the |",
@@ -115,7 +116,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   printf(", Intensity = %5.2G mW/cm^2\t", laser_fe.power/(_mW/_cm2));
   printf(", s3 = %5.3G --> I = <%8.6G, %8.6G> mW/cm^2\t", laser_fe.stokes[3],
 	 laser_fe.intensity[0]/(_mW/_cm2), laser_fe.intensity[1]/(_mW/_cm2));
-  printf(", E = <%8.6G, %8.6G> V/m\n", laser_ge.field[0], laser_ge.field[1]);
+  printf(", E = <%8.6G, %8.6G, %8.6G> V/m\n", laser_fe.field[0],
+	 laser_fe.field[1], laser_fe.field[2]);
   //  printf("Field = %8.6G V/m\n", laser_fe.field/(_V/_m));
   printf("G States: %i\tF States: %i\tE States %i\n\n",
          atom.numGStates, atom.numFStates, atom.numEStates);
