@@ -28,22 +28,41 @@ struct coherence_flags {
 };
 
 class Laser_data {
+ private:
+  void set_field_components();
+  void set_intensity_components();
  public:
   Laser_data();
+  // Old constructor with polarizations
+  // Laser_data(double nu, double power, double detune, double linewidth,
+  //           double polarization[], double tau);
   Laser_data(double nu, double power, double detune, double linewidth,
-             double polarization[], double tau);
+	     double s3_over_s0, double tau);
   void set_saturation_intensity(double tau);
-  void set_E_field_circular();
-  void set_E_field_linear();
   // and set I_sat in mW/cm^2
   double nu;  // Frequency of laser.  Energy = h * nu
-  double power, field;
+  double power, intensity[3], field[3];
+  // power is the total laser power while intensity is the power in each
+  // component
+  // The three components of intensity and field represent photons with
+  // z-component of angular momentum equal to -1, 0, 1 respectively.
+  // The z-component is defined as the direction of propogation of the laser
+  // light.  The basis in which I am working is convenient for circularly
+  // polarized light.  The basis vectors are right and left-handed unit vectors.
+  // e_+^hat = 1/sqrt2 * (x^hat + i y^hat). e_-^hat = (e_+^hat)*
+  // Therefore, there is no laser light with l_z = 0 although light emmitted
+  // in spontaneous decay can have l_z = 0.
+  // In calculations with q representing the index of these vectors, l_z = q - 1
+
+  double stokes[4];  // Stokes parameters as in Jackson
+  // I only anticipate using [0] and [3] as those are the parameters that define
+  // the polarization.
   double detune;
   double linewidth;  // linewidth = FWHM
   // linewidth will represent linewidth in frequency with linewidth in energy
   // = h * linewidth (as opposed to linewidth in angular frequency with
   // energy linewidth = hbar * linewidth)
-  double polarization[3];
+  //  double polarization[3]; Don't want a seperate parameter anymore
   double saturation_intensity;
 };
 

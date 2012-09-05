@@ -17,6 +17,6 @@ class OpticalPumping {
            int Je2, double laser_fe_power, double laser_ge_power,
            double laser_fe_detune, double laser_ge_detune,
            double laser_fe_linewidth, double laser_ge_linewidth,
-           double laser_fe_pol[], double laser_ge_pol[], double B_z);
+           double laser_fe_s3_over_s0, double laser_ge_s3_over_s0, double B_z);
 };
 #endif  // INCLUDE_OPTICAL_PUMPING_H_

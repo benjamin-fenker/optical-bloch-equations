@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <gsl/gsl_const_mksa.h>
+#include "stdlib.h"
 #include "include/optical_pumping_data_structures.h"
 #include "include/units.h"
 
@@ -11,15 +12,19 @@ extern bool op_verbose;
 Laser_data::Laser_data() {}
 
 Laser_data::Laser_data(double set_nu, double set_power, double set_detune,
-                       double set_linewidth, double set_polarization[],
-                       double tau) :
+                       double set_linewidth, double set_s3_over_s0,
+		       double tau) :
   nu(set_nu), power(set_power), detune(set_detune), linewidth(set_linewidth) {
-  for (int i = 0; i < 3; i++) polarization[i] = set_polarization[i];
   set_saturation_intensity(tau);
-  // NEED TO UNDERSTAND WHY SETTING THIS TO LINEAR FIXES THINGS.  WHAT DOES
-  // LASER INTENSITY MEAN???
-  //  set_E_field_circular();
-  set_E_field_linear();
+  // s1 and s2 concern the phase difference of E_+ and E_- light, but have
+  // no relevance and I don't even think we measure them.  0.0 is arbitrary.
+  // See Jackson (3rd edition) for definition of Stokes parameters
+  stokes[0] = 2*set_power / (_epsilon_0*_speed_of_light);
+  stokes[1] = 0.0;
+  stokes[2] = 0.0;
+  stokes[3] = stokes[0] * set_s3_over_s0;
+  set_field_components();
+  set_intensity_components();
 }
 
 void Laser_data::set_saturation_intensity(double tau) {
@@ -30,12 +35,28 @@ void Laser_data::set_saturation_intensity(double tau) {
   if (op_verbose) printf("I_s = %6.4G mW/cm^2\n", I_s/(_mW/_cm2));
 }
 
-void Laser_data::set_E_field_circular() {
-  field = sqrt(power/(_epsilon_0 * _speed_of_light));
-  if (op_verbose) printf("E field: %8.6G V/m\n", field/(_V/_m));
+void Laser_data::set_field_components() {
+  // field[0] = sigma^- and field[1] = sigma^+ are the two basis vectors.
+  // No capability at this time to do x-hat and y-hat basis
+  if (stokes[0] <= 0.0) {
+    printf("Stokes vectors not possible.  Aborting\n");
+    exit(1);
+  }
+  field[0] = sqrt((stokes[0] - stokes[3]) / 2.0); // l_z = -1
+  field[1] = 0.0;				  // l_z = 0
+  field[2] = sqrt((stokes[0] + stokes[3]) / 2.0); // l_z = +1
 }
 
-void Laser_data::set_E_field_linear() {
-  field = sqrt((2.0*power)/(_epsilon_0 * _speed_of_light));
-  if (op_verbose) printf("E field: %8.6G V/m\n", field/(_V/_m));
+void Laser_data::set_intensity_components() {
+  // intensity[0] = sigma^- and intensity[1] = sigma^+ are the two basis
+  // vectors. No capability at this time to do x-hat and y-hat basis
+  if ((field[0] < 0.0 || field[2] < 0.0) ||
+      (field[0] <= 0.0 && field[2] <= 0.0)) {
+    printf("Electric field not possible.  Aborting\n");
+    exit(1);
+  }
+  for (int i = 0; i < 3; i++) {
+    intensity[i] = 0.5 * _epsilon_0 * _speed_of_light * pow(field[i], 2.0);
+    printf("intensity[%d] = %8.6G mW/cm2\n", i, intensity[i]/(_mW/_cm2));
+  }
 }
