@@ -20,7 +20,7 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
                                double B_x, double g_I, double Aj,
                                double *arrayToFill) {
   extern bool op_verbose;
-  // bool debug = true;
+  //  bool debug = true;
   bool debug = false;
   printf("Decomposing nuclear spin I = %i/2 for the L = %i ; ", I2, L);
   printf("J = %i/2 state.  Aj = %6.4G MHz\t", J2, Aj/_MHz);
@@ -422,6 +422,6 @@ double Eigenvector_Helper::calc_gf(int F2, int J2, int I2, int L2,
     num = ((F*(F+1.0)) - (J*(J+1.0)) + (I*(I+1.0)))*g_Ip;
     g_F += (num/den);
   }
-  //  printf("g_F = %6.4G\t", g_F);
+  // printf("g_F = %6.4G\t", g_F);
   return g_F;
 }
