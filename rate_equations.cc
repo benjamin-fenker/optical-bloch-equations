@@ -11,9 +11,9 @@ Rate_Equations::Rate_Equations(atom_data atom, magnetic_field_data field,
                                Laser_data set_laser_fe, Laser_data set_laser_ge)
   : OpticalPumping_Method(atom, field, set_laser_fe, set_laser_ge),
     transition_rate_eg(atom.numEStates, vector<vector<double> >(atom.numGStates,
-						       vector<double>(2, 0.0))),
+						       vector<double>(3, 0.0))),
     transition_rate_ef(atom.numEStates, vector<vector<double> >(atom.numFStates,
-						       vector<double>(2, 0.0))),
+						       vector<double>(3, 0.0))),
     dPop_g(atom.numGStates, 0.0), dPop_f(atom.numFStates, 0.0),
     dPop_e(atom.numEStates, 0.0) {
   printf("Rate_Equations::Rate_Equations(...)\n\n");
@@ -57,51 +57,53 @@ void Rate_Equations::update_population(double dt) {
   // and angular frequency are concerned
   bool debug = false;
   reset_dPop();
+  //  printf("RATE EQUATION!!!\n");
   double delta_laser, delta_spon;
   // Laser interaction:  stimulated emission and absoprtion
-  for (int q = 0; q < 2; q++) {
     for (int e = 0; e < numEStates; e++) {
       // g <---> e
-      for (int g =0; g < numGStates; g++) {
-	double pop_diff = (GSL_REAL(rho_gg[g][g])-GSL_REAL(rho_ee[e][e]));
-	if (debug) printf("|g=%d> <--> |e%d\t", g, e);
-	if (debug) printf(" popDiff = %8.6G\t tran_rate = %8.6G ns^-1\t",
-			  pop_diff, transition_rate_eg[e][g][q]/(1/_ns));
-	if (debug) printf("a^2 = %5.3G\t", pow(a_eg[e][g][q], 2.0));
-	delta_laser = pop_diff * transition_rate_eg[e][g][q];
-	delta_laser *= pow(a_eg[e][g][q], 2.0);
-	if (debug) printf("delta_laser = %8.6G ns^-1\t", delta_laser/(1/_ns));
-	dPop_e[e] += delta_laser;
-	dPop_g[g] -= delta_laser;
-	if (debug) printf("dPop_e[%d] = %12.10G\t dPop_g[%d] = %12.10G\n",
-			  e, dt*dPop_e[e], g, dt*dPop_g[g]);
+      for (int g = 0; g < numGStates; g++) {
+	for (int q = 0; q < 3; q++) {
+	  double pop_diff = (GSL_REAL(rho_gg[g][g])-GSL_REAL(rho_ee[e][e]));
+	  if (debug) printf("|g=%d> <--> |e%d\t", g, e);
+	  if (debug) printf(" popDiff = %8.6G\t tran_rate = %8.6G ns^-1\t",
+			    pop_diff, transition_rate_eg[e][g][q]/(1/_ns));
+	  if (debug) printf("a^2 = %5.3G\t", pow(a_eg[e][g][q], 2.0));
+	  delta_laser = pop_diff * transition_rate_eg[e][g][q];
+	  delta_laser *= pow(a_eg[e][g][q], 2.0);
+	  if (debug) printf("delta_laser = %8.6G ns^-1\t", delta_laser/(1/_ns));
+	  dPop_e[e] += delta_laser;
+	  dPop_g[g] -= delta_laser;
+	  if (debug) printf("dPop_e[%d] = %12.10G\t dPop_g[%d] = %12.10G\n",
+			    e, dt*dPop_e[e], g, dt*dPop_g[g]);
 	// Spontaneous emission
         delta_spon = GSL_REAL(rho_ee[e][e]) * pow(a_eg[e][g][q], 2.0) / tau;
         dPop_e[e] -= delta_spon;
         dPop_g[g] += delta_spon;
-      }
+	} // End q-loop
+      }	// End g-loop
       // f <---> e
       for (int f =0; f < numFStates; f++) {
-	double pop_diff = (GSL_REAL(rho_ff[f][f])-GSL_REAL(rho_ee[e][e]));
-	if (debug) printf("|f=%d> <--> |e=%d\t ", f, e);
-	if (debug) printf("popDiff = %8.6G\t tran_rate = %8.6G ns^-1\t",
-			  pop_diff, transition_rate_ef[e][f][q]/(1/_ns));
-	if (debug) printf("a^2 = %5.3G\t", pow(a_ef[e][f][q], 2.0));
-	delta_laser = pop_diff * transition_rate_ef[e][f][q];
-	delta_laser *=  pow(a_ef[e][f][q], 2.0);
-	if (debug) printf("delta_laser = %8.6G ns^-1\t", delta_laser/(1/_ns));
-	dPop_e[e] += delta_laser;
-	dPop_f[f] -= delta_laser;
-	if (debug) printf("dPop_e[%d] = %12.10G\t dPop_f[%d] = %12.10G\n",
-			  e, dt*dPop_e[e], f, dt*dPop_f[f]);
-	// Spontaneous emission
-	delta_spon = GSL_REAL(rho_ee[e][e]) * pow(a_ef[e][f][q], 2.0) / tau;
-	dPop_e[e] -= delta_spon;
-	dPop_f[f] += delta_spon;
-      }
-    }
-  }
-
+	for (int q = 0; q < 3; q++) {
+	  double pop_diff = (GSL_REAL(rho_ff[f][f])-GSL_REAL(rho_ee[e][e]));
+	  if (debug) printf("|f=%d> <--> |e=%d\t ", f, e);
+	  if (debug) printf("popDiff = %8.6G\t tran_rate = %8.6G ns^-1\t",
+			    pop_diff, transition_rate_ef[e][f][q]/(1/_ns));
+	  if (debug) printf("a^2 = %5.3G\t", pow(a_ef[e][f][q], 2.0));
+	  delta_laser = pop_diff * transition_rate_ef[e][f][q];
+	  delta_laser *=  pow(a_ef[e][f][q], 2.0);
+	  if (debug) printf("delta_laser = %8.6G ns^-1\t", delta_laser/(1/_ns));
+	  dPop_e[e] += delta_laser;
+	  dPop_f[f] -= delta_laser;
+	  if (debug) printf("dPop_e[%d] = %12.10G\t dPop_f[%d] = %12.10G\n",
+			    e, dt*dPop_e[e], f, dt*dPop_f[f]);
+	  // Spontaneous emission
+	  delta_spon = GSL_REAL(rho_ee[e][e]) * pow(a_ef[e][f][q], 2.0) / tau;
+	  dPop_e[e] -= delta_spon;
+	  dPop_f[f] += delta_spon;
+	} // End q-loop
+      }	// End f-loop
+    }	// End e-loop
 
   for (int g = 0; g < numGStates; g++) {
     GSL_SET_REAL(&rho_gg[g][g], GSL_REAL(rho_gg[g][g]) + dt*dPop_g[g]);
@@ -125,7 +127,7 @@ void Rate_Equations::setup_transition_rates(double linewidth) {
     printf("Laser_g %8.6G MHz\t Laser_f %8.6G MHz\n", laser_ge.nu/_MHz,
            laser_fe.nu/_MHz);
   }
-  for (int q = 0; q < 2; q++) {
+  for (int q = 0; q < 3; q++) {
     for (int e = 0; e < numEStates; e++) {
       for (int g = 0; g < numGStates; g++) {
 	double transition_freq = nu_E[e] - nu_G[g];

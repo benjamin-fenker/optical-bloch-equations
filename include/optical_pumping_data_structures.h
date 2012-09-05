@@ -41,9 +41,19 @@ class Laser_data {
   void set_saturation_intensity(double tau);
   // and set I_sat in mW/cm^2
   double nu;  // Frequency of laser.  Energy = h * nu
-  double power, intensity[2], field[2];  // sigma^- , sigma^+ for each
+  double power, intensity[3], field[3];
   // power is the total laser power while intensity is the power in each
   // component
+  // The three components of intensity and field represent photons with
+  // z-component of angular momentum equal to -1, 0, 1 respectively.
+  // The z-component is defined as the direction of propogation of the laser
+  // light.  The basis in which I am working is convenient for circularly
+  // polarized light.  The basis vectors are right and left-handed unit vectors.
+  // e_+^hat = 1/sqrt2 * (x^hat + i y^hat). e_-^hat = (e_+^hat)*
+  // Therefore, there is no laser light with l_z = 0 although light emmitted
+  // in spontaneous decay can have l_z = 0.
+  // In calculations with q representing the index of these vectors, l_z = q - 1
+
   double stokes[4];  // Stokes parameters as in Jackson
   // I only anticipate using [0] and [3] as those are the parameters that define
   // the polarization.

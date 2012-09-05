@@ -35,11 +35,11 @@ int main(int argc, char* argv[]) {
   // New way
   // (I think) that John is reportings I_+ + I_- / I_+ - I_-, which is
   // equivalent to s3/s0 in the notation of Jackson 3rd edition
-  double laser_fe_s3_over_s0 = 1.0;
-  double laser_ge_s3_over_s0 = 1.0;
+  double laser_fe_s3_over_s0 = 0.80;
+  double laser_ge_s3_over_s0 = 0.80;
   
-  double laser_fe_detune = 0.1 * _MHz;  // MHz
-  double laser_ge_detune = 0.1 * _MHz;  // MHz
+  double laser_fe_detune = -1.0 * _MHz;  // MHz
+  double laser_ge_detune = -1.0 * _MHz;  // MHz
 
   double laser_fe_linewidth = 0.2 *_MHz;  // MHz (FWHM)
   double laser_ge_linewidth = 0.2 *_MHz;  // MHz (FWHM)
