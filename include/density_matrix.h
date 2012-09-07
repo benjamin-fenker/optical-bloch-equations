@@ -6,12 +6,13 @@
 #include <vector>
 #include "./optical_pumping_method.h"
 #include "./optical_pumping_data_structures.h"
+#include "./eigenvector_helper.h"
 
 using std::vector;
 
 class Density_Matrix: public OpticalPumping_Method {
  public:
-  Density_Matrix(atom_data atom, magnetic_field_data field, Laser_data laser_fe,
+  Density_Matrix(Eigenvector_Helper set_eigen, Laser_data laser_fe,
                  Laser_data laser_ge, coherence_flags flags);
   //  ~Density_Matrix();
   void update_population(double dt);

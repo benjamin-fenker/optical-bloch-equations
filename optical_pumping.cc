@@ -48,7 +48,6 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
 
   // Create helper classes to do useful things
   Alkali alk;
-  Eigenvector_Helper decomp;
 
   if (alk.lookupParameters(isotope, atom.Je2, &atom.I2, &atom.Aj_g,
                              &atom.Aj_e, &atom.g_I, &atom.nu_excited,
@@ -60,6 +59,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   atom.numEStates = alk.getNumberOfExcitedStates(atom.I2, atom.Je2);
   atom.numFStates = alk.getNumberOfGroundStates_f(atom.I2);
   atom.numGStates = alk.getNumberOfGroundStates_g(atom.I2);
+  atom.numBasisStates_ground = atom.numGStates + atom.numFStates;
+  atom.numBasisStates_excited = atom.numEStates;
   atom.linewidth = 1 / atom.tau;
 
   // These will hold the F quantum number of the two ground and one excited
@@ -127,10 +128,20 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   const int numEStates = atom.numEStates;
   const int numGroundStates = atom.numGStates + atom.numFStates;
 
+  
+
+  /*
   double *ground_IzJz_Decomp = new double[numGroundStates*numGroundStates];
   double *excited_IzJz_Decomp = new double[numEStates*numEStates];
-  decomp.diagH(atom, field, 0, 1, atom.Aj_g, &ground_IzJz_Decomp[0]);
-  decomp.diagH(atom, field, 1, atom.Je2, atom.Aj_e, &excited_IzJz_Decomp[0]);
+  decomp->diagH(atom, field, 0, 1, atom.Aj_g, &ground_IzJz_Decomp[0]);
+  decomp->diagH(atom, field, 1, atom.Je2, atom.Aj_e, &excited_IzJz_Decomp[0]);
+  // Test the decomps:
+  printf("TESTING DECOMPS:\n");
+  for (int i = 0; i < numEStates*numEStates; i++) {
+    printf("%8.6G   ", excited_IzJz_Decomp[i]);
+    if ((i+1)%numEStates == 0) printf("\n");
+  }
+  */
   // ***********************************************************************
 
   // Setup print statements to only print a reasonable number of times
@@ -179,16 +190,16 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // End set up output
 
   OpticalPumping_Method *equ;
-
+  Eigenvector_Helper decomp(atom, field);
   int (*update_func)(double, const double[], double[], void*);
 
   if (strcmp(method.c_str(), "R") == 0) {
-    equ = new Rate_Equations(atom, field, laser_fe, laser_ge);
+    equ = new Rate_Equations(decomp, laser_fe, laser_ge);
     update_func = &Rate_Equations::update_population_gsl;
     //    int (*update_func)(double, const double[], double[], void*) =
     //      &Rate_Equations::update_population_gsl;
   } else if (strcmp(method.c_str(), "O") == 0) {
-    equ = new Density_Matrix(atom, field, laser_fe, laser_ge, flags);
+    equ = new Density_Matrix(decomp, laser_fe, laser_ge, flags);
     update_func = &Density_Matrix::update_population_gsl;
   } else {
     printf("Failed to initialize the optical pumping method\t");
@@ -292,8 +303,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   }
   gsl_odeiv2_driver_free(d);
   */
-  delete[] ground_IzJz_Decomp;
-  delete[] excited_IzJz_Decomp;
+  //  delete[] ground_IzJz_Decomp;
+  // delete[] excited_IzJz_Decomp;
   return 0;
 }
 

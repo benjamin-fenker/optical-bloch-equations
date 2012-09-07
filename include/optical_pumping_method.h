@@ -8,6 +8,7 @@
 #include <vector>
 #include "./eigenvector_helper.h"
 #include "./optical_pumping_data_structures.h"
+#include "./eigenvector_helper.h"
 
 using std::vector;
 // IMPORTANT:  The methods of this class are all blind to units, so you must
@@ -17,8 +18,8 @@ using std::vector;
 class OpticalPumping_Method {
  public:
   OpticalPumping_Method();
-  OpticalPumping_Method(atom_data atom, magnetic_field_data field,
-                        Laser_data laser_fe, Laser_data laser_ge);
+  OpticalPumping_Method(Eigenvector_Helper set_eigen, Laser_data laser_fe,
+			Laser_data laser_ge);
   virtual ~OpticalPumping_Method();
   void setup_quantum_numbers(int I2, int J2);
   void setup_quantum_numbers(atom_data atom);
@@ -40,9 +41,13 @@ class OpticalPumping_Method {
                       int Je2, int Fe2, int Me2, int q);
   void setup_pop_uniform_ground();
 
+  // Struct to hold atom, laser and eignenvector information
+  Eigenvector_Helper eigen;
+
   double get_total_population();
   double get_polarization();
   double get_alignment();
+  double get_excited_state_total();
   bool is_hermitian();
 
   op_data_for_gsl data;
@@ -114,5 +119,9 @@ class OpticalPumping_Method {
   vector<vector<gsl_complex> > delta_ef;
   vector<vector<gsl_complex> > delta_eg;
   vector<vector<gsl_complex> > delta_fg;
+
+  /* Matrices to hold the ground and excited state decomposition. */
+  vector<vector<double> > IzJz_ground;
+  vector<vector<double> > IzJz_excited;
 };
 #endif  // INCLUDE_OPTICAL_PUMPING_METHOD_H_

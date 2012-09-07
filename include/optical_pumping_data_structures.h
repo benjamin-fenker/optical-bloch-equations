@@ -7,8 +7,10 @@
 
 using std::vector;
 // Struct to hold atomic data and make function calls clearer
-struct atom_data {
+class atom_data {
+ public:
   int numEStates, numFStates, numGStates;
+  int numBasisStates_ground, numBasisStates_excited;
   int I2, Je2;
   double nu_excited, tau, gamma_spon;
   double Aj_g, Aj_e, g_I;
