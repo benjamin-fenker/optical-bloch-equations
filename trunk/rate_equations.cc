@@ -7,23 +7,25 @@
 using std::vector;
 extern bool op_verbose;
 
-Rate_Equations::Rate_Equations(atom_data atom, magnetic_field_data field,
-                               Laser_data set_laser_fe, Laser_data set_laser_ge)
-  : OpticalPumping_Method(atom, field, set_laser_fe, set_laser_ge),
-    transition_rate_eg(atom.numEStates, vector<vector<double> >(atom.numGStates,
-						       vector<double>(3, 0.0))),
-    transition_rate_ef(atom.numEStates, vector<vector<double> >(atom.numFStates,
-						       vector<double>(3, 0.0))),
-    dPop_g(atom.numGStates, 0.0), dPop_f(atom.numFStates, 0.0),
-    dPop_e(atom.numEStates, 0.0) {
+Rate_Equations::Rate_Equations(Eigenvector_Helper set_eigen,
+			       Laser_data set_laser_fe, Laser_data set_laser_ge)
+  : OpticalPumping_Method(set_eigen, set_laser_fe, set_laser_ge),
+    transition_rate_eg(eigen.atom.numEStates,
+		       vector<vector<double> >(eigen.atom.numGStates,
+					       vector<double>(3, 0.0))),
+    transition_rate_ef(eigen.atom.numEStates,
+		       vector<vector<double> >(eigen.atom.numFStates,
+					       vector<double>(3, 0.0))),
+    dPop_g(eigen.atom.numGStates, 0.0), dPop_f(eigen.atom.numFStates, 0.0),
+    dPop_e(eigen.atom.numEStates, 0.0) {
   printf("Rate_Equations::Rate_Equations(...)\n\n");
   if (op_verbose) {
     printf("Stokes vector: <%8.6G, %4.2G, %4.2G, %8.6G\n", laser_fe.stokes[0],
 	   laser_fe.stokes[1], laser_fe.stokes[2], laser_fe.stokes[3]);
   }
 
-  setup_transition_rates(atom.linewidth);
-  totalTerms = atom.numFStates+atom.numGStates+atom.numEStates;
+  setup_transition_rates(eigen.atom.linewidth);
+  totalTerms = eigen.atom.numFStates+eigen.atom.numGStates+eigen.atom.numEStates;
 
   /* 
   data.gStart = 0;
@@ -37,7 +39,7 @@ Rate_Equations::Rate_Equations(atom_data atom, magnetic_field_data field,
   data.transition_rate_ef = transition_rate_ef;
   */
 
-  population = new double[atom.numFStates+atom.numGStates+atom.numEStates];
+  population = new double[eigen.atom.numFStates+eigen.atom.numGStates+eigen.atom.numEStates];
   int i, j;
   for (i = 0; i < (numFStates+numGStates); i++) {
     population[i] = 1.0 / (numFStates + numGStates);

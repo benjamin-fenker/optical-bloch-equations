@@ -15,28 +15,67 @@
 #include "include/units.h"
 
 using std::string;
+extern bool op_verbose;
 
-void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
-                               double B_x, double g_I, double Aj,
-                               double *arrayToFill) {
-  extern bool op_verbose;
-  //  bool debug = true;
+Eigenvector_Helper::Eigenvector_Helper(atom_data set_atom,
+				       magnetic_field_data set_field) :
+  atom(set_atom), field(set_field),
+  nuclear_spin_ground(2*atom.numBasisStates_ground, 0),
+  nuclear_spin_excited(2*atom.numBasisStates_excited, 0),
+  total_atomic_spin_ground(2*atom.numBasisStates_ground, 0),
+  total_atomic_spin_excited(2*atom.numBasisStates_excited, 0),
+  IzJz_decomp_ground(atom.numBasisStates_ground,
+		     vector<double>(atom.numBasisStates_ground, 0.0)),
+  IzJz_decomp_excited(atom.numBasisStates_excited,
+		     vector<double>(atom.numBasisStates_excited, 0.0))
+ {
+  if (op_verbose) printf("Eigenvector_Helper::Eigenvector_Helper(...)\n");
+  nuclear_spin_ground = get_nuclear_spin(atom.numBasisStates_ground);
+  nuclear_spin_excited = get_nuclear_spin(atom.numBasisStates_excited);
+  total_atomic_spin_ground = get_total_atomic_spin(atom.numBasisStates_ground,
+						   1);
+  total_atomic_spin_excited = get_total_atomic_spin(atom.numBasisStates_excited,
+						    atom.Je2);
+  IzJz_decomp_ground = diagH(0);
+  IzJz_decomp_excited = diagH(1);
+  /*
+  printf("Excited decomp:\n");
+  for (int i = 0; i < atom.numBasisStates_excited; i++) {
+    for (int j = 0; j < atom.numBasisStates_excited; j++) {
+      printf("%8.6G   ", IzJz_decomp_excited[i][j]);
+    }
+    printf("\n");
+  }
+  */
+}
+
+vector<vector<double> > Eigenvector_Helper::diagH(int L) {
+
   bool debug = false;
-  printf("Decomposing nuclear spin I = %i/2 for the L = %i ; ", I2, L);
+  // Figure out some parameters to use based on J
+  int J2;
+  double Aj;
+  vector<int> Iz2, Jz2;
+  if (L == 0) {
+    J2 = 1;
+    Aj = atom.Aj_g;
+    Iz2 = nuclear_spin_ground;
+    Jz2 = total_atomic_spin_ground;
+  } else if (L == 1) {
+    J2  = atom.Je2;
+    Aj = atom.Aj_g;
+    Iz2 = nuclear_spin_excited;
+    Jz2 = total_atomic_spin_excited;
+  } else {
+    printf("FATAL ERROR.  L MUST EQUAL 0 OR 1\n L = %d\n", L);
+    exit(1);
+  }
+  printf("Decomposing nuclear spin I = %i/2 for the L = %i ; ", atom.I2, L);
   printf("J = %i/2 state.  Aj = %6.4G MHz\t", J2, Aj/_MHz);
-  printf("B = %6.4G z + %6.4G x G\n", B_z/_G, B_x/_G);
-  int numBasisStates = (I2 + 1)*(J2+1);
+  printf("B = %6.4G z + %6.4G x G\n", field.B_z/_G, field.B_x/_G);
+  int numBasisStates = (atom.I2 + 1)*(J2+1);
   // genAtomicState::numBasisStates = numBasisStates;
 
-  int *Iz2 = new int[numBasisStates*2];
-  int *Jz2 = new int[numBasisStates*2];
-
-  for (int i = 0; i < numBasisStates*2; i+=2) {
-    Iz2[i] = -I2 + 2*((i/2)%(I2+1));
-    Iz2[i+1] = 0.0;  // The imaginary part
-    Jz2[i] = -J2+ 2*(i/2/(I2+1));
-    Jz2[i+1] = 0.0;
-  }
   if (op_verbose) printf("\n");
 
   double *I_z = new double[2*numBasisStates*numBasisStates];
@@ -52,10 +91,10 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
     H[i] = 0.0;
 
     if (i/2 % (numBasisStates+1) == 0) {
-      I_z[i] = static_cast<double>(Iz2[2*((i/2)%numBasisStates)])/2.0;
-      J_z[i] = static_cast<double>(Jz2[2*((i/2)%numBasisStates)])/2.0;
-
-
+      I_z[i] = static_cast<double>(Iz2[
+				       2*((i/2)%numBasisStates)])/2.0;
+      J_z[i] = static_cast<double>(Jz2[
+				       2*((i/2)%numBasisStates)])/2.0;
     } else {
       I_z[i] = 0.0;
       J_z[i] = 0.0;
@@ -64,8 +103,9 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
     J_z[i+1] = 0.0;
 
     if (((i/2)+1) % (numBasisStates+1) == 0) {  // One below the diagonal only
-      double I = static_cast<double>(I2) / 2.0;
-      double Iz = static_cast<double>(Iz2[2*((i/2)%(numBasisStates))])/2.0;
+      double I = static_cast<double>(atom.I2) / 2.0;
+      double Iz = static_cast<double>(Iz2[
+				          2*((i/2)%(numBasisStates))])/2.0;
       I_plus[i] = sqrt(I*(I+1.0) - Iz*(Iz+1.0));
     } else {
       I_plus[i] = 0.0;
@@ -73,8 +113,9 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
     I_plus[i+1] = 0.0;
 
     if (((i/2)-1) % (numBasisStates+1) == 0) {  // One above the diagonal only
-      double I = static_cast<double>(I2) / 2.0;
-      double Iz = static_cast<double>(Iz2[2*((i/2)%(numBasisStates))])/2.0;
+      double I = static_cast<double>(atom.I2) / 2.0;
+      double Iz = static_cast<double>(Iz2[
+				          2*((i/2)%(numBasisStates))])/2.0;
       I_minus[i] = sqrt(I*(I+1) - Iz*(Iz-1.0));
     } else {
       I_minus[i] = 0.0;
@@ -84,7 +125,8 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
     if (((i/2)+(numBasisStates/(J2+1)))%(numBasisStates+1) == 0) {
       //  Below the diagonal only
       double J = static_cast<double>(J2) / 2.0;
-      double Jz = static_cast<double>(Jz2[(2*((i/2)%numBasisStates))])/2.0;
+      double Jz = static_cast<double>(Jz2[
+				          (2*((i/2)%numBasisStates))])/2.0;
       J_plus[i] = sqrt(J*(J+1.0) - Jz*(Jz+1.0));
     } else {
       J_plus[i] = 0.0;
@@ -109,7 +151,7 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
   }
   if (debug) {
     for (int i = 0; i < (2*numBasisStates*numBasisStates) -1; i+=2) {
-      printf("%4.3G", I_z[i]);
+      printf("%6.4G", I_z[i]);
       if ((i+2) %(2*numBasisStates) == 0) {
         printf("\n");
       }
@@ -119,52 +161,40 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
 
   gsl_matrix_complex_view I_z_view = gsl_matrix_complex_view_array(I_z,
                                          numBasisStates, numBasisStates);
-
   gsl_matrix_complex_view J_z_view = gsl_matrix_complex_view_array(J_z,
                                          numBasisStates, numBasisStates);
-
   gsl_matrix_complex_view I_plus_view = gsl_matrix_complex_view_array(I_plus,
                                             numBasisStates, numBasisStates);
-
   gsl_matrix_complex_view J_plus_view = gsl_matrix_complex_view_array(J_plus,
                                             numBasisStates, numBasisStates);
-
   gsl_matrix_complex_view I_minus_view = gsl_matrix_complex_view_array(I_minus,
                                              numBasisStates, numBasisStates);
-
   gsl_matrix_complex_view J_minus_view = gsl_matrix_complex_view_array(J_minus,
                                              numBasisStates, numBasisStates);
-
   gsl_matrix_complex_view H_view = gsl_matrix_complex_view_array(H,
                                        numBasisStates, numBasisStates);
 
   // Initializes to all zeroes
   gsl_matrix_complex *Hbz = gsl_matrix_complex_calloc(numBasisStates,
                                                       numBasisStates);
-
   gsl_matrix_complex *tempz = gsl_matrix_complex_calloc(numBasisStates,
                                                         numBasisStates);
   /*
   gsl_matrix_complex *Jx = gsl_matrix_complex_calloc(numBasisStates,
                                                      numBasisStates);
-
   gsl_matrix_complex *Ix = gsl_matrix_complex_calloc(numBasisStates,
                                                      numBasisStates);
-
   gsl_matrix_complex *Jy = gsl_matrix_complex_calloc(numBasisStates,
                                                      numBasisStates);
-
   gsl_matrix_complex *Iy = gsl_matrix_complex_calloc(numBasisStates,
                                                      numBasisStates);
-
   gsl_matrix_complex *Hbt = gsl_matrix_complex_calloc(numBasisStates,
                                                       numBasisStates);
-
   gsl_matrix_complex *tempt = gsl_matrix_complex_calloc(numBasisStates,
                                                         numBasisStates);
   */
   const double memn = 1.0/1836.152701;
-  gsl_complex g_Ip = gsl_complex_rect(-g_I * memn, 0.0);
+  gsl_complex g_Ip = gsl_complex_rect(-atom.g_I * memn, 0.0);
 
   gsl_matrix_complex_add(Hbz, &I_z_view.matrix);
   if (debug) printf("Scaling Iz by g_Ip = %8.6G\n", GSL_REAL(g_Ip));
@@ -176,7 +206,7 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
                            gsl_complex_rect(calc_gj(1.0, L*2, 1.0), 0.0));
 
   gsl_matrix_complex_add(Hbz, tempz);
-  gsl_matrix_complex_scale(Hbz, gsl_complex_rect((mu_B*B_z), 0.0));
+  gsl_matrix_complex_scale(Hbz, gsl_complex_rect((field.mu_B*field.B_z), 0.0));
 
   // Now for the transverse field components!
   /*
@@ -209,7 +239,7 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
                            gsl_complex_rect(calc_gj(1.0, L*2, 1.0), 0.0));
 
   gsl_matrix_complex_add(Hbt, tempt);
-  gsl_matrix_complex_scale(Hbt, gsl_complex_rect((mu_B*B_x), 0.0));
+  gsl_matrix_complex_scale(Hbt, gsl_complex_rect((field.mu_B*field.B_x), 0.0));
   */
   // gsl_matrix_complex_fprintf(stdout,Hbt,"%g");
   // *****************************************************************
@@ -255,7 +285,7 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
   int *F2 = new int[numBasisStates];
   int *Fz2 = new int[numBasisStates];
 
-  int F2current = abs(I2 - J2);
+  int F2current = abs(atom.I2 - J2);
   int Fz2current = -F2current;
 
   for (int i = 0; i < numBasisStates; i++) {
@@ -304,12 +334,16 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
   }
   */
 
-  int F2desired = abs(I2 - J2);
+  int F2desired = abs(atom.I2 - J2);
   int Fz2desired = -F2desired;
+  /*
   double **admixture = new double*[numBasisStates];
   for (int i = 0; i < numBasisStates; i++) {
     admixture[i] = new double[numBasisStates];
   }
+  */
+  vector<vector<double> > admixture(numBasisStates,
+				    vector<double>(numBasisStates, 0.0));
 
   for (int i = 0; i < numBasisStates; i++) {
     //  printf("Looking for F2 = %i and Fz2 = %i \n",F2desired, Fz2desired);
@@ -331,7 +365,7 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
   }
   for (int i = 0; i < numBasisStates; i++) {
     for (int j = 0; j < numBasisStates; j++) {
-      *(arrayToFill+j+(i*numBasisStates)) = admixture[i][j];
+      //      *(decomp_array+j+(i*numBasisStates)) = admixture[i][j];
       //  printf("%10.6G\t ",admixture[i][j]);
     }
     //  printf("\n");
@@ -349,21 +383,21 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
   */
   for (int i = 0; i < numBasisStates; i++) {
     double eval_i = gsl_vector_get(eval, i);
-    if (op_verbose) printf("%12.10G   ", eval_i/_MHz);
+    if (debug) printf("%12.10G   ", eval_i/_MHz);
   }
-  if (op_verbose) printf("\n\n");
+  if (debug) printf("\n\n");
   for (int i = 0; i < numBasisStates; i++) {
     for (int j = 0; j < numBasisStates; j++) {
       gsl_vector_complex_view evec_j = gsl_matrix_complex_column(evec, j);
       gsl_complex ev = gsl_vector_complex_get(&evec_j.vector, i);
-      if (op_verbose) printf("%12.10G   ", GSL_REAL(ev));
+      if (debug) printf("%12.10G   ", GSL_REAL(ev));
     }
-    if (op_verbose) printf("\n");
+    if (debug) printf("\n");
   }
-  if (op_verbose) printf("\n");
+  if (debug) printf("\n");
 
-  delete[] Iz2;
-  delete[] Jz2;
+  //  delete[] Iz2;
+  //  delete[] Jz2;
   delete[] I_z;
   delete[] J_z;
   delete[] I_plus;
@@ -373,19 +407,21 @@ void Eigenvector_Helper::diagH(int I2, int L, int J2, double mu_B, double B_z,
   delete[] H;
   delete[] F2;
   delete[] Fz2;
-  for (int i = 0; i < numBasisStates; i++)  delete[] admixture[i];
+  return admixture;
+  //  for (int i = 0; i < numBasisStates; i++)  delete[] admixture[i];
   // genAtomicState::eval[L] = eval;
   // genAtomicState::evec[L] = evec;
   // gsl_vector_free(eval);
   // gsl_matrix_complex_free(evec);
 }
 
-
-void Eigenvector_Helper::diagH(atom_data atom, magnetic_field_data field,
-                               int L, int J2, double Aj, double *arrayToFill) {
-  diagH(atom.I2, L, J2, field.mu_B, field.B_z, field.B_x, atom.g_I, Aj,
-        arrayToFill);
+/*
+void Eigenvector_Helper::diagH(atom_data l_atom, magnetic_field_data l_field,
+                               int L, int J2, double Aj, double *decomp_array) {
+  diagH(atom.I2, L, J2, l_field.mu_B, field.B_z, field.B_x, l_atom.g_I, Aj,
+        decomp_array);
 }
+*/
 
 double Eigenvector_Helper::calc_gj(int J2, int L2, int S2) {
   double g_J = 0.0;
@@ -425,3 +461,45 @@ double Eigenvector_Helper::calc_gf(int F2, int J2, int I2, int L2,
   // printf("g_F = %6.4G\t", g_F);
   return g_F;
 }
+
+vector<int> Eigenvector_Helper::get_nuclear_spin(int numBasisStates) {
+  /*
+  int *Iz2_local = new int[numBasisStates*2]; // Times two to leave room for
+  // imaginary component
+  for (int i = 0; i < numBasisStates*2; i+=2) {
+    Iz2_local[i] = -I2 + 2*((i/2)%(I2+1));
+    Iz2_local[i+1] = 0.0;	// The imaginary part
+
+    *(Iz2+i) = Iz2_local[i];
+    *(Iz2+i+1) = Iz2_local[i+1];
+  }
+  */
+  vector<int> Iz2_local(numBasisStates*2, 0);
+  for (int i = 0; i < numBasisStates*2; i+=2) {
+    Iz2_local[i] = -atom.I2 + 2*((i/2)%(atom.I2+1));
+    Iz2_local[i+1] = 0;
+  }
+  return (Iz2_local);
+}
+
+vector<int> Eigenvector_Helper::get_total_atomic_spin(int numBasisStates,
+							  int J2) {
+  /*
+  int *Jz2_local = new int[numBasisStates*2]; // Times two to leave room for
+  // imaginary component
+  for (int i = 0; i < numBasisStates*2; i+=2) {
+    Jz2_local[i] = -J2 + 2*(i/2/(I2+1));
+    Jz2_local[i+1] = 0.0;	// The imaginary part
+
+    *(Jz2+i) = Jz2_local[i];
+    *(Jz2+i+1) = Jz2_local[i+1];
+  }
+  */
+  vector<int> Jz2_local(numBasisStates*2, 0);
+  for (int i = 0; i < numBasisStates*2; i+=2) {
+    Jz2_local[i] = -J2 + 2*(i/2/(atom.I2+1));
+    Jz2_local[i+1] = 0;
+  }
+  return Jz2_local;
+}
+  

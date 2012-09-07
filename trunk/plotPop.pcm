@@ -1,13 +1,14 @@
 CLEAR
+CLEAR
 
 read\scalars\-closeafter ?1 numStates numEStates totalPop tPoints I2 Je2 junk
-read\text\-closefirs\-closeafter ?1 method
+read\text\-closefirst\-closeafter ?1 method
 numGrStates = numStates - numEStates
 =numStates
 =numGrStates
 =numEStates       
 
-read\matrix\-closefirst ?1 pop numStates+4
+read\matrix\-closefirst ?1 pop numStates+5
 
 set autoscale off
 IF (eqs(method,'R') = 1) THEN method = "Rate-equation"     
@@ -49,24 +50,25 @@ DO j = [1:numEStates]
 
 ENDDO
 
-window 3
+window 5
 !window 9
 set curvelinewidth 2
 set plotsymbol 0
 set linetype 5
 set curvecolor -1
-gr 'TOTAL' pop[1,*] pop[#-2,*] !This is for the total population
+gr 'TOTAL' pop[1,*] pop[#-3,*] !This is for the total population
 
 set curvelinetype 2
 set legendon 1
 set legendsize 0.1
-set legendframe 4 5 8 7
+!set legendframe 4 5 8 7
+set legendframe 2 5 4.5 7
 set legendtitle method
 
 DO i = [1:numGrStates]          
 set curvecolor -i
 
-    gr 'GS F = '//RCHAR(Fg[i])//' MF = '//RCHAR(Mfg[i]) pop[1,*] pop[i+1,*]
+    gr 'F = '//RCHAR(Fg[i])//' MF = '//RCHAR(Mfg[i]) pop[1,*] pop[i+1,*]
 
 ENDDO
 
@@ -78,7 +80,7 @@ replot
 	
 !inquire 'Hit OK to continue to excited states' junk
 !CLEAR
-window 4
+window 6
 set curvelinewidth 2
 set legendframe 4.0 1.0 8.0 3.0
 
@@ -96,31 +98,36 @@ HARDCOPY\POSTSCRIPT excitedState.eps
 
 !inquire 'Hit OK to see the nuclear polarization' junk
 !CLEAR	
-!window 9
-!set legendon 1
-!set legendsize 0.1
-!set legendframe 4.0 5.1 9.8 6.3
+window 7
+set legendon 1
+set legendsize 0.1
+set legendframe 7.0 6.5 10.5 7.0
 
-!set curvecolor -2
-!gr 'Nuclear Polarization' pop[1,*] 100*pop[#-1,*]
-!set xlabel 'time[us]'
-!set ylabel 'Nuclear Pol %'
-!scales 0 pop[1,tPoints] 0.0 100.0
-!replot
+set curvecolor -2
+gr 'Nuclear Polarization' pop[1,*] 100*pop[#-2,*]
+set xlabel 'time[us]'
+set ylabel 'Nuclear Pol %'
+scales 0 pop[1,tPoints] 0.0 100.0
+replot
 !replot
 
 !inquire 'Hit OK to see the alignment term' junk
-!set curvecolor -3
-!gr 'T - alignment term' pop[1,*] -100*pop[#,*]
+set curvecolor -3
+gr 'T - alignment term' pop[1,*] -100*pop[#-1,*]
 !set ylabel '%'
-!replot 
+replot 
 !replot
 
 !inquire 'Hit OK to see the excited state population' junk
 !CLEAR
-!set curvecolor -1
-!gr 'Excited state population' pop[1,*] pop[#,*]
-!set ylabel 'Excited State Population'
+window 8
+set curvecolor -1
+gr 'Excited state population' pop[1,*] pop[#,*]
+set ylabel 'Excited State Population'
+set xlabel 'time[us]'
+scales 0 300 0 0.003
 !set autoscale y
+replot
 !replot
-!replot
+
+return
