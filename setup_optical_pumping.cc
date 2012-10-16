@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
   double tmax = 1.0 * _ns;  // ns
   double dt = 1.0 * _ns;  // ns
 
-  string method = "O";  // O for OBE and R fro Rate Equations
+  string method = "R";  // O for OBE and R fro Rate Equations
 
   bool zCoherences = false;
   bool hfCoherences_ex = false;
@@ -28,16 +28,11 @@ int main(int argc, char* argv[]) {
   double laser_fe_I = 0.200 * (_mW/_cm2);  // mW/cm^2
   double laser_ge_I = 0.200 * (_mW/_cm2);  // mW/cm^2
 
-  // Old way
-  //double laser_fe_pol[3] = {0.05, 0.05, 0.95};  // sigma^- pi sigma^+
-  //double laser_ge_pol[3] = {0.05, 0.05, 0.95};  // sigma^- pi sigma^+
-
-  // New way
   // (I think) that John is reportings I_+ + I_- / I_+ - I_-, which is
   // equivalent to s3/s0 in the notation of Jackson 3rd edition
   double laser_fe_s3_over_s0 = 0.9985;
   double laser_ge_s3_over_s0 = 0.9985;
-  
+
   double laser_fe_detune = -1.0 * _MHz;  // MHz
   double laser_ge_detune = -1.0 * _MHz;  // MHz
 
@@ -92,7 +87,7 @@ int main(int argc, char* argv[]) {
                            hfCoherences_ex, hfCoherences_gr, Je2, laser_fe_I,
                            laser_ge_I, laser_fe_detune, laser_ge_detune,
                            laser_fe_linewidth, laser_ge_linewidth,
-			   laser_fe_s3_over_s0, laser_ge_s3_over_s0, B_z);
+                           laser_fe_s3_over_s0, laser_ge_s3_over_s0, B_z);
   printf("\nCompleted with status = %d\n\n", status);
   return status;
 }

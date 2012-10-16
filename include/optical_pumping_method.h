@@ -8,7 +8,6 @@
 #include <vector>
 #include "./eigenvector_helper.h"
 #include "./optical_pumping_data_structures.h"
-#include "./eigenvector_helper.h"
 
 using std::vector;
 // IMPORTANT:  The methods of this class are all blind to units, so you must
@@ -19,7 +18,7 @@ class OpticalPumping_Method {
  public:
   OpticalPumping_Method();
   OpticalPumping_Method(Eigenvector_Helper set_eigen, Laser_data laser_fe,
-			Laser_data laser_ge);
+                        Laser_data laser_ge);
   virtual ~OpticalPumping_Method();
   void setup_quantum_numbers(int I2, int J2);
   void setup_quantum_numbers(atom_data atom);
@@ -59,8 +58,8 @@ class OpticalPumping_Method {
   // The =0 defines it as a pure virtual function without an implementation.
   // Any subclass MUST fully implement this function
   virtual void update_population(double dt) = 0;
-  static int update_population_gsl(double t, const double y[], double f[],
-                                   void *params);
+  // static int update_population_gsl(double t, const double y[], double f[],
+  //                               void *params);
 
   //  virtual int update_population_gsl(double t, const double y[],
   //                                double f[], void *params) = 0;

@@ -18,24 +18,23 @@ using std::string;
 extern bool op_verbose;
 
 Eigenvector_Helper::Eigenvector_Helper(atom_data set_atom,
-				       magnetic_field_data set_field) :
-  atom(set_atom), field(set_field),
+                                       magnetic_field_data set_field)
+  :atom(set_atom), field(set_field),
   nuclear_spin_ground(2*atom.numBasisStates_ground, 0),
   nuclear_spin_excited(2*atom.numBasisStates_excited, 0),
   total_atomic_spin_ground(2*atom.numBasisStates_ground, 0),
   total_atomic_spin_excited(2*atom.numBasisStates_excited, 0),
   IzJz_decomp_ground(atom.numBasisStates_ground,
-		     vector<double>(atom.numBasisStates_ground, 0.0)),
+                     vector<double>(atom.numBasisStates_ground, 0.0)),
   IzJz_decomp_excited(atom.numBasisStates_excited,
-		     vector<double>(atom.numBasisStates_excited, 0.0))
- {
+                     vector<double>(atom.numBasisStates_excited, 0.0)) {
   if (op_verbose) printf("Eigenvector_Helper::Eigenvector_Helper(...)\n");
   nuclear_spin_ground = get_nuclear_spin(atom.numBasisStates_ground);
   nuclear_spin_excited = get_nuclear_spin(atom.numBasisStates_excited);
   total_atomic_spin_ground = get_total_atomic_spin(atom.numBasisStates_ground,
-						   1);
+                                                   1);
   total_atomic_spin_excited = get_total_atomic_spin(atom.numBasisStates_excited,
-						    atom.Je2);
+                                                    atom.Je2);
   IzJz_decomp_ground = diagH(0);
   IzJz_decomp_excited = diagH(1);
   /*
@@ -50,7 +49,6 @@ Eigenvector_Helper::Eigenvector_Helper(atom_data set_atom,
 }
 
 vector<vector<double> > Eigenvector_Helper::diagH(int L) {
-
   bool debug = false;
   // Figure out some parameters to use based on J
   int J2;
@@ -63,7 +61,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
     Jz2 = total_atomic_spin_ground;
   } else if (L == 1) {
     J2  = atom.Je2;
-    Aj = atom.Aj_g;
+    Aj = atom.Aj_e;
     Iz2 = nuclear_spin_excited;
     Jz2 = total_atomic_spin_excited;
   } else {
@@ -92,9 +90,9 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
 
     if (i/2 % (numBasisStates+1) == 0) {
       I_z[i] = static_cast<double>(Iz2[
-				       2*((i/2)%numBasisStates)])/2.0;
+                                       2*((i/2)%numBasisStates)])/2.0;
       J_z[i] = static_cast<double>(Jz2[
-				       2*((i/2)%numBasisStates)])/2.0;
+                                       2*((i/2)%numBasisStates)])/2.0;
     } else {
       I_z[i] = 0.0;
       J_z[i] = 0.0;
@@ -105,7 +103,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
     if (((i/2)+1) % (numBasisStates+1) == 0) {  // One below the diagonal only
       double I = static_cast<double>(atom.I2) / 2.0;
       double Iz = static_cast<double>(Iz2[
-				          2*((i/2)%(numBasisStates))])/2.0;
+                                          2*((i/2)%(numBasisStates))])/2.0;
       I_plus[i] = sqrt(I*(I+1.0) - Iz*(Iz+1.0));
     } else {
       I_plus[i] = 0.0;
@@ -115,7 +113,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
     if (((i/2)-1) % (numBasisStates+1) == 0) {  // One above the diagonal only
       double I = static_cast<double>(atom.I2) / 2.0;
       double Iz = static_cast<double>(Iz2[
-				          2*((i/2)%(numBasisStates))])/2.0;
+                                          2*((i/2)%(numBasisStates))])/2.0;
       I_minus[i] = sqrt(I*(I+1) - Iz*(Iz-1.0));
     } else {
       I_minus[i] = 0.0;
@@ -126,7 +124,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
       //  Below the diagonal only
       double J = static_cast<double>(J2) / 2.0;
       double Jz = static_cast<double>(Jz2[
-				          (2*((i/2)%numBasisStates))])/2.0;
+                                          (2*((i/2)%numBasisStates))])/2.0;
       J_plus[i] = sqrt(J*(J+1.0) - Jz*(Jz+1.0));
     } else {
       J_plus[i] = 0.0;
@@ -343,7 +341,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   }
   */
   vector<vector<double> > admixture(numBasisStates,
-				    vector<double>(numBasisStates, 0.0));
+                                    vector<double>(numBasisStates, 0.0));
 
   for (int i = 0; i < numBasisStates; i++) {
     //  printf("Looking for F2 = %i and Fz2 = %i \n",F2desired, Fz2desired);
@@ -468,7 +466,7 @@ vector<int> Eigenvector_Helper::get_nuclear_spin(int numBasisStates) {
   // imaginary component
   for (int i = 0; i < numBasisStates*2; i+=2) {
     Iz2_local[i] = -I2 + 2*((i/2)%(I2+1));
-    Iz2_local[i+1] = 0.0;	// The imaginary part
+    Iz2_local[i+1] = 0.0;       // The imaginary part
 
     *(Iz2+i) = Iz2_local[i];
     *(Iz2+i+1) = Iz2_local[i+1];
@@ -483,13 +481,13 @@ vector<int> Eigenvector_Helper::get_nuclear_spin(int numBasisStates) {
 }
 
 vector<int> Eigenvector_Helper::get_total_atomic_spin(int numBasisStates,
-							  int J2) {
+                                                          int J2) {
   /*
   int *Jz2_local = new int[numBasisStates*2]; // Times two to leave room for
   // imaginary component
   for (int i = 0; i < numBasisStates*2; i+=2) {
     Jz2_local[i] = -J2 + 2*(i/2/(I2+1));
-    Jz2_local[i+1] = 0.0;	// The imaginary part
+    Jz2_local[i+1] = 0.0;       // The imaginary part
 
     *(Jz2+i) = Jz2_local[i];
     *(Jz2+i+1) = Jz2_local[i+1];
@@ -502,4 +500,4 @@ vector<int> Eigenvector_Helper::get_total_atomic_spin(int numBasisStates,
   }
   return Jz2_local;
 }
-  
+

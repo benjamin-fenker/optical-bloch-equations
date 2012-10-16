@@ -33,13 +33,14 @@ class Laser_data {
  private:
   void set_field_components();
   void set_intensity_components();
+
  public:
   Laser_data();
   // Old constructor with polarizations
   // Laser_data(double nu, double power, double detune, double linewidth,
   //           double polarization[], double tau);
   Laser_data(double nu, double power, double detune, double linewidth,
-	     double s3_over_s0, double tau);
+             double s3_over_s0, double tau);
   void set_saturation_intensity(double tau);
   // and set I_sat in mW/cm^2
   double nu;  // Frequency of laser.  Energy = h * nu
