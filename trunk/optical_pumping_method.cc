@@ -13,28 +13,28 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
                                              Laser_data set_laser_ge)
   : eigen(set_eigen),
     numEStates(eigen.atom.numEStates), numFStates(eigen.atom.numFStates),
-    numGStates(eigen.atom.numGStates), tau(eigen.atom.tau), laser_ge(set_laser_ge),
-    laser_fe(set_laser_fe), Fe2_Vector(numEStates, 0),
+    numGStates(eigen.atom.numGStates), tau(eigen.atom.tau),
+    laser_ge(set_laser_ge), laser_fe(set_laser_fe), Fe2_Vector(numEStates, 0),
     MFe2_Vector(numEStates, 0), Ff2_Vector(numFStates, 0),
     MFf2_Vector(numFStates, 0), Fg2_Vector(numGStates, 0),
     MFg2_Vector(numGStates, 0), nu_E(numEStates, 0.0), nu_F(numFStates, 0.0),
     nu_G(numGStates, 0.0),
     a_eg(numEStates, vector<vector<double> >(numGStates,
-					     vector<double>(3, 0.0))),
+                                             vector<double>(3, 0.0))),
     a_ef(numEStates, vector<vector<double> >(numFStates,
-					     vector<double>(3, 0.0))),
+                                             vector<double>(3, 0.0))),
     rho_ee(numEStates, vector<gsl_complex>(numEStates,
-					   gsl_complex_rect(0.0, 0.0))),
+                                           gsl_complex_rect(0.0, 0.0))),
     rho_ff(numFStates, vector<gsl_complex>(numFStates,
-					   gsl_complex_rect(0.0, 0.0))),
+                                           gsl_complex_rect(0.0, 0.0))),
     rho_gg(numGStates, vector<gsl_complex>(numGStates,
-					   gsl_complex_rect(0.0, 0.0))),
+                                           gsl_complex_rect(0.0, 0.0))),
     delta_ef(numEStates, vector<gsl_complex>(numFStates,
-					     gsl_complex_rect(0.0, 0.0))),
+                                             gsl_complex_rect(0.0, 0.0))),
     delta_eg(numEStates, vector<gsl_complex>(numGStates,
-					     gsl_complex_rect(0.0, 0.0))),
+                                             gsl_complex_rect(0.0, 0.0))),
     delta_fg(numFStates, vector<gsl_complex>(numGStates,
-					     gsl_complex_rect(0.0, 0.0))) {
+                                             gsl_complex_rect(0.0, 0.0))) {
   printf("\nOpticalPumping_Method::OpticalPumping_Method(...)\n");
   if (op_verbose) {
     printf("G = %d F = %d E = %d\n", numGStates, numFStates, numEStates);
@@ -271,24 +271,24 @@ double OpticalPumping_Method::get_total_population() {
   return sum;
 }
 
-double OpticalPumping_Method::get_polarization() { 
+double OpticalPumping_Method::get_polarization() {
   bool debug = false;
   // As in Pathria and Beale Ch5: <G> = Tr(rho*G) where G is any operator and
   // rho is the density matrix.  (They are matrix multiplied.)  For the nuclear
-  // polarization, I use equation 3.25 from Dan's thesis.  Since I_z is diagonal,
-  // I only need wory about the diagonal elements of the density matrix.  In that
-  // case, I will forgo the matrix multiplication and just do the sipmler method
-  // of sum of F-state{ sum over I,J eigenstates { I of that eigenstate * mixing
-  // of F eigenstate into tha I,J eignestate * population of that eignestate
-  // (diagonal density matrix element) } }
+  // polarization, I use equation 3.25 from Dan's thesis.  Since I_z is
+  // diagonal, I only need wory about the diagonal elements of the density
+  // matrix.  In that case, I will forgo the matrix multiplication and just do
+  // the sipmler method of sum of F-state{ sum over I,J eigenstates { I of that
+  // eigenstate * mixing of F eigenstate into tha I,J eignestate * population of
+  // that eignestate (diagonal density matrix element) } }
   int state;
   double state_pol = 0.0;
   for (state = 0; state < numGStates; state++) {
     if (debug) printf("For state %d, the decomp is:\n", state);
     for (int decomp = 0; decomp < eigen.atom.numBasisStates_ground; decomp++) {
       if (debug) {
-	printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_ground[2*decomp],
-	       eigen.IzJz_decomp_ground[decomp][state]);
+        printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_ground[2*decomp],
+               eigen.IzJz_decomp_ground[decomp][state]);
       }
       double tmp = (static_cast<double>(eigen.nuclear_spin_ground[2*decomp]));
       tmp /= 2.0;
@@ -301,8 +301,8 @@ double OpticalPumping_Method::get_polarization() {
     if (debug) printf("For state %d, the decomp is:\n", state);
     for (int decomp = 0; decomp < eigen.atom.numBasisStates_ground; decomp++) {
       if (debug) {
-	printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_ground[2*decomp],
-	       eigen.IzJz_decomp_ground[decomp][state]);
+        printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_ground[2*decomp],
+               eigen.IzJz_decomp_ground[decomp][state]);
       }
       double tmp = (static_cast<double>(eigen.nuclear_spin_ground[2*decomp]));
       tmp /= 2.0;
@@ -315,8 +315,8 @@ double OpticalPumping_Method::get_polarization() {
     if (debug) printf("For e-state %d, the decomp is:\n", state);
     for (int decomp = 0; decomp < eigen.atom.numBasisStates_excited; decomp++) {
       if (debug) {
-	printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_excited[2*decomp],
-	       eigen.IzJz_decomp_excited[decomp][state]);
+        printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_excited[2*decomp],
+               eigen.IzJz_decomp_excited[decomp][state]);
       }
       double tmp = (static_cast<double>(eigen.nuclear_spin_excited[2*decomp]));
       tmp /= 2.0;
@@ -332,20 +332,20 @@ double OpticalPumping_Method::get_polarization() {
 double OpticalPumping_Method::get_alignment() {  bool debug = false;
   // As in Pathria and Beale Ch5: <G> = Tr(rho*G) where G is any operator and
   // rho is the density matrix.  (They are matrix multiplied.)  For the nuclear
-  // polarization, I use equation 3.26 from Dan's thesis.  Since I_z is diagonal,
-  // I only need wory about the diagonal elements of the density matrix.  In that
-  // case, I will forgo the matrix multiplication and just do the sipmler method
-  // of sum of F-state{ sum over I,J eigenstates { I of that eigenstate * mixing
-  // of F eigenstate into tha I,J eignestate * population of that eignestate
-  // (diagonal density matrix element) } }
+  // polarization, I use equation 3.26 from Dan's thesis.  Since I_z is
+  // diagonal, I only need wory about the diagonal elements of the density
+  // matrix.  In that case, I will forgo the matrix multiplication and just do
+  // the sipmler method of sum of F-state{ sum over I,J eigenstates { I of that
+  // eigenstate * mixing of F eigenstate into tha I,J eignestate * population of
+  // that eignestate (diagonal density matrix element) } }
   int state;
   double state_align = 0.0;
   for (state = 0; state < numGStates; state++) {
     if (debug) printf("For state %d, the decomp is:\n", state);
     for (int decomp = 0; decomp < eigen.atom.numBasisStates_ground; decomp++) {
       if (debug) {
-	printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_ground[2*decomp],
-	       eigen.IzJz_decomp_ground[decomp][state]);
+        printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_ground[2*decomp],
+               eigen.IzJz_decomp_ground[decomp][state]);
       }
       double tmp = (static_cast<double>(eigen.nuclear_spin_ground[2*decomp]));
       tmp /= 2.0;
@@ -359,8 +359,8 @@ double OpticalPumping_Method::get_alignment() {  bool debug = false;
     if (debug) printf("For state %d, the decomp is:\n", state);
     for (int decomp = 0; decomp < eigen.atom.numBasisStates_ground; decomp++) {
       if (debug) {
-	printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_ground[2*decomp],
-	       eigen.IzJz_decomp_ground[decomp][state]);
+        printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_ground[2*decomp],
+               eigen.IzJz_decomp_ground[decomp][state]);
       }
       double tmp = (static_cast<double>(eigen.nuclear_spin_ground[2*decomp]));
       tmp /= 2.0;
@@ -374,8 +374,8 @@ double OpticalPumping_Method::get_alignment() {  bool debug = false;
     if (debug) printf("For e-state %d, the decomp is:\n", state);
     for (int decomp = 0; decomp < eigen.atom.numBasisStates_excited; decomp++) {
       if (debug) {
-	printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_excited[2*decomp],
-	       eigen.IzJz_decomp_excited[decomp][state]);
+        printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_excited[2*decomp],
+               eigen.IzJz_decomp_excited[decomp][state]);
       }
       double tmp = (static_cast<double>(eigen.nuclear_spin_excited[2*decomp]));
       tmp /= 2.0;
@@ -540,9 +540,11 @@ void OpticalPumping_Method::print_density_matrix(FILE *des) {
   }
 }
 
+/*
 int OpticalPumping_Method::update_population_gsl(double t, const double y[],
                                                  double f[], void *params) {
   printf("OpticalPumping_Method::update_population_gsl\n");
   printf("Nothing is happening!\n");
   return -2;
 }
+*/

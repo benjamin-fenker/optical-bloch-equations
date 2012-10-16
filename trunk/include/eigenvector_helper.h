@@ -20,11 +20,8 @@ class Eigenvector_Helper {
              double Aj, double *arrayToFill);
   */
   vector<vector<double> > diagH(int L);
-
-  //  void get_nuclear_spin_vec(int numBasisStates, int I2, int *Iz2);
   vector<int> get_nuclear_spin(int numBasisStates);
   vector<int> get_total_atomic_spin(int numBasisStates, int J2);
-  //  void get_total_atomic_spin_vec(int numBasisStates, int I2, int J2, int *Jz2);
   double calc_gj(int J2, int L2, int S2);
   double calc_gf(int F2, int J2, int I2, int L2, int S2, double g_I);
 

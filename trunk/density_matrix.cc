@@ -2,8 +2,8 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #include <vector>
-#include "stdlib"
 #include "include/density_matrix.h"
 #include "include/units.h"
 
@@ -243,7 +243,7 @@ void Density_Matrix::update_population(double dt) {
                 // to an appropriate index
                 double coupling = a_ef[e][f][q] * a_ef[ep][fp][q];
                 gsl_complex left = gsl_complex_mul_real(rho_ee[e][ep],
-							coupling);
+                                                        coupling);
                 spon_decay = gsl_complex_add(spon_decay, left);
               }  // End if M_f sublevels satisfy m_e - m_e` = m_f - m_f`
             }    // End ep sum
@@ -254,10 +254,10 @@ void Density_Matrix::update_population(double dt) {
                                                    angFrequency);
           spon_decay = gsl_complex_sub(spon_decay, right);
           drho_ff[f][fp] = gsl_complex_add(drho_ff[f][fp], spon_decay);
-        } // End spontaneous decay term
-      } // End if doing coherences
-    }   // End fp loop
-  }     // End f loop
+        }  // End spontaneous decay term
+      }  // End if doing coherences
+    }    // End fp loop
+  }      // End f loop
 
   // EG-Optical Coherences delta_eg:  Equation 36
   bool debug_eg = false;
@@ -265,7 +265,7 @@ void Density_Matrix::update_population(double dt) {
     for (int g = 0; g < numGStates; g++) {
       if (debug_eg) printf("e = %d, g = %d\n", e, g);
       gsl_complex gLaser_term = gsl_complex_rect(0.0, 0.0);
-      for (int q = 0; q < 3; q += 2) { // Only q = 0, 2 will have lasers
+      for (int q = 0; q < 3; q += 2) {  // Only q = 0, 2 will have lasers
           if (debug_eg) printf("\t q = %d\n", q);
           gsl_complex gsum = gsl_complex_rect(0.0, 0.0);
           gsl_complex esum = gsl_complex_rect(0.0, 0.0);
@@ -274,17 +274,17 @@ void Density_Matrix::update_population(double dt) {
             temp = gsl_complex_mul_real(temp, a_eg[e][gpp][q]);
             temp = gsl_complex_mul(temp, rho_gg[gpp][g]);
             gsum = gsl_complex_add(gsum, temp);
-          } // End gpp-loop
+          }  // End gpp-loop
           for (int epp = 0; epp < numEStates; epp++) {
             gsl_complex temp = gsl_complex_rect(dipole_moment_eg[epp][g], 0.0);
             temp = gsl_complex_mul_real(temp, a_eg[epp][g][q]);
             temp = gsl_complex_mul(temp, rho_ee[e][epp]);
             esum = gsl_complex_add(esum, temp);
-          } // End epp-loop
+          }  // End epp-loop
           gsum = gsl_complex_sub(gsum, esum);
           gsum = gsl_complex_mul_real(gsum, laser_ge.field[q]);
           gLaser_term = gsl_complex_add(gLaser_term, gsum);
-      } // End q-loop
+      }  // End q-loop
       gLaser_term = gsl_complex_mul_imag(gLaser_term, 1.0/(2.0*_planck_hbar));
       ddelta_eg[e][g] = gsl_complex_add(ddelta_eg[e][g], gLaser_term);
 
@@ -294,8 +294,8 @@ void Density_Matrix::update_population(double dt) {
       gsl_complex detune_g = gsl_complex_rect(linewidth, detune_d);
       detune_g = gsl_complex_mul(detune_g, delta_eg[e][g]);
       ddelta_eg[e][g] = gsl_complex_add(ddelta_eg[e][g], detune_g);
-    } //  End g
-  }   // End e
+    }  //  End g
+  }    // End e
 
   // EF-Optical Coherences delta_ef:  Equation 35
   bool debug_ef = false;
@@ -303,7 +303,7 @@ void Density_Matrix::update_population(double dt) {
     for (int f = 0; f < numFStates; f++) {
       if (debug_ef) printf("e = %d, f = %d\n", e, f);
       gsl_complex fLaser_term = gsl_complex_rect(0.0, 0.0);
-      for (int q = 0; q < 3; q +=2) { // Only q = 0, 2 will have lasers
+      for (int q = 0; q < 3; q +=2) {  // Only q = 0, 2 will have lasers
           if (debug_ef) printf("\t q = %d\n", q);
           gsl_complex fsum = gsl_complex_rect(0.0, 0.0);
           gsl_complex esum = gsl_complex_rect(0.0, 0.0);
@@ -312,17 +312,17 @@ void Density_Matrix::update_population(double dt) {
             temp = gsl_complex_mul_real(temp, a_ef[e][fpp][q]);
             temp = gsl_complex_mul(temp, rho_ff[fpp][f]);
             fsum = gsl_complex_add(fsum, temp);
-          } // End fpp-loop
+          }  // End fpp-loop
           for (int epp = 0; epp < numEStates; epp++) {
             gsl_complex temp = gsl_complex_rect(dipole_moment_ef[epp][f], 0.0);
             temp = gsl_complex_mul_real(temp, a_ef[epp][f][q]);
             temp = gsl_complex_mul(temp, rho_ee[e][epp]);
             esum = gsl_complex_add(esum, temp);
-          } // End epp-loop
+          }  // End epp-loop
           fsum = gsl_complex_sub(fsum, esum);
           fsum = gsl_complex_mul_real(fsum, laser_fe.field[q]);
           fLaser_term = gsl_complex_add(fLaser_term, fsum);
-      } // End q-loop
+      }  // End q-loop
       fLaser_term = gsl_complex_mul_imag(fLaser_term, 1.0/(2.0*_planck_hbar));
       ddelta_ef[e][f] = gsl_complex_add(ddelta_ef[e][f], fLaser_term);
 
@@ -332,8 +332,8 @@ void Density_Matrix::update_population(double dt) {
       gsl_complex detune_f = gsl_complex_rect(linewidth, detune_d);
       detune_f = gsl_complex_mul(detune_f, delta_ef[e][f]);
       ddelta_ef[e][f] = gsl_complex_add(ddelta_ef[e][f], detune_f);
-    } //  End f
-  }   // End e
+    }  //  End f
+  }    // End e
 
 
   for (int e = 0; e < numEStates; e++) {

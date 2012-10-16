@@ -2,8 +2,8 @@
 
 #include <stdio.h>
 #include <math.h>
+#include <stdlib.h>
 #include <gsl/gsl_const_mksa.h>
-#include "stdlib.h"
 #include "include/optical_pumping_data_structures.h"
 #include "include/units.h"
 
@@ -13,7 +13,7 @@ Laser_data::Laser_data() {}
 
 Laser_data::Laser_data(double set_nu, double set_power, double set_detune,
                        double set_linewidth, double set_s3_over_s0,
-		       double tau) :
+                       double tau) :
   nu(set_nu), power(set_power), detune(set_detune), linewidth(set_linewidth) {
   set_saturation_intensity(tau);
   // s1 and s2 concern the phase difference of E_+ and E_- light, but have
@@ -42,9 +42,9 @@ void Laser_data::set_field_components() {
     printf("Stokes vectors not possible.  Aborting\n");
     exit(1);
   }
-  field[0] = sqrt((stokes[0] - stokes[3]) / 2.0); // l_z = -1
-  field[1] = 0.0;				  // l_z = 0
-  field[2] = sqrt((stokes[0] + stokes[3]) / 2.0); // l_z = +1
+  field[0] = sqrt((stokes[0] - stokes[3]) / 2.0);  // l_z = -1
+  field[1] = 0.0;                                  // l_z = 0
+  field[2] = sqrt((stokes[0] + stokes[3]) / 2.0);  // l_z = +1
 }
 
 void Laser_data::set_intensity_components() {

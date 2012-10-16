@@ -104,11 +104,10 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
          laser_ge.nu/_MHz, laser_ge.linewidth/_MHz);
   printf(", Intensity = %5.2G mW/cm^2\t", laser_ge.power/(_mW/_cm2));
   printf(", s3 = %5.3G --> I = <%8.6G, %8.6G> mW/cm^2\t", laser_ge.stokes[3],
-	 laser_ge.intensity[0]/(_mW/_cm2), laser_ge.intensity[1]/(_mW/_cm2));
+         laser_ge.intensity[0]/(_mW/_cm2), laser_ge.intensity[1]/(_mW/_cm2));
   printf(", E = <%8.6G, %8.6G, %8.6G> V/m\n", laser_ge.field[0],
-	 laser_ge.field[1], laser_ge.field[2]);
+         laser_ge.field[1], laser_ge.field[2]);
   //  printf("Field = %8.6G V/m\n", laser_ge.field/(_V/_m));
-  
   printf("\nLaser f->e data.  Laser 1: Detuned %5.2G MHz from the |",
          laser_fe.detune/_MHz);
   printf("%i/2,%i> ---> |%i/2,%i>", tuned_F_F2, 0, tuned_E_F2, 0);
@@ -116,19 +115,17 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
          laser_fe.nu/_MHz, laser_fe.linewidth/_MHz);
   printf(", Intensity = %5.2G mW/cm^2\t", laser_fe.power/(_mW/_cm2));
   printf(", s3 = %5.3G --> I = <%8.6G, %8.6G> mW/cm^2\t", laser_fe.stokes[3],
-	 laser_fe.intensity[0]/(_mW/_cm2), laser_fe.intensity[1]/(_mW/_cm2));
+         laser_fe.intensity[0]/(_mW/_cm2), laser_fe.intensity[1]/(_mW/_cm2));
   printf(", E = <%8.6G, %8.6G, %8.6G> V/m\n", laser_fe.field[0],
-	 laser_fe.field[1], laser_fe.field[2]);
+         laser_fe.field[1], laser_fe.field[2]);
   //  printf("Field = %8.6G V/m\n", laser_fe.field/(_V/_m));
   printf("G States: %i\tF States: %i\tE States %i\n\n",
          atom.numGStates, atom.numFStates, atom.numEStates);
 
   // Call function to retrieve vectors holding the Iz/Jz decomposotion of the
   // F, Mf eigenstates.
-  const int numEStates = atom.numEStates;
-  const int numGroundStates = atom.numGStates + atom.numFStates;
-
-  
+  // const int numEStates = atom.numEStates;
+  // const int numGroundStates = atom.numGStates + atom.numFStates;
 
   /*
   double *ground_IzJz_Decomp = new double[numGroundStates*numGroundStates];
@@ -191,16 +188,16 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
 
   OpticalPumping_Method *equ;
   Eigenvector_Helper decomp(atom, field);
-  int (*update_func)(double, const double[], double[], void*);
+  //  int (*update_func)(double, const double[], double[], void*);
 
   if (strcmp(method.c_str(), "R") == 0) {
     equ = new Rate_Equations(decomp, laser_fe, laser_ge);
-    update_func = &Rate_Equations::update_population_gsl;
+    //    update_func = &Rate_Equations::update_population_gsl;
     //    int (*update_func)(double, const double[], double[], void*) =
     //      &Rate_Equations::update_population_gsl;
   } else if (strcmp(method.c_str(), "O") == 0) {
     equ = new Density_Matrix(decomp, laser_fe, laser_ge, flags);
-    update_func = &Density_Matrix::update_population_gsl;
+    //  update_func = &Density_Matrix::update_population_gsl;
   } else {
     printf("Failed to initialize the optical pumping method\t");
     printf("Method = %s.  Aborting.", method.c_str());
@@ -218,7 +215,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     }
     if ((fabs(time - nextPrint))/_ns < pow(10, -2)) {
       equ->print_data(file, time);
-      //equ->print_density_matrix(stdout);
+      //  equ->print_density_matrix(stdout);
       nextPrint += print_frequency;
     }
     equ->update_population(tStep);
@@ -234,7 +231,6 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     }
     time += tStep;
   }
-  
   /*
   printf("\n");
   gsl_odeiv2_system sys = {update_func, NULL, equ->totalTerms, &(equ->data)};

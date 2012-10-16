@@ -30,8 +30,8 @@ class Rate_Equations: public OpticalPumping_Method {
   static int jacobian(double t, const double y[], double *dfdy, double dfdt[],
                void *params);
   void reset_dPop();
-  vector<vector<vector<double> > > transition_rate_eg; // e,g,q are the indexes
-  vector<vector<vector<double> > > transition_rate_ef; // e,g,q are the indexes
+  vector<vector<vector<double> > > transition_rate_eg;  // e,g,q are the indexes
+  vector<vector<vector<double> > > transition_rate_ef;  // e,g,q are the indexes
   vector<double> dPop_g;
   vector<double> dPop_f;
   vector<double> dPop_e;
