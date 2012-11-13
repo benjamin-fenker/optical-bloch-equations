@@ -8,7 +8,6 @@
 #include <gsl/gsl_const_num.h>
 #include <gsl/gsl_errno.h>      // GSL Reserves error codes -2 to 32 (succes = 0)
 #include <gsl/gsl_matrix.h>
-#include <gsl/gsl_odeiv2.h>
 
 #include "include/optical_pumping.h"
 #include "include/alkali.h"
