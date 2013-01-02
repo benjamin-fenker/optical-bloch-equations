@@ -51,6 +51,7 @@ DO j = [1:numEStates]
 ENDDO
 
 window 5
+@extrema.init
 !window 9
 set curvelinewidth 2
 set plotsymbol 0
@@ -62,7 +63,7 @@ set curvelinetype 2
 set legendon 1
 set legendsize 0.1
 !set legendframe 4 5 8 7
-set legendframe 2 5 4.5 7
+set legendframe 2 4.9 4.5 7
 set legendtitle method
 
 DO i = [1:numGrStates]          
@@ -81,8 +82,9 @@ replot
 !inquire 'Hit OK to continue to excited states' junk
 !CLEAR
 window 6
+@extrema.init
 set curvelinewidth 2
-set legendframe 4.0 1.0 8.0 3.0
+set legendframe 4.0 0.0 8.0 2.0
 
 DO i = [1:numEStates]
   set curvecolor -i
@@ -99,9 +101,11 @@ HARDCOPY\POSTSCRIPT excitedState.eps
 !inquire 'Hit OK to see the nuclear polarization' junk
 !CLEAR	
 window 7
+@extrema.init
 set legendon 1
 set legendsize 0.1
-set legendframe 7.0 6.5 10.5 7.0
+set legendframe 6.5 5.5 10.3 6.0
+set curvelinewidth 2
 
 set curvecolor -2
 gr 'Nuclear Polarization' pop[1,*] 100*pop[#-2,*]
@@ -121,7 +125,9 @@ replot
 !inquire 'Hit OK to see the excited state population' junk
 !CLEAR
 window 8
+@extrema.init
 set curvecolor -1
+set curvelinewidth 2
 gr 'Excited state population' pop[1,*] pop[#,*]
 set ylabel 'Excited State Population'
 set xlabel 'time[us]'
