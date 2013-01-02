@@ -38,12 +38,14 @@
 #define _MHz (1e6)              /* megahertz */
 
 /* Energy [J] */
-#define _J (1e0)                /* joule */
+#define _J (1e0)                /* joules */
+#define _eV (1.602177e-19)      /* electronvolts */
+#define _MeV (1.602177e-13)     /* megaelectronvolts */
 
 /* Power [W = kg*m^2/s^3] */
 #define _W (1e0)                /* watts */
 #define _mW (1e-3)              /* milliwatts */
-
+#define _uW (1e-6)              /* microwatts */
 /* Magnetic Field [T = Tesla] */
 #define _T (1e0)                /* tesla */
 #define _G (1e-4)               /* gauss */
