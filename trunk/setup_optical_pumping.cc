@@ -25,16 +25,16 @@ int main(int argc, char* argv[]) {
 
   string isotope = "37K";
   int Je2 = 1;  // D1(1) or D2(3) line
-  double laser_fe_I = 100.0 * (_uW/_cm2);  // mW/cm^2
-  double laser_ge_I = 100.0 * (_uW/_cm2);  // mW/cm^2
+  double laser_fe_I = 800.0 * (_uW/_cm2);  // uW/cm^2
+  double laser_ge_I = 800.0 * (_uW/_cm2);  // uW/cm^2
 
   // (I think) that John is reportings I_+ + I_- / I_+ - I_-, which is
   // equivalent to s3/s0 in the notation of Jackson 3rd edition
-  double laser_fe_s3_over_s0 = 0.98;
-  double laser_ge_s3_over_s0 = 0.98;
+  double laser_fe_s3_over_s0 = -0.995; // 
+  double laser_ge_s3_over_s0 = -0.995; // 
 
-  double laser_fe_detune = -1.0 * _MHz;  // MHz
-  double laser_ge_detune = -1.0 * _MHz;  // MHz
+  double laser_fe_detune = -4.5 * _MHz;  // MHz
+  double laser_ge_detune = -4.5 * _MHz;  // MHz
 
   double laser_fe_linewidth = 0.2 *_MHz;  // MHz (FWHM)
   double laser_ge_linewidth = 0.2 *_MHz;  // MHz (FWHM)
