@@ -209,7 +209,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // printf("updateFreq = %8.6G\n", updateFreq);
   while (time < tmax) {
     if ((fabs(time - nextUpdate))/_ns < pow(10, -2)) {
-      printf(" t = %8.6G ns\n", time/_ns);
+      printf(" t = %8.6G ns\r", time/_ns);
       nextUpdate += updateFreq;
     }
     if ((fabs(time - nextPrint))/_ns < pow(10, -2)) {
