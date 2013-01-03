@@ -17,11 +17,11 @@ int main(int argc, char* argv[]) {
   double tmax = 1.0 * _ns;  // ns
   double dt = 1.0 * _ns;  // ns
 
-  string method = "R";  // O for OBE and R fro Rate Equations
+  string method = "O";  // O for OBE and R for Rate Equations
 
   bool zCoherences = false;
   bool hfCoherences_ex = false;
-  bool hfCoherences_gr = false;
+  bool hfCoherences_gr = true;
 
   string isotope = "37K";
   int Je2 = 1;  // D1(1) or D2(3) line

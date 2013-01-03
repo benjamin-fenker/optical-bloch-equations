@@ -33,6 +33,7 @@ Density_Matrix::Density_Matrix(Eigenvector_Helper set_eigen,
   es_Zeeman = flags.zCoherences;
   gs_Zeeman = flags.zCoherences;
   es_hyperfine = flags.hfCoherences_ex;
+  gs_hyperfine = flags.hfCoherences_gr;
   setup_dipole_moments(eigen.atom.linewidth);
   if (op_verbose) print_rabi_frequencies(stdout);
 }
@@ -142,7 +143,7 @@ void Density_Matrix::update_population(double dt) {
   for (int g = 0; g < numGStates; g++) {
     for (int gp = 0; gp < numGStates; gp++) {
       gsl_complex oCoherences = gsl_complex_rect(0.0, 0.0);
-      if ((g == gp) || gs_Zeeman) {
+      if ((g == gp) || (gs_Zeeman && MFg2_Vector[g] == MFg2_Vector[gp])) {
         for (int q = 0; q < 3; q +=2) {  // Only q = 0, 2 will have lasers
           gsl_complex qTerm = gsl_complex_rect(0.0, 0.0);
           for (int epp = 0; epp < numEStates; epp++) {
@@ -203,7 +204,7 @@ void Density_Matrix::update_population(double dt) {
   for (int f = 0; f < numFStates; f++) {
     for (int fp = 0; fp < numFStates; fp++) {
       gsl_complex oCoherences = gsl_complex_rect(0.0, 0.0);
-      if ((f == fp) || gs_Zeeman) {
+      if ((f == fp) || (gs_Zeeman && MFf2_Vector[f] == MFf2_Vector[fp])) {
         for (int q = 0; q < 3; q += 2) {  // Only q = 0, 2 will have lasers
           gsl_complex qTerm = gsl_complex_rect(0.0, 0.0);
           for (int epp = 0; epp < numEStates; epp++) {
@@ -288,6 +289,29 @@ void Density_Matrix::update_population(double dt) {
       gLaser_term = gsl_complex_mul_imag(gLaser_term, 1.0/(2.0*_planck_hbar));
       ddelta_eg[e][g] = gsl_complex_add(ddelta_eg[e][g], gLaser_term);
 
+      // ***********************************************************************
+      // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ******
+      // ***********************************************************************
+      // GS-Hyperfine coherence term
+      if (gs_hyperfine) {
+        gsl_complex qsum = gsl_complex_rect(0.0, 0.0);
+        for (int q = 0; q < 3; q+=2) { // Only the q = 0, 2 will have lasers
+          gsl_complex fsum = gsl_complex_rect(0.0, 0.0);
+          for (int fpp = 0; fpp < numFStates; fpp++) {
+            gsl_complex temp = gsl_complex_rect(dipole_moment_ef[e][fpp], 0.0);
+            temp = gsl_complex_mul(temp, delta_fg[fpp][g]);
+            fsum = gsl_complex_add(fsum, temp);
+          } // End loop over gpp
+          fsum = gsl_complex_mul(fsum, gsl_complex_rect(laser_fe.field[q], 0.0));
+          qsum = gsl_complex_add(qsum, fsum);
+        }   // End loop over q
+        gsl_complex hyperfine_term = gsl_complex_mul_imag(qsum, 0.5/_planck_hbar);
+        ddelta_eg[e][g] = gsl_complex_add(ddelta_eg[e][g], hyperfine_term);
+      } // End if gs_hyperfine
+      // ***********************************************************************
+      // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ******
+      // ***********************************************************************
+
       // Detuning term -i(\omega_eg - \omega_1)*\delta_eg
       double detune_d = -2*M_PI*((nu_E[e] - nu_G[g]) - laser_ge.nu);
       double linewidth = -M_PI*(data.atom.linewidth + laser_ge.linewidth);
@@ -326,6 +350,29 @@ void Density_Matrix::update_population(double dt) {
       fLaser_term = gsl_complex_mul_imag(fLaser_term, 1.0/(2.0*_planck_hbar));
       ddelta_ef[e][f] = gsl_complex_add(ddelta_ef[e][f], fLaser_term);
 
+      // ***********************************************************************
+      // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ******
+      // ***********************************************************************
+      // GS-Hyperfine coherence term
+      if (gs_hyperfine) {
+        gsl_complex qsum = gsl_complex_rect(0.0, 0.0);
+        for (int q = 0; q < 3; q+=2) { // Only the q = 0, 2 will have lasers
+          gsl_complex gsum = gsl_complex_rect(0.0, 0.0);
+          for (int gpp = 0; gpp < numGStates; gpp++) {
+            gsl_complex temp = gsl_complex_rect(dipole_moment_eg[e][gpp], 0.0);
+            temp = gsl_complex_mul(temp, gsl_complex_conjugate(delta_fg[f][gpp]));
+            gsum = gsl_complex_add(gsum, temp);
+          } // End loop over gpp
+          gsum = gsl_complex_mul(gsum, gsl_complex_rect(laser_ge.field[q], 0.0));
+          qsum = gsl_complex_add(qsum, gsum);
+        }   // End loop over q
+        gsl_complex hyperfine_term = gsl_complex_mul_imag(qsum, 0.5/_planck_hbar);
+        ddelta_ef[e][f] = gsl_complex_add(ddelta_ef[e][f], hyperfine_term);
+      } // End if gs_hyperfine
+      // ***********************************************************************
+      // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ******
+      // ***********************************************************************
+
       // Detuning term -i(\omega_ef - \omega_1)*\delta_ef
       double detune_d = -2*M_PI*((nu_E[e] - nu_F[f]) - laser_fe.nu);
       double linewidth = -M_PI*(data.atom.linewidth + laser_fe.linewidth);
@@ -335,11 +382,67 @@ void Density_Matrix::update_population(double dt) {
     }  //  End f
   }    // End e
 
+  // ***************************************************************************
+  // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF **********
+  // ***************************************************************************
+  // FG-Ground state hyperfine coherences: Equation 37
+  if (gs_hyperfine) {
+    bool debug_fg = false;
+    for (int f = 0; f < numFStates; f++) {
+      for (int g = 0; g < numGStates; g++) {
+        if (debug_fg) printf("f = %d, g = %d\n", f, g);
+        ddelta_fg[f][g] = gsl_complex_rect(0.0, 0.0);
+        // F-laser term & G-Laser term
+        gsl_complex fLaser_term = gsl_complex_rect(0.0, 0.0);
+        gsl_complex gLaser_term = gsl_complex_rect(0.0, 0.0);
+        for (int q = 0; q < 3; q+=2) { // Only q = 0, 2 3ill have lasers
+          if (debug_fg) printf("\t q = %d\n", q);
+          gsl_complex fsum = gsl_complex_rect(0.0, 0.0);
+          gsl_complex gsum = gsl_complex_rect(0.0, 0.0);
+          for (int epp = 0; epp < numEStates; epp++) {
+            gsl_complex ftemp = gsl_complex_rect(dipole_moment_ef[epp][f]*
+                                                 pow(-1.0, 0.0), 0.0);
+            ftemp = gsl_complex_mul(ftemp, delta_eg[epp][g]);
+            fsum = gsl_complex_add(fsum, ftemp);
+            gsl_complex gtemp = gsl_complex_rect(dipole_moment_eg[epp][g], 0.0);
+            gtemp = gsl_complex_mul(gtemp, gsl_complex_conjugate(delta_ef[epp][f]));
+            gsum = gsl_complex_add(gsum, gtemp);
+          } // End loop of epp (combined f-laser and g-laser terms)
+          fsum = gsl_complex_mul(fsum,
+                                 gsl_complex_rect(laser_fe.field[q], 0.0));
+          fLaser_term = gsl_complex_add(fLaser_term, fsum);
+          gsum = gsl_complex_mul(gsum,
+                                 gsl_complex_rect(laser_ge.field[q], 0.0));
+          fLaser_term = gsl_complex_add(gLaser_term, gsum);
+        } // End loop over q = 0, 2
+        
+        // Now the `f-Laser' term will stand for the subtraction of f-g
+        fLaser_term = gsl_complex_sub(fLaser_term, gLaser_term);
+        fLaser_term = gsl_complex_mul_imag(fLaser_term, 0.5/_planck_hbar);
+        ddelta_fg[f][g] = gsl_complex_add(ddelta_fg[f][g], fLaser_term);
+        
+        // Now the line width and angular frequencies terms
+        double real = M_PI*(laser_fe.linewidth + laser_ge.linewidth);
+        double imag = 2*M_PI*((fabs(nu_F[f] - nu_G[g]))
+                              - (laser_ge.nu - laser_fe.nu));
+        gsl_complex decayTerm = gsl_complex_rect(real, imag);
+        decayTerm = gsl_complex_mul(decayTerm, delta_fg[f][g]);
+        ddelta_fg[f][g] = gsl_complex_sub(ddelta_fg[f][g], decayTerm);
+      }   // End loop over g states
+    }     // End loop over f states
+  }       // End if doing gs_hyperine coherences
+  // ***************************************************************************
+  // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF **********
+  // ***************************************************************************
+
 
   for (int e = 0; e < numEStates; e++) {
     for (int ep = 0; ep < numEStates; ep++) {
       drho_ee[e][ep] = gsl_complex_mul_real(drho_ee[e][ep], dt);
       rho_ee[e][ep] = gsl_complex_add(rho_ee[e][ep], drho_ee[e][ep]);
+      if ((e == ep) && GSL_REAL(rho_ee[e][ep]) < 0.0) {
+        rho_ee[e][ep] = gsl_complex_rect(0.0, 0.0);
+      }
     }
     for (int f = 0; f < numFStates; f++) {
       ddelta_ef[e][f] = gsl_complex_mul_real(ddelta_ef[e][f], dt);
@@ -354,12 +457,28 @@ void Density_Matrix::update_population(double dt) {
     for (int fp = 0; fp < numFStates; fp++) {
       drho_ff[f][fp] = gsl_complex_mul_real(drho_ff[f][fp], dt);
       rho_ff[f][fp] = gsl_complex_add(rho_ff[f][fp], drho_ff[f][fp]);
+      if ((f == fp) && GSL_REAL(rho_ff[f][fp]) < 0.0) {
+        rho_ff[f][fp] = gsl_complex_rect(0.0, 0.0);
+      }
     }
+    // *************************************************************************
+    // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ********
+    // *************************************************************************
+    for (int g = 0; g < numGStates; g++) {
+      ddelta_fg[f][g] = gsl_complex_mul_real(ddelta_fg[f][g], dt);
+      delta_fg[f][g] = gsl_complex_add(delta_fg[f][g], ddelta_fg[f][g]);
+    }
+    // *************************************************************************
+    // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ********
+    // *************************************************************************
   }
   for (int g = 0; g < numGStates; g++) {
     for (int gp = 0; gp < numGStates; gp++) {
       drho_gg[g][gp] = gsl_complex_mul_real(drho_gg[g][gp], dt);
       rho_gg[g][gp] = gsl_complex_add(rho_gg[g][gp], drho_gg[g][gp]);
+      if ((g == gp) && GSL_REAL(rho_gg[g][gp]) < 0.0) {
+        rho_gg[g][gp] = gsl_complex_rect(0.0, 0.0);
+      }
     }
   }
 }
