@@ -49,6 +49,7 @@ DO j = [1:numEStates]
    ENDIF	
 
 ENDDO
+label\xaxis `Time [us]'
 
 !window 5
 !window 9
@@ -66,46 +67,46 @@ legend on
 legend frame on 2 5 4.5 7
 legend title method
 
-! DO i = [1:numGrStates]          
-!     set pchar 0 0 i
+DO i = [1:numGrStates]          
+    set pchar 0 0 i
 
-!     gr `F = '//RCHAR(Fg[i])//` MF = '//RCHAR(Mfg[i]) pop[1,*] pop[i+1,*]
+    gr `F = '//RCHAR(Fg[i])//` MF = '//RCHAR(Mfg[i]) pop[1,*] pop[i+1,*]
 
-! ENDDO
+ENDDO
 
-! scales 0 pop[1,tPoints] 0.0 totalPop
-! !scales 0 0 0 0
-! !set xlabel `time[us]'
-! !set ylabel `Ground State Pop'
-! replot
-! !INQUIRE `Enter YES or NO >>' TXT
-! !clear
+scales 0 pop[1,tPoints] 0.0 totalPop
+!scales 0 0 0 0
+!set xlabel `time[us]'
+!set ylabel `Ground State Pop'
+replot
+!INQUIRE `Enter YES or NO >>' TXT
+!clear
 !replot
 !Hardcopy\POSTSCRIPT groundState.eps
 	
-! !inquire 'Hit OK to continue to excited states' junk
-! CLEAR
+ inquire `Hit OK to continue to excited states' junk
+ CLEAR
 ! !window 6
 ! !set curvelinewidth 2
  !set legendframe 4.0 1.0 8.0 3.0
 !legend on
 
-! DO i = [1:numEStates]
-! !  set curvecolor -i
-!    set pchar 0 0 i
-!   gr `ES F = '//rchar(Fe[i])//` Mf = '//RCHAR(Mfe[i]) pop[1,*] pop[numGrStates+i+1,*]
+ DO i = [1:numEStates]
+!   set curvecolor -i
+    set pchar 0 0 i
+    gr `ES F = '//rchar(Fe[i])//` Mf = '//RCHAR(Mfe[i]) pop[1,*] pop[numGrStates+i+1,*]
+  ENDDO
 
-    
-! ENDDO
 !set ylabel `Excited State Pop'
 !SCALES 0 pop[1,tPoints] 0.0 0.001*totalPop
-! scales 0 0 0 0
+scales 0 0 0 0
+scales 0 pop[1,#] 0 0.004
 ! REPLOT 
-! REPLOT 
+REPLOT 
 ! !HARDCOPY\POSTSCRIPT excitedState.eps
 
 
-! !inquire 'Hit OK to see the nuclear polarization' junk
+inquire `Hit OK to see the nuclear polarization' junk
 ! INQUIRE `Enter YES or NO >>' TXT
  CLEAR	
 ! !window 7
@@ -114,26 +115,25 @@ legend title method
 ! !set legendsize 0.1
 ! !set legendframe 7.0 6.5 10.5 7.0
 
-! set pchar 0 0 2
+ set pchar 0 0 2
 ! !set curvecolor -2
-! gr `Nuclear Polarization' pop[1,*] 100*pop[#-2,*]
+ gr `Nuclear Polarization' pop[1,*] 100*pop[#-2,*]
 ! !set xlabel `time[us]'
 ! !set ylabel `Nuclear Pol %'
 ! !scales 0 pop[1,tPoints] 0.0 100.0
-! scales 0 0 0 0 
-! !replot
+ scales 0 0 0 0 
+replot
 
-! !inquire 'Hit OK to see the alignment term' junk
 ! !set curvecolor -3
-! set pchar 0 03
+set pchar 0 03
 ! gr `T - alignment term' pop[1,*] -100*pop[#-1,*]
-! !!set ylabel `%'
-! !replot 
+!set ylabel `%'
+replot 
 ! !replot
 
- !inquire 'Hit OK to see the excited state population' junk
-! INQUIRE `Enter YES or NO >>' TXT
-! !CLEAR
+inquire `Hit OK to see the excited state population' junk
+
+CLEAR
 ! ! window 8
 legend on
 !set curvecolor -1
