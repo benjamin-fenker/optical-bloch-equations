@@ -209,7 +209,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // printf("updateFreq = %8.6G\n", updateFreq);
   while (time < tmax) {
     if ((fabs(time - nextUpdate))/_ns < pow(10, -2)) {
-      printf(" t = %8.6G ns\r", time/_ns);
+      printf(" t = %8.6G ns\n", time/_ns);
       nextUpdate += updateFreq;
     }
     if ((fabs(time - nextPrint))/_ns < pow(10, -2)) {
@@ -223,7 +223,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
       equ->print_density_matrix(stdout);
       return 1;
     }
-    if (fabs(equ->get_total_population() - 1.0) > pow(10, -6)) {
+    if (fabs(equ->get_total_population() - 1.0) > pow(10, -8)) {
       printf("PARTICLES NOT CONSERVED AT t = %4.2G ns\n", time/_ns);
       equ->print_data(stdout, time);
       return 1;
