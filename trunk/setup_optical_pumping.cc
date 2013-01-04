@@ -9,7 +9,7 @@
 
 using std::string;
 
-bool op_verbose = false;
+bool op_verbose = true;
 
 int main(int argc, char* argv[]) {
   printf("\n");
@@ -30,8 +30,8 @@ int main(int argc, char* argv[]) {
 
   // (I think) that John is reportings I_+ + I_- / I_+ - I_-, which is
   // equivalent to s3/s0 in the notation of Jackson 3rd edition
-  double laser_fe_s3_over_s0 = -0.995; // 
-  double laser_ge_s3_over_s0 = -0.995; // 
+  double laser_fe_s3_over_s0 = 1.0;
+  double laser_ge_s3_over_s0 = 1.0;
 
   double laser_fe_detune = -4.5 * _MHz;  // MHz
   double laser_ge_detune = -4.5 * _MHz;  // MHz

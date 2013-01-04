@@ -214,7 +214,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     }
     if ((fabs(time - nextPrint))/_ns < pow(10, -2)) {
       equ->print_data(file, time);
-      //  equ->print_density_matrix(stdout);
+      equ->print_density_matrix(stdout);
       nextPrint += print_frequency;
     }
     equ->update_population(tStep);

@@ -340,6 +340,9 @@ double OpticalPumping_Method::get_alignment() {  bool debug = false;
   // that eignestate (diagonal density matrix element) } }
   int state;
   double state_align = 0.0;
+  if (eigen.atom.I2 == 1) {      // My formula would divide by zero
+    return 0.0;
+  }
   for (state = 0; state < numGStates; state++) {
     if (debug) printf("For state %d, the decomp is:\n", state);
     for (int decomp = 0; decomp < eigen.atom.numBasisStates_ground; decomp++) {
