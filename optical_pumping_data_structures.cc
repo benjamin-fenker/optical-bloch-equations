@@ -38,7 +38,7 @@ void Laser_data::set_saturation_intensity(double tau) {
 void Laser_data::set_field_components() {
   // field[0] = sigma^- and field[1] = sigma^+ are the two basis vectors.
   // No capability at this time to do x-hat and y-hat basis
-  if (stokes[0] <= 0.0) {
+  if (stokes[0] < 0.0) {
     printf("Stokes vectors not possible.  Aborting\n");
     exit(1);
   }
@@ -50,8 +50,7 @@ void Laser_data::set_field_components() {
 void Laser_data::set_intensity_components() {
   // intensity[0] = sigma^- and intensity[1] = sigma^+ are the two basis
   // vectors. No capability at this time to do x-hat and y-hat basis
-  if ((field[0] < 0.0 || field[2] < 0.0) ||
-      (field[0] <= 0.0 && field[2] <= 0.0)) {
+  if (field[0] < 0.0 || field[2] < 0.0) {
     printf("Electric field not possible.  Aborting\n");
     exit(1);
   }
