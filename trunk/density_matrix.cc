@@ -30,7 +30,7 @@ Density_Matrix::Density_Matrix(Eigenvector_Helper set_eigen,
                                             gsl_complex_rect(0.0, 0.0))),
     ddelta_fg(numFStates, vector<gsl_complex>(numGStates,
                                             gsl_complex_rect(0.0, 0.0))) {
-  printf("DensityMatrix::Density_Matrix(...)\n\n");
+  //  printf("DensityMatrix::Density_Matrix(...)\n\n");
   es_Zeeman = flags.zCoherences;
   gs_Zeeman = flags.zCoherences;
   es_hyperfine = flags.hfCoherences_ex;
@@ -565,7 +565,7 @@ double Density_Matrix::set_dipole_moment(double gamma, double omega_ex,
   double den = pow(omega_ex-omega_gr, 3.0);
   double dipole = sqrt(num/den);
   if (op_verbose) {
-    printf("gamma = %5.3G MHz\t delta_omega = %8.6G MHz\t", gamma/_MHz,
+    printf("gamma = %5.3G MHz\t delta_omega = %19.16G MHz\t", gamma/_MHz,
            fabs(omega_ex-omega_gr)/_MHz);
     printf("dipole moment = %8.6G e*nm\t", dipole/(_elementary_charge*_nm));
     printf("laser rate = %8.6G MHz\n",

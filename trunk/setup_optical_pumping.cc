@@ -26,13 +26,13 @@ int main(int argc, char* argv[]) {
 
   string isotope = "37K";
   int Je2 = 1;  // D1(1) or D2(3) line
-  double laser_fe_I = 800.0 * (_uW/_cm2);  // uW/cm^2
-  double laser_ge_I = 800.0 * (_uW/_cm2);  // uW/cm^2
+  double laser_fe_I = 200.0 * (_uW/_cm2);  // uW/cm^2
+  double laser_ge_I = 145.0 * (_uW/_cm2);  // uW/cm^2
 
   // (I think) that John is reportings I_+ + I_- / I_+ - I_-, which is
   // equivalent to s3/s0 in the notation of Jackson 3rd edition
-  double laser_fe_s3_over_s0 = 0.995;
-  double laser_ge_s3_over_s0 = 0.995;
+  double laser_fe_s3_over_s0 = 1.0;
+  double laser_ge_s3_over_s0 = 1.0;
 
   double laser_fe_detune = -4.5 * _MHz;  // MHz
   double laser_ge_detune = -4.5 * _MHz;  // MHz
@@ -52,15 +52,17 @@ int main(int argc, char* argv[]) {
       printf("Third parameter is tmax in ns [%3.1G]\n", tmax/_ns);
       printf("Fourth paramter is dt in ns [%3.1G]\n", dt/_ns);
       printf("Fifth parameter is B_ext in G [%3.1G]\n", B_z/_G);
-      printf("Sixth parameter is detune (both lasers) in MHz [%3.1G]\n",
+      printf("Sixth parameter is f --> e laser detune in MHz [%3.1G]\n",
              laser_fe_detune/_MHz);
-      printf("Seventh paramter is linewidth (both lasers) in MHz [%3.1G]\n",
+      printf("Seventh parameter is g --> e laser detune in MHz [%3.1G]\n",
+             laser_ge_detune/_MHz);
+      printf("Eigth paramter is linewidth (both lasers) in MHz [%3.1G]\n",
              laser_fe_linewidth/_MHz);
       printf("\n\n");
       return 0;
     } else {
       isotope = argv[1];
-      if (argc>2) {
+      if (argc > 2) {
         Je2 = atoi(argv[2]);
         if (argc > 3) {
           tmax = atof(argv[3])*_ns;
@@ -70,10 +72,12 @@ int main(int argc, char* argv[]) {
               B_z = atof(argv[5])*_G;
               if (argc > 6) {
                 laser_fe_detune = atof(argv[6]) *_MHz;
-                laser_ge_detune = atof(argv[6]) *_MHz;
                 if (argc > 7) {
+                  laser_ge_detune = atof(argv[7]) * _MHz;
+                  if (argc > 8) {
                   laser_fe_linewidth = atof(argv[7]) *_MHz;
                   laser_ge_linewidth = atof(argv[7]) *_MHz;
+                  }
                 }
               }
             }

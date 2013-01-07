@@ -57,6 +57,6 @@ void Laser_data::set_intensity_components() {
   }
   for (int i = 0; i < 3; i++) {
     intensity[i] = 0.5 * _epsilon_0 * _speed_of_light * pow(field[i], 2.0);
-    printf("intensity[%d] = %8.6G mW/cm2\n", i, intensity[i]/(_mW/_cm2));
+    // printf("intensity[%d] = %8.6G mW/cm2\n", i, intensity[i]/(_mW/_cm2));
   }
 }

@@ -19,7 +19,7 @@ Rate_Equations::Rate_Equations(Eigenvector_Helper set_eigen,
                                                vector<double>(3, 0.0))),
     dPop_g(eigen.atom.numGStates, 0.0), dPop_f(eigen.atom.numFStates, 0.0),
     dPop_e(eigen.atom.numEStates, 0.0) {
-  printf("Rate_Equations::Rate_Equations(...)\n\n");
+  //   printf("Rate_Equations::Rate_Equations(...)\n\n");
   if (op_verbose) {
     printf("Stokes vector: <%8.6G, %4.2G, %4.2G, %8.6G\n", laser_fe.stokes[0],
            laser_fe.stokes[1], laser_fe.stokes[2], laser_fe.stokes[3]);
