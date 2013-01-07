@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
   // Also will accept command line input
   if (argc > 1) {
     if (strcmp(argv[1], "-h") == 0) {
-      printf("First paramter is isotope (37K, 38K, 47K) [%s]\n",
+      printf("First paramter is isotope (37K, 38K, 41K, 47K) [%s]\n",
              isotope.c_str());
       printf("Second parameter is Je2 (1 for D1 line, 3 for D2 line [%d]\n",
              Je2);

@@ -24,7 +24,7 @@ int Alkali::lookupParameters(string isotope, int Je2, int* I2, double* Aj_g,
   double set_nu_excited = 0;
   double set_tau = 0;
 
-  if (strcmp(isotope.c_str(), "K37") == 0||
+  if (strcmp(isotope.c_str(), "K37") == 0 ||
       strcmp(isotope.c_str(), "37K") == 0 ) {
     // See Besch 1968 and DM Thesis
     set_I2 = 3;
@@ -69,6 +69,20 @@ int Alkali::lookupParameters(string isotope, int Je2, int* I2, double* Aj_g,
     if (Je2 == 3) {
       lambda = 766.7 * _nm;
       set_Aj_e = 8.05 *_MHz;
+    }
+    set_nu_excited = (_speed_of_light / lambda);
+
+  } else if (strcmp(isotope.c_str(), "K41") == 0 ||
+            strcmp(isotope.c_str(), "41K") == 0 ) {
+    set_I2 = 3;                 // Nuclear spin 3/2
+    set_Aj_g = (254.0/2.0)*_MHz;
+    set_Aj_e = (30.5 /2.0)*_MHz;
+    set_g_I = -0.00007790600;
+    set_tau = 26.37*_ns;
+    double lambda = 770.1079191*_nm;
+    if (Je2 == 3) {
+      lambda = 766.70045870*_nm;
+      set_Aj_e = 8.4 * _MHz;
     }
     set_nu_excited = (_speed_of_light / lambda);
   } else {
