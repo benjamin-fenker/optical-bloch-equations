@@ -37,7 +37,7 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
                                              gsl_complex_rect(0.0, 0.0))),
     delta_fg(numFStates, vector<gsl_complex>(numGStates,
                                              gsl_complex_rect(0.0, 0.0))) {
-  printf("\nOpticalPumping_Method::OpticalPumping_Method(...)\n");
+  //   printf("\nOpticalPumping_Method::OpticalPumping_Method(...)\n");
   if (op_verbose) {
     printf("G = %d F = %d E = %d\n", numGStates, numFStates, numEStates);
   }

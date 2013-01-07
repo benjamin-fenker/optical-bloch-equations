@@ -83,44 +83,57 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // Same units as atom.Aj_g,e
   atom.gamma_spon = (alk.getGamma(atom.tau, laser_fe.power));
 
-  printf("** OPTICAL PUMPING **\n\n");
-  printf("Time step = %4.2G\n", tStep/_ns);
-  printf("Pumping %s\t As = %8.6G MHz \t ", isotope.c_str(), atom.Aj_g/_MHz);
-  printf("Ap = %8.6G MHz \t g-Factor = %8.6G\n", atom.Aj_e/_MHz, atom.g_I);
-  printf("atom.nu_excited = %14.10G MHz\n", atom.nu_excited/_MHz);
-  if (atom.I2%2 == 0) {
-    printf("Nuclear spin: %d \n", atom.I2/2);
+  string longMethod;
+  if (method == "O") {
+    longMethod = "Optical-Bloch Equations";
+  } else if (method == "R") {
+    longMethod = "Rate Equations";
   } else {
-    printf("Nuclear spin: %d/2 \n", atom.I2);
+    printf("Method not found.  Use \"R\" or \"O\"\n");
+    return 2;
   }
-  printf("Tau: %5.2G ns\t gamma_spon = %5.2G MHz \n", atom.tau/_ns,
+
+  printf("** OPTICAL PUMPING **\n");
+  printf("%s\n\n", longMethod.c_str());
+
+  printf("Pumping %s\n\tAs = %8.6G MHz \n ", isotope.c_str(), atom.Aj_g/_MHz);
+  printf("\tAp = %8.6G MHz \n \tg-Factor = %8.6G\n", atom.Aj_e/_MHz, atom.g_I);
+  printf("\tatom.nu_excited = %14.10G MHz\n", atom.nu_excited/_MHz);
+  if (atom.I2%2 == 0) {
+    printf("\tNuclear spin: %d \n", atom.I2/2);
+  } else {
+    printf("\tNuclear spin: %d/2 \n", atom.I2);
+  }
+  printf("\tG States: %i\tF States: %i\tE States %i\n\n",
+         atom.numGStates, atom.numFStates, atom.numEStates);
+
+
+  printf("\tTau: %5.2G ns\n\tgamma_spon = %5.2G MHz \n\n", atom.tau/_ns,
          atom.gamma_spon/_MHz);
-  printf("Tmax: %8.1G ns \t Time Step: %4.2G ns \n", tmax/_ns, tStep/_ns);
-  printf("Magnetic Field: %4.2G G\n", field.B_z/_G);
-  printf("\nLaser g->e data.  Laser 1: Detuned %5.2G MHz from the |",
+  printf("Tmax: %8.1G ns \nTime Step: %4.2G ns \n", tmax/_ns, tStep/_ns);
+  printf("Magnetic Field: %4.2G G\n\n", field.B_z/_G);
+
+  printf("\nLaser g->e (Laser 1) data:\n\tDetuned %5.2G MHz from the |",
          laser_ge.detune/_MHz);
   printf("%i/2,%i> ---> |%i/2,%i>", tuned_G_F2, 0, tuned_E_F2, 0);
-  printf(" transition.  \nFrequency = %14.10G MHz, Linewidth = %5.2G MHz",
+  printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
          laser_ge.nu/_MHz, laser_ge.linewidth/_MHz);
-  printf(", Intensity = %5.2G mW/cm^2\t", laser_ge.power/(_mW/_cm2));
-  printf(", s3 = %5.3G --> I = <%8.6G, %8.6G> mW/cm^2\t", laser_ge.stokes[3],
-         laser_ge.intensity[0]/(_mW/_cm2), laser_ge.intensity[1]/(_mW/_cm2));
-  printf(", E = <%8.6G, %8.6G, %8.6G> V/m\n", laser_ge.field[0],
-         laser_ge.field[1], laser_ge.field[2]);
-  //  printf("Field = %8.6G V/m\n", laser_ge.field/(_V/_m));
-  printf("\nLaser f->e data.  Laser 1: Detuned %5.2G MHz from the |",
+  printf("\tIntensity = %5.2G mW/cm^2\n", laser_ge.power/(_mW/_cm2));
+  printf("\ts3 = %5.3G --> I = <%8.6G, %8.6G> mW/cm^2\n", laser_ge.stokes[3],
+         laser_ge.intensity[0]/(_mW/_cm2), laser_ge.intensity[2]/(_mW/_cm2));
+  printf("\t                  E = <%8.6G, %8.6G> V/m\n",
+         laser_ge.field[0]/(_V/_m), laser_ge.field[2]/(_V/_m));
+
+  printf("\nLaser f->e (Laser 1) data:\n\tDetuned %5.2G MHz from the |",
          laser_fe.detune/_MHz);
   printf("%i/2,%i> ---> |%i/2,%i>", tuned_F_F2, 0, tuned_E_F2, 0);
-  printf(" transition.  \nFrequency = %14.10G MHz, Linewidth = %5.2G MHz",
+  printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
          laser_fe.nu/_MHz, laser_fe.linewidth/_MHz);
-  printf(", Intensity = %5.2G mW/cm^2\t", laser_fe.power/(_mW/_cm2));
-  printf(", s3 = %5.3G --> I = <%8.6G, %8.6G> mW/cm^2\t", laser_fe.stokes[3],
-         laser_fe.intensity[0]/(_mW/_cm2), laser_fe.intensity[1]/(_mW/_cm2));
-  printf(", E = <%8.6G, %8.6G, %8.6G> V/m\n", laser_fe.field[0],
-         laser_fe.field[1], laser_fe.field[2]);
-  //  printf("Field = %8.6G V/m\n", laser_fe.field/(_V/_m));
-  printf("G States: %i\tF States: %i\tE States %i\n\n",
-         atom.numGStates, atom.numFStates, atom.numEStates);
+  printf("\tIntensity = %5.2G mW/cm^2\n", laser_fe.power/(_mW/_cm2));
+  printf("\ts3 = %5.3G --> I = <%8.6G, %8.6G> mW/cm^2\n", laser_fe.stokes[3],
+         laser_fe.intensity[0]/(_mW/_cm2), laser_fe.intensity[2]/(_mW/_cm2));
+  printf("\t                  E = <%8.6G, %8.6G> V/m\n\n",
+         laser_fe.field[0]/(_V/_m), laser_fe.field[2]/(_V/_m));
 
   // Call function to retrieve vectors holding the Iz/Jz decomposotion of the
   // F, Mf eigenstates.
