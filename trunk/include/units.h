@@ -1,4 +1,5 @@
-// Copyright Benjamin Fenker 2012
+// Authors: Benjamin Fenker 2013
+// Copyright Benjamin Fenker 2013
 
 #ifndef INCLUDE_UNITS_H_
 #define INCLUDE_UNITS_H_
@@ -45,7 +46,7 @@
 /* Power [W = kg*m^2/s^3] */
 #define _W (1e0)                /* watts */
 #define _mW (1e-3)              /* milliwatts */
-#define _uW (1e-6)		/* microwatts */
+#define _uW (1e-6)              /* microwatts */
 
 /* Magnetic Field [T = Tesla] */
 #define _T (1e0)                /* tesla */

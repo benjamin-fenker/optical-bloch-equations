@@ -1,4 +1,5 @@
-// Copyright 2012 Benjamin Fenker
+// Authors: Benjamin Fenker 2013
+// Copyright 2013 Benjamin Fenker
 
 #ifndef INCLUDE_RATE_EQUATIONS_H_
 #define INCLUDE_RATE_EQUATIONS_H_

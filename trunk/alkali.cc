@@ -1,4 +1,6 @@
-// Copyright 2012 Benjamin Fenker
+// Authors: Benjamin Fenker 2013
+
+// Copyright Benjamin Fenker 2013
 
 #include <stdio.h>
 #include <math.h>

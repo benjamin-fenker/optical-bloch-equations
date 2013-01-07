@@ -1,4 +1,5 @@
-// Copyright Benjamin Fenker 2012
+// Authors: Benjamin Fenker 2013
+// Copyright Benjamin Fenker 2013
 
 #ifndef INCLUDE_EIGENVECTOR_HELPER_H_
 #define INCLUDE_EIGENVECTOR_HELPER_H_

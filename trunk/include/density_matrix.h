@@ -1,3 +1,4 @@
+// Authors: Benjamin Fenker 2013
 // Copyright 2012 Benjamin Fenker
 
 #ifndef INCLUDE_DENSITY_MATRIX_H_
