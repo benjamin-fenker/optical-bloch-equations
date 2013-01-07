@@ -1,4 +1,5 @@
-// Copyright 2012 Benjamin Fenker
+// Authors: Benjamin Fenker 2013
+// Copyright 2013 Benjamin Fenker
 
 #ifndef INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
 #define INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
