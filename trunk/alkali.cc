@@ -111,40 +111,20 @@ int Alkali::getNumberOfGroundStates_f(int I2) {
 
 int Alkali::getNumberOfGroundStates_g(int I2) { return I2; }
 
-double Alkali::getLaserFrequency(double nu_excited, double B_z, int Fg2,
-                                 int Mfg2, int I2, int Je2, int Fe2, int Mfe2,
-                                 double Aj_g, double Aj_e, double detune) {
-  bool debug = false;
-  // Zero detuning corresponds to a transition from F = Fg2, Mf = 0 to
-  // F = FeMax, Mf = 0.
-
-  if (debug) printf("Fg2 = %d, I2 = %d\n", Fg2, I2);
-  // Hyperfine splitting of the ground-state energy
-  // See DM Equatin 3.7 and note that 0.5Aj*(F*(F+1))... = 0.125Aj*(2F*(2F+2))
-  double Jg2 = 1;
-  double hfShift_ground = static_cast<double>(Fg2*(Fg2+2)) - (I2*(I2+2)) -
-    (Jg2*(Jg2+2));
-  hfShift_ground *= Aj_g/8.0;
-  if (debug) printf("hfShift_ground = %8.6G MHz\t ", hfShift_ground/_MHz);
-  //  double zeShift_ground =
-
-  // Zeeman splitting of the ground-state energy
-  printf("Mfg2 = %d\tMfe2=%d\tB_z=%8.6G\n", Mfg2, Mfe2, B_z);
-
-  // Hyperfine splitting of the excited-state energy
-  double hfShift_excited = static_cast<double>(Fe2*(Fe2+2)) - (I2*(I2+2)) -
-    (Je2*(Je2+2));
-  hfShift_excited *= Aj_e/8.0;
-  if (debug) printf("hfShift_excited = %8.6G MHz\n", hfShift_excited/_MHz);
-  if (debug) printf("detune = %8.6G MHz\n", detune/_MHz);
-  return nu_excited - hfShift_ground + hfShift_excited + detune;
-}
-
 double Alkali::getLaserFrequency(atom_data atom, magnetic_field_data field,
                                  int Fg2, int Mfg2, int Fe2, int Mfe2,
                                  double detune) {
-  return getLaserFrequency(atom.nu_excited, field.B_z, Fg2, Mfg2, atom.I2,
-                           atom.Je2, Fe2, Mfe2, atom.Aj_g, atom.Aj_e, detune);
+  bool debug = false;
+  Rate_Equations *opm = new Rate_Equations();
+  double energy_gr = opm -> set_frequency(0.0, atom.I2, atom.Je2, Fg2, Mfg2, 0,
+                                       atom.Aj_g, atom.g_I, field.B_z);
+  if (debug) printf("Ground energy: %8.6G\n", energy_gr);
+  double energy_ex = opm -> set_frequency(atom.nu_excited, atom.I2, atom.Je2,
+                                       Fe2, Mfe2, 1, atom.Aj_e, atom.g_I,
+                                       field.B_z);
+  if (debug) printf("Excited energy: %8.6G\n", energy_ex);
+  delete opm;
+  return energy_ex - energy_gr + detune;
 }
 
 double Alkali::getGamma(double tau, double laser_power) {

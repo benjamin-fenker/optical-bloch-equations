@@ -25,6 +25,8 @@ using std::max;
 int OpticalPumping::pump(string isotope, string method, double tmax,
                          double tStep, bool zCoherences, bool hfCoherences_ex,
                          bool hfCoherences_gr, int temp_Je2,
+                         int nominalSublevelTune2_ef,
+                         int nominalSublevelTune2_eg,
                          double laser_fe_power, double laser_ge_power,
                          double laser_fe_detune, double laser_ge_detune,
                          double laser_fe_linewidth, double laser_ge_linewidth,
@@ -36,7 +38,6 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
 
   magnetic_field_data field;
   // **Physical constant**
-  // field.mu_B = 1.399625 * (_MHz/_G);  // MHz/Gauss
   printf("mu_B = %10.8G MHz/G\n", _bohr_magneton/_planck_h/(_MHz/_G));
   field.B_z = set_B_z;
   field.B_x = 0.0;
@@ -70,10 +71,16 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   int tuned_E_F2 = atom.Je2 + atom.I2;
   // *************************************************************************
 
-  double laser_fe_nu = alk.getLaserFrequency(atom, field, tuned_F_F2, 0,
-                                             tuned_E_F2, 0, laser_fe_detune);
-  double laser_ge_nu = alk.getLaserFrequency(atom, field, tuned_G_F2, 0,
-                                             tuned_E_F2, 0, laser_ge_detune);
+  double laser_fe_nu = alk.getLaserFrequency(atom, field, tuned_F_F2,
+                                             nominalSublevelTune2_ef,
+                                             tuned_E_F2,
+                                             nominalSublevelTune2_ef,
+                                             laser_fe_detune);
+  double laser_ge_nu = alk.getLaserFrequency(atom, field, tuned_G_F2,
+                                             nominalSublevelTune2_eg,
+                                             tuned_E_F2,
+                                             nominalSublevelTune2_eg,
+                                             laser_ge_detune);
 
   Laser_data laser_fe(laser_fe_nu, laser_fe_power, laser_fe_detune,
                       laser_fe_linewidth, laser_fe_s3_over_s0, atom.tau);

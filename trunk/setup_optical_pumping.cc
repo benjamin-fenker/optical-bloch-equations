@@ -34,6 +34,9 @@ int main(int argc, char* argv[]) {
   double laser_fe_s3_over_s0 = 1.0;
   double laser_ge_s3_over_s0 = 1.0;
 
+  int nominalSublevelTune2_fe = -2;
+  int nominalSublevelTune2_ge = -2;
+
   double laser_fe_detune = -4.5 * _MHz;  // MHz
   double laser_ge_detune = -4.5 * _MHz;  // MHz
 
@@ -89,10 +92,12 @@ int main(int argc, char* argv[]) {
 
   OpticalPumping pumper;
   int status = pumper.pump(isotope, method, tmax, dt, zCoherences,
-                           hfCoherences_ex, hfCoherences_gr, Je2, laser_fe_I,
-                           laser_ge_I, laser_fe_detune, laser_ge_detune,
-                           laser_fe_linewidth, laser_ge_linewidth,
-                           laser_fe_s3_over_s0, laser_ge_s3_over_s0, B_z);
+                           hfCoherences_ex, hfCoherences_gr, Je2,
+                           nominalSublevelTune2_fe, nominalSublevelTune2_ge,
+                           laser_fe_I, laser_ge_I, laser_fe_detune,
+                           laser_ge_detune, laser_fe_linewidth,
+                           laser_ge_linewidth, laser_fe_s3_over_s0,
+                           laser_ge_s3_over_s0, B_z);
   printf("\nCompleted with status = %d\n\n", status);
   return status;
 }

@@ -8,6 +8,9 @@
 using std::vector;
 extern bool op_verbose;
 
+Rate_Equations::Rate_Equations() {
+}
+
 Rate_Equations::Rate_Equations(Eigenvector_Helper set_eigen,
                                Laser_data set_laser_fe, Laser_data set_laser_ge)
   : OpticalPumping_Method(set_eigen, set_laser_fe, set_laser_ge),
