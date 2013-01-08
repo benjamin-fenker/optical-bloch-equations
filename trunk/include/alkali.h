@@ -22,9 +22,11 @@ class Alkali {
   int getNumberOfGroundStates_f(int I2);
   int getNumberOfGroundStates_g(int I2);
 
-  double getLaserFrequency(double omega_Di, int Fg2, int I2, int Je2, int Fe2,
-                           double Aj_g, double Aj_e, double detune);
-  double getLaserFrequency(atom_data atom, int Fg2, int Fe2, double detune);
+  double getLaserFrequency(double omega_Di, double B_z, int Fg2, int Mfg2,
+                           int I2, int Je2, int Fe2, int Mfe2, double Aj_g,
+                           double Aj_e, double detune);
+  double getLaserFrequency(atom_data atom, magnetic_field_data field, int Fg2,
+                           int Mfg2, int Fe2, int Mfe2, double detune);
   double getGamma(double tau, double laser_power);
 };
 

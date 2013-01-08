@@ -75,8 +75,8 @@ int main(int argc, char* argv[]) {
                 if (argc > 7) {
                   laser_ge_detune = atof(argv[7]) * _MHz;
                   if (argc > 8) {
-                  laser_fe_linewidth = atof(argv[7]) *_MHz;
-                  laser_ge_linewidth = atof(argv[7]) *_MHz;
+                  laser_fe_linewidth = atof(argv[8]) *_MHz;
+                  laser_ge_linewidth = atof(argv[8]) *_MHz;
                   }
                 }
               }

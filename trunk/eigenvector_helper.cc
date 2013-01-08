@@ -205,7 +205,8 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
                            gsl_complex_rect(calc_gj(1.0, L*2, 1.0), 0.0));
 
   gsl_matrix_complex_add(Hbz, tempz);
-  gsl_matrix_complex_scale(Hbz, gsl_complex_rect((field.mu_B*field.B_z), 0.0));
+  gsl_matrix_complex_scale(Hbz,
+                  gsl_complex_rect((_bohr_magneton/_planck_h*field.B_z), 0.0));
 
   // Now for the transverse field components!
   /*
@@ -238,7 +239,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
                            gsl_complex_rect(calc_gj(1.0, L*2, 1.0), 0.0));
 
   gsl_matrix_complex_add(Hbt, tempt);
-  gsl_matrix_complex_scale(Hbt, gsl_complex_rect((field.mu_B*field.B_x), 0.0));
+  gsl_matrix_complex_scale(Hbt, gsl_complex_rect((_bohr_magneton/_planck_h*field.B_x), 0.0));
   */
   // gsl_matrix_complex_fprintf(stdout,Hbt,"%g");
   // *****************************************************************
