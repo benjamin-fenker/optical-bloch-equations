@@ -18,6 +18,7 @@
 using std::vector;
 class Rate_Equations: public OpticalPumping_Method {
  public:
+  Rate_Equations();
   Rate_Equations(Eigenvector_Helper set_eigen, Laser_data laser_fe,
                  Laser_data laser_ge);
   ~Rate_Equations();

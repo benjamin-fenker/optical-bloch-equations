@@ -25,14 +25,15 @@ class OpticalPumping_Method {
   void setup_quantum_numbers(atom_data atom);
   void setup_frequencies_excited(int I2, int Je2, double excitation,
                                  double hyperfine_const, double g_I,
-                                 double mu_B, double B_z);
+                                 double B_z);
   void setup_frequencies_excited(atom_data atom, magnetic_field_data field);
   void setup_frequencies_ground(int I2, double hyperfine_const, double g_I,
-                                double mu_B, double B_z);
+                                double B_z);
   void setup_frequencies_ground(atom_data atom, magnetic_field_data field);
+  /* const guarantees that this won't change the state */
   double set_frequency(double excitation, int I2, int J2, int F2, int Mf2,
-                       int L2, double hyperfine_const, double mu_B, double g_I,
-                       double B_z);
+                       int L2, double hyperfine_const, double g_I,
+                       double B_z) const;
   void setup_eg_coupling(int I2, int Je2);
   void setup_eg_coupling(atom_data atom);
   void setup_ef_coupling(int I2, int Je2);
