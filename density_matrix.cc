@@ -473,6 +473,7 @@ void Density_Matrix::update_population(double dt) {
         ddelta_fg[f][g] = gsl_complex_add(ddelta_fg[f][g], fLaser_term);
         // Now the line width and angular frequencies terms
         double real = M_PI*(laser_fe.linewidth + laser_ge.linewidth);
+        real = 0.0;
         double imag = 2*M_PI*((fabs(nu_F[f] - nu_G[g]))
                               - (laser_ge.nu - laser_fe.nu));
         gsl_complex decayTerm = gsl_complex_rect(real, imag);

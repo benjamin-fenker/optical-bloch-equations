@@ -23,12 +23,12 @@ numLowestFStates_gr  = (((I2/2.0) - 0.5)*2.0)+1.0
 numHighestFStates_gr = (((I2/2.0) + 0.5)*2.0)+1.0
 
 Do i = [1:numLowestFStates_gr]
-  =i
+!  =i
   Fg[i] = (I2/2.0) - 0.5
   Mfg[i] = -Fg[i] + i - 1.0
 ENDDO
 DO i = [numLowestFStates_gr+1:numGrStates]
-  =i
+!  =i
   Fg[i] = (I2/2.0) + 0.5
   Mfg[i]  = -Fg[i] + i - numLowestFStates_gr - 1.0
 ENDDO
@@ -50,7 +50,7 @@ DO j = [1:numEStates]
 
 ENDDO
 label\xaxis `Time [us]'
-
+legend nsymbols 3
 ! window 5
 ! window 9
 ! set curvelinewidth 2

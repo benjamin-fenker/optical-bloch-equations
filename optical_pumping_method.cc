@@ -121,7 +121,7 @@ void OpticalPumping_Method::setup_frequencies_excited(
                                atom_data atom,
                                magnetic_field_data field) {
   setup_frequencies_excited(atom.I2, atom.Je2, atom.nu_excited, atom.Aj_e,
-                            field.mu_B, atom.g_I, field.B_z);
+                            _bohr_magneton/_planck_h, atom.g_I, field.B_z);
 }
 
 void OpticalPumping_Method::setup_frequencies_ground(int I2,
@@ -141,8 +141,10 @@ void OpticalPumping_Method::setup_frequencies_ground(int I2,
 void OpticalPumping_Method::setup_frequencies_ground(
                                 atom_data atom,
                                 magnetic_field_data field) {
-  setup_frequencies_ground(atom.I2, atom.Aj_g, field.mu_B, atom.g_I, field.B_z);
+  setup_frequencies_ground(atom.I2, atom.Aj_g, _bohr_magneton/_planck_h,
+                           atom.g_I, field.B_z);
 }
+
 double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
                                             int F2, int Mf2, int L2,
                                             double hyperfine_const,

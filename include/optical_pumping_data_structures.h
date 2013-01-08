@@ -19,7 +19,7 @@ class atom_data {
 };
 
 struct magnetic_field_data {
-  double mu_B;
+  //  double mu_B;
   double B_z;
   double B_x;
 };

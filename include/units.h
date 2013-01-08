@@ -67,4 +67,11 @@
 #define _planck_hbar (1.05457162825e-34) /* m^3 / kg s^2 */
 #define _epsilon_0 (8.854e-12)           /* s^4 A^2 / kg m^3 */
 #define _elementary_charge (1.60217646e-19) /* C */
+/* BE VERY CAREFUL using this.  The useful units for mu_B are MHz/G
+ while the SI units are J/T.  They are NOT compatible units and differ by 
+ a factor of h (not hbar).  To use mu_B in Hz/G write
+ '_bohr_magneton/_planck_h' Note also that this is what to use internally and
+ only convert to MHz/G when printing.  Do this by writing
+'(_bohr_magneton/_planck_h)/(_MHz/_G)*/
+#define _bohr_magneton (9.27400968e-24)     /* J/T */
 #endif  // INCLUDE_UNITS_H_

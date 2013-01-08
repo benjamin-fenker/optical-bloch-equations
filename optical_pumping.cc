@@ -36,8 +36,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
 
   magnetic_field_data field;
   // **Physical constant**
-  field.mu_B = 1.399625 * (_MHz/_G);  // MHz/Gauss
-  // printf("mu_B = %10.8G MHz/G\n", field.mu_B/(_MHz/_G));
+  // field.mu_B = 1.399625 * (_MHz/_G);  // MHz/Gauss
+  printf("mu_B = %10.8G MHz/G\n", _bohr_magneton/_planck_h/(_MHz/_G));
   field.B_z = set_B_z;
   field.B_x = 0.0;
 
@@ -70,11 +70,11 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   int tuned_E_F2 = atom.Je2 + atom.I2;
   // *************************************************************************
 
-  double laser_fe_nu = alk.getLaserFrequency(atom, tuned_F_F2, tuned_E_F2,
-                                      laser_fe_detune);
-  // Same units as atom.Aj_g,e
-  double laser_ge_nu = alk.getLaserFrequency(atom, tuned_G_F2, tuned_E_F2,
-                                      laser_ge_detune);
+  double laser_fe_nu = alk.getLaserFrequency(atom, field, tuned_F_F2, 0,
+                                             tuned_E_F2, 0, laser_fe_detune);
+  double laser_ge_nu = alk.getLaserFrequency(atom, field, tuned_G_F2, 0,
+                                             tuned_E_F2, 0, laser_ge_detune);
+
   Laser_data laser_fe(laser_fe_nu, laser_fe_power, laser_fe_detune,
                       laser_fe_linewidth, laser_fe_s3_over_s0, atom.tau);
   Laser_data laser_ge(laser_ge_nu, laser_ge_power, laser_ge_detune,
@@ -124,7 +124,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   printf("\t                  E = <%8.6G, %8.6G> V/m\n",
          laser_ge.field[0]/(_V/_m), laser_ge.field[2]/(_V/_m));
 
-  printf("\nLaser f->e (Laser 1) data:\n\tDetuned %5.2G MHz from the |",
+  printf("\nLaser f->e (Laser 2) data:\n\tDetuned %5.2G MHz from the |",
          laser_fe.detune/_MHz);
   printf("%i/2,%i> ---> |%i/2,%i>", tuned_F_F2, 0, tuned_E_F2, 0);
   printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
