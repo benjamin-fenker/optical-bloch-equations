@@ -21,6 +21,7 @@
 
 using std::string;
 using std::max;
+extern char outFile[];
 
 int OpticalPumping::pump(string isotope, string method, double tmax,
                          double tStep, bool zCoherences, bool hfCoherences_ex,
@@ -181,14 +182,52 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     total_print = max_out;
   }
   // Setup File I/O for later use
+
   FILE * file;
   if (!debug) {
-    file = fopen("opData.dat", "w");
+    printf("Opening file...%s\n", outFile);
+    file = fopen(outFile, "w");
+    if (file == NULL) {
+      printf("could not open file %s\n", outFile);
+    }
+    // Print data for plotting
     fprintf(file, "%d \t ", atom.numEStates+atom.numFStates+atom.numGStates);
     fprintf(file, "%d \t %6.2G \t %d \t %d \t ", atom.numEStates, 1.0,
             total_print, atom.I2);
     fprintf(file, "%d \t 4.0\n", atom.Je2);
+
+    // Print laser data
+    fprintf(file, "%4.2G \t %4.2G \t %4.2G \t %4.2G \t %d \n ",
+            laser_fe.power/(_mW/_cm2), laser_fe.nu/_MHz,
+            laser_fe.detune/_MHz, laser_fe.stokes[3]/laser_fe.stokes[0],
+            nominalSublevelTune2_ef);
+    fprintf(file, "%4.2G \t %4.2G \t %4.2G \t %4.2G \t %d \n ",
+            laser_ge.power/(_mW/_cm2), laser_ge.nu/_MHz,
+            laser_ge.detune/_MHz, laser_ge.stokes[3]/laser_ge.stokes[0],
+            nominalSublevelTune2_eg);
+
+    // Print magnetic field data
+    fprintf(file, "%4.2G \t %4.2G \n", field.B_z/_G, field.B_x/_G);
+
+    // Print atomic data
+    if (zCoherences) {
+      fprintf(file, "%d \t ", 1);
+    } else {
+      fprintf(file, "%d \t ", 0);
+    }
+    if (hfCoherences_gr) {
+      fprintf(file, "%d \t ", 1);
+    } else {
+      fprintf(file, "%d \t ", 0);
+    }
+    if (hfCoherences_ex) {
+      fprintf(file, "%d \t ", 1);
+    } else {
+      fprintf(file, "%d \n ", 0);
+    }
+    fprintf(file, "%s\n", isotope.c_str());
     fprintf(file, "%s\n", method.c_str());
+
   } else {
     file = stdout;
   }

@@ -472,8 +472,20 @@ void Density_Matrix::update_population(double dt) {
         }
         ddelta_fg[f][g] = gsl_complex_add(ddelta_fg[f][g], fLaser_term);
         // Now the line width and angular frequencies terms
-        double real = M_PI*(laser_fe.linewidth + laser_ge.linewidth);
-        real = 0.0;
+        // Here, T&J write that the ground state hyperfine coherences decay
+        // with a rate 0.5*(gamma_1+gamma_2).  Note that this is for
+        // uncorrelated laser beams.  In typical TRINAT application, the beams
+        // are 100% correlated and this term drops out.  More accurately, T&J
+        // leave off the correlation term -(2*gamma_12) between the two lasers
+        // as per their assumptions.  Therefore I am leaving this term out of
+        // the calculation.  Note that all other terms remain
+        // Useful references for this point:
+        // S. Gu et. al. Op. Comm.  220 (2003) 365-370
+        // E. Arimondo, Progress in Optics XXXV (1996) 257 (eq 2.37)
+        // B. Dalton and P. Knight J. Phys. B 15 (1982) 3997-4015 (fig 2)
+        // double real = M_PI*(laser_fe.linewidth + laser_ge.linewidth);
+        // double real = M_PI*(laser_fe.linewidth + laser_ge.linewidth);
+        double real = 500.0;
         double imag = 2*M_PI*((fabs(nu_F[f] - nu_G[g]))
                               - (laser_ge.nu - laser_fe.nu));
         gsl_complex decayTerm = gsl_complex_rect(real, imag);

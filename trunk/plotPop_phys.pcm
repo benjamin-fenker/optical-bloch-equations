@@ -2,6 +2,11 @@
 ! CLEAR
 
 read\scalars\continue ?1 numStates numEStates totalPop tPoints I2 Je2 junk
+read\scalars\continue ?1 fe_power fe_freq fe_detune fe_s3 fe_nomTune
+read\scalars\continue ?1 ge_power ge_freq ge_detune ge_s3 ge_nomTune
+read\scalars\continue ?1 B_z B_x
+read\scalars\continue ?1 zCoherences hfCoherences_gr hfCoherences_ex
+read\text\continue ?1 isotope
 read\text\continue ?1 method
 numGrStates = numStates - numEStates
 =numStates
@@ -64,7 +69,9 @@ legend on
 ! set legendsize 0.1
 ! set legendframe 4 5 8 7
 ! set legendframe 2 5 4.5 7
-legend frame on 2 5 4.5 7
+!legend frame on 2 5 4.5 7 ! good for OP runs
+legend frame 20 60 50 90  !good for CPT runs
+
 legend title method
 
 DO i = [1:numGrStates]          
