@@ -11,21 +11,63 @@
 using std::string;
 
 bool op_verbose = false;
+char outFile[] = "opData_d.dat";
+
+void readAndCheckFromFile(FILE *f, char *parameter, string *s) {
+  char tempL[40] = "";
+  char tempR[40] = "";
+  int val;
+  val = fscanf(f, "%s\t%s", tempL, tempR);
+  if (val != 2) {
+    printf("Read error.\n");
+    exit(1);
+  }
+  printf("READ %s\n", tempR);
+  if (strcmp(parameter, tempL) != 0) {
+    printf("Unexpected line in input file: %s\n",
+           tempR);
+    exit(1);
+  }
+  string out = tempR;
+  *s = out;
+}
+
+void readAndCheckFromFile(FILE *f, char *parameter, int *i) {
+  char temp[20] = "";
+  int val = fscanf(f, "%s\t%d", temp, i);
+  if (val != 2) {
+    printf("Read error.\n");
+    exit(1);
+  }
+  if (strcmp(parameter, temp) != 0) {
+    printf("Unexpected line in input file: %s\n",
+           temp);
+    exit(1);
+  }
+}
+
+void readAndCheckFromFile(FILE *f, char *parameter, double *i) {
+  char temp[20] = "";
+  int val = fscanf(f, "%s\t%lf", temp, i);
+  if (val != 2) {
+    printf("Read error.\n");
+    exit(1);
+  }
+  if (strcmp(parameter, temp) != 0) {
+    printf("Unexpected line in input file: %s\n",
+           temp);
+    exit(1);
+  }
+}
 
 int main(int argc, char* argv[]) {
   printf("\n");
-
-  double tmax = 1.0 * _ns;  // ns
-  double dt = 1.0 * _ns;  // ns
-
   string method = "O";  // O for OBE and R for Rate Equations
 
   bool zCoherences = false;
   bool hfCoherences_ex = false;
   bool hfCoherences_gr = true;
 
-  string isotope = "37K";
-  int Je2 = 1;  // D1(1) or D2(3) line
   double laser_fe_I = 200.0 * (_uW/_cm2);  // uW/cm^2
   double laser_ge_I = 145.0 * (_uW/_cm2);  // uW/cm^2
 
@@ -34,8 +76,15 @@ int main(int argc, char* argv[]) {
   double laser_fe_s3_over_s0 = 1.0;
   double laser_ge_s3_over_s0 = 1.0;
 
-  int nominalSublevelTune2_fe = -2;
-  int nominalSublevelTune2_ge = -2;
+  int nominalSublevelTune2_fe = 0;
+  int nominalSublevelTune2_ge = 0;
+
+  // ****These are only defaults****
+  double tmax = 1.0 * _ns;  // ns
+  double dt = 1.0 * _ns;  // ns
+
+  string isotope = "37K";
+  int Je2 = 1;  // D1(1) or D2(3) line
 
   double laser_fe_detune = -4.5 * _MHz;  // MHz
   double laser_ge_detune = -4.5 * _MHz;  // MHz
@@ -44,10 +93,15 @@ int main(int argc, char* argv[]) {
   double laser_ge_linewidth = 0.2 *_MHz;  // MHz (FWHM)
 
   double B_z = 2.0 * _G;  // G
+  double B_x = 0.0 * _G;  // G
+  // *******************************
 
   // Also will accept command line input
   if (argc > 1) {
     if (strcmp(argv[1], "-h") == 0) {
+      printf("Run this program with from an input file or a command line:\n");
+      printf("To run from a file do: opticalPumping -f fileName\n\n");
+      printf("To run from the command line, give a list of parameters:\n");
       printf("First paramter is isotope (37K, 38K, 41K, 47K) [%s]\n",
              isotope.c_str());
       printf("Second parameter is Je2 (1 for D1 line, 3 for D2 line [%d]\n",
@@ -63,6 +117,104 @@ int main(int argc, char* argv[]) {
              laser_fe_linewidth/_MHz);
       printf("\n\n");
       return 0;
+    } else if (strcmp(argv[1], "-f") == 0) {  // accept input from file
+      if (argc == 2) {                        // No file name given
+        printf("File name required with -f option.\n");
+        printf("opticalPumping -f in.in\n");
+        exit(1);
+      }
+      FILE *file;
+      char* inFile = argv[2];
+      printf("Opening file %s\n", argv[2]);
+      file = fopen(inFile, "r");
+      if (file != NULL) {
+        char expectedInput[40] = "file";
+        string file_s = "tmp.dat";
+        readAndCheckFromFile(file, expectedInput, &file_s);
+        // strcpy(const_cast<char *>(file_s.c_str()), outFile);
+        snprintf(outFile, sizeof(outFile), "%s", file_s.c_str());
+
+        snprintf(expectedInput, sizeof(expectedInput), "method");
+        readAndCheckFromFile(file, expectedInput, &method);
+
+        snprintf(expectedInput, sizeof(expectedInput), "isotope");
+        readAndCheckFromFile(file, expectedInput, &isotope);
+
+        snprintf(expectedInput, sizeof(expectedInput), "Je2");
+        readAndCheckFromFile(file, expectedInput, &Je2);
+
+        snprintf(expectedInput, sizeof(expectedInput), "tstep");
+        readAndCheckFromFile(file, expectedInput, &dt);
+        dt *= _ns;              // Have to get the units right!
+
+        snprintf(expectedInput, sizeof(expectedInput), "tmax");
+        readAndCheckFromFile(file, expectedInput, &tmax);
+        tmax *= _ns;              // Have to get the units right!
+
+        int useCoherence = 1;
+        snprintf(expectedInput, sizeof(expectedInput), "zCoherences");
+        readAndCheckFromFile(file, expectedInput, &useCoherence);
+        if (useCoherence != 1) zCoherences = false;
+
+        useCoherence = 1;
+        snprintf(expectedInput, sizeof(expectedInput), "hfCoherences_gr");
+        readAndCheckFromFile(file, expectedInput, &useCoherence);
+        if (useCoherence != 1) hfCoherences_gr = false;
+
+        useCoherence = 1;
+        snprintf(expectedInput, sizeof(expectedInput), "hfCoherences_ex");
+        readAndCheckFromFile(file, expectedInput, &useCoherence);
+        if (useCoherence != 1) hfCoherences_ex = false;
+
+        snprintf(expectedInput, sizeof(expectedInput), "laser_fe_power");
+        readAndCheckFromFile(file, expectedInput, &laser_fe_I);
+        laser_fe_I *= _uW/_cm2;            // Have to get the units right!
+
+        snprintf(expectedInput, sizeof(expectedInput), "laser_fe_s3");
+        readAndCheckFromFile(file, expectedInput, &laser_fe_s3_over_s0);
+
+        snprintf(expectedInput, sizeof(expectedInput), "laser_fe_linewidth");
+        readAndCheckFromFile(file, expectedInput, &laser_fe_linewidth);
+        laser_fe_linewidth *= _MHz;            // Have to get the units right!
+
+        snprintf(expectedInput, sizeof(expectedInput), "laser_fe_nomTune");
+        readAndCheckFromFile(file, expectedInput, &nominalSublevelTune2_fe);
+
+        snprintf(expectedInput, sizeof(expectedInput), "laser_fe_detune");
+        readAndCheckFromFile(file, expectedInput, &laser_fe_detune);
+        laser_fe_detune *= _MHz;            // Have to get the units right!
+
+        snprintf(expectedInput, sizeof(expectedInput), "laser_ge_power");
+        readAndCheckFromFile(file, expectedInput, &laser_ge_I);
+        laser_ge_I *= _uW/_cm2;            // Have to get the units right!
+
+        snprintf(expectedInput, sizeof(expectedInput), "laser_ge_s3");
+        readAndCheckFromFile(file, expectedInput, &laser_ge_s3_over_s0);
+
+        snprintf(expectedInput, sizeof(expectedInput), "laser_ge_linewidth");
+        readAndCheckFromFile(file, expectedInput, &laser_ge_linewidth);
+        laser_ge_linewidth *= _MHz;            // Have to get the units right!
+
+        snprintf(expectedInput, sizeof(expectedInput), "laser_ge_nomTune");
+        readAndCheckFromFile(file, expectedInput, &nominalSublevelTune2_ge);
+
+        snprintf(expectedInput, sizeof(expectedInput), "laser_ge_detune");
+        readAndCheckFromFile(file, expectedInput, &laser_ge_detune);
+        laser_ge_detune *= _MHz;            // Have to get the units right!
+
+        snprintf(expectedInput, sizeof(expectedInput), "B_z");
+        readAndCheckFromFile(file, expectedInput, &B_z);
+        B_z *= _G;            // Have to get the units right!
+
+        snprintf(expectedInput, sizeof(expectedInput), "B_x");
+        readAndCheckFromFile(file, expectedInput, &B_x);
+        B_x *= _G;            // Have to get the units right!
+
+        //        printf("Method = %s\n", method.c_str());
+      } else {                  // File does not exist
+        printf("File %s does not exist\n", inFile);
+        exit(1);
+      }
     } else {
       isotope = argv[1];
       if (argc > 2) {
