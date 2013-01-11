@@ -32,6 +32,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                          double laser_fe_detune, double laser_ge_detune,
                          double laser_fe_linewidth, double laser_ge_linewidth,
                          double laser_fe_s3_over_s0, double laser_ge_s3_over_s0,
+                         double laser_fe_offTime, double laser_ge_offTime,
                          double set_B_z) {
   bool debug = false;
   atom_data atom;
@@ -127,9 +128,10 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
          laser_ge.nu/_MHz, laser_ge.linewidth/_MHz);
   printf("\tIntensity = %5.2G mW/cm^2\n", laser_ge.power/(_mW/_cm2));
-  printf("\ts3 = %5.3G --> I = <%8.6G, %8.6G> mW/cm^2\n", laser_ge.stokes[3],
-         laser_ge.intensity[0]/(_mW/_cm2), laser_ge.intensity[2]/(_mW/_cm2));
-  printf("\t                  E = <%8.6G, %8.6G> V/m\n",
+  printf("\ts3 = %5.3G V^2/m^2--> I = <%8.6G, %8.6G> mW/cm^2\n",
+         laser_ge.stokes[3]/(_V*_V/_m*_m), laser_ge.intensity[0]/(_mW/_cm2),
+         laser_ge.intensity[2]/(_mW/_cm2));
+  printf("\t                         E = <%8.6G, %8.6G> V/m\n",
          laser_ge.field[0]/(_V/_m), laser_ge.field[2]/(_V/_m));
 
   printf("\nLaser f->e (Laser 2) data:\n\tDetuned %5.2G MHz from the |",
@@ -138,9 +140,10 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
          laser_fe.nu/_MHz, laser_fe.linewidth/_MHz);
   printf("\tIntensity = %5.2G mW/cm^2\n", laser_fe.power/(_mW/_cm2));
-  printf("\ts3 = %5.3G --> I = <%8.6G, %8.6G> mW/cm^2\n", laser_fe.stokes[3],
-         laser_fe.intensity[0]/(_mW/_cm2), laser_fe.intensity[2]/(_mW/_cm2));
-  printf("\t                  E = <%8.6G, %8.6G> V/m\n\n",
+  printf("\ts3 = %5.3G V^2/m^2 --> I = <%8.6G, %8.6G> mW/cm^2\n",
+         laser_fe.stokes[3]/(_V*_V/_m*_m), laser_fe.intensity[0]/(_mW/_cm2),
+         laser_fe.intensity[2]/(_mW/_cm2));
+  printf("\t                          E = <%8.6G, %8.6G> V/m\n\n",
          laser_fe.field[0]/(_V/_m), laser_fe.field[2]/(_V/_m));
 
   // Call function to retrieve vectors holding the Iz/Jz decomposotion of the
@@ -171,7 +174,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // allowing the print frquency to be higher, matching the physics frequency
   // ******CAUTION******
 
-  const int max_out = 1000;  // Maximum number of time steps to write to a file
+  const int max_out = 10000;  // Maximum number of time steps to write to a file
   double print_frequency;  // Number of ns between print statements
   int total_print;  // Total number of print statements
   if (tmax/tStep <= max_out) {
@@ -197,14 +200,14 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     fprintf(file, "%d \t 4.0\n", atom.Je2);
 
     // Print laser data
-    fprintf(file, "%4.2G \t %4.2G \t %4.2G \t %4.2G \t %d \n ",
+    fprintf(file, "%4.2G \t %4.2G \t %4.2G \t %4.2G \t %d \t %4.2G \n ",
             laser_fe.power/(_mW/_cm2), laser_fe.nu/_MHz,
             laser_fe.detune/_MHz, laser_fe.stokes[3]/laser_fe.stokes[0],
-            nominalSublevelTune2_ef);
-    fprintf(file, "%4.2G \t %4.2G \t %4.2G \t %4.2G \t %d \n ",
+            nominalSublevelTune2_ef, laser_fe_offTime/_us);
+    fprintf(file, "%4.2G \t %4.2G \t %4.2G \t %4.2G \t %d \t %4.2G \n ",
             laser_ge.power/(_mW/_cm2), laser_ge.nu/_MHz,
             laser_ge.detune/_MHz, laser_ge.stokes[3]/laser_ge.stokes[0],
-            nominalSublevelTune2_eg);
+            nominalSublevelTune2_eg, laser_ge_offTime/_us);
 
     // Print magnetic field data
     fprintf(file, "%4.2G \t %4.2G \n", field.B_z/_G, field.B_x/_G);
@@ -267,6 +270,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   double nextPrint = 0.0;
   double nextUpdate = 0.0;
   // printf("updateFreq = %8.6G\n", updateFreq);
+  bool laser_fe_Off = false;
+  bool laser_ge_Off = false;
   while (time < tmax) {
     if ((fabs(time - nextUpdate))/_ns < pow(10, -2)) {
       printf(" t = %8.6G ns\n", time/_ns);
@@ -277,7 +282,20 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
       // equ->print_density_matrix(stdout);
       nextPrint += print_frequency;
     }
-    equ->update_population(tStep);
+    if (!laser_ge_Off && laser_ge_offTime > 0 && time >= laser_ge_offTime) {
+      laser_ge_Off = true;
+      printf("Switching off ge laser at time = %6.4G ns\n", time/_ns);
+      equ -> switch_off_laser(1);
+    }
+    if (!laser_fe_Off && laser_fe_offTime > 0 && time >= laser_fe_offTime) {
+      laser_fe_Off = true;
+      printf("Switching off fe laser at time = %6.4G ns\n", time/_ns);
+      equ -> switch_off_laser(2);
+    }
+    // **********************************************************************
+    equ->update_population(tStep);  // **************************************
+    // **********************************************************************
+
     if (!equ->is_hermitian()) {
       printf("DENSITY MATRIX NOT HERMITIAN AT t = %4.2G ns\n", time/_ns);
       equ->print_density_matrix(stdout);
@@ -290,76 +308,6 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     }
     time += tStep;
   }
-  /*
-  printf("\n");
-  gsl_odeiv2_system sys = {update_func, NULL, equ->totalTerms, &(equ->data)};
-  gsl_odeiv2_driver *d = gsl_odeiv2_driver_alloc_y_new(&sys,
-                                                       gsl_odeiv2_step_rk8pd,
-                                                       1e-6, 1e-6, 0);
-  double i;
-  double t = 0.0;
-
-  fprintf(file, "%8.6G   ", t/_us);
-  if (strcmp(method.c_str(), "R") == 0) {
-    for (int j = 0; j < equ->totalTerms; j++) {
-      fprintf(file, "%5.3G   ", equ->population[j]);
-    }
-  }
-  if (strcmp(method.c_str(), "O") == 0) {
-    int index;
-    for (int g = 0; g < atom.numGStates; g++) {
-      index = g*((atom.numGStates*2)+2);
-      fprintf(file, "%5.3G    ", equ->population[index]);
-    }
-    int terms = atom.numGStates * atom.numGStates * 2;
-    for (int f = 0; f < atom.numFStates; f++) {
-      index = terms + f*((atom.numFStates*2)+2);
-      fprintf(file, "%5.3G    ", equ->population[index]);
-    }
-    terms += (atom.numFStates * atom.numFStates * 2);
-    for (int e = 0; e < atom.numEStates; e++) {
-      index = terms + e*((atom.numEStates*2)+2);
-      fprintf(file, "%5.3G   ", equ->population[index]);
-    }
-  }
-  fprintf(file, "\n");
-  printf("Starting loop\n tStep = %5.3G   tmax = %5.3G\n", tStep, tmax);
-  for (i = tStep; i < tmax; i += print_frequency) {
-    double ti = i;
-    int status = gsl_odeiv2_driver_apply(d, &t, ti, equ->population);
-    if (status != GSL_SUCCESS) {
-      printf("error, return value = %d\n", status);
-      break;
-    }
-    fprintf(file, "%8.6G   ", t/_us);
-    if (strcmp(method.c_str(), "R") == 0) {
-      for (int j = 0; j < equ->totalTerms; j++) {
-        fprintf(file, "%5.3G   ", equ->population[j]);
-      }
-    }
-    if (strcmp(method.c_str(), "O") == 0) {
-      int index;
-      for (int g = 0; g < atom.numGStates; g++) {
-        index = g*((atom.numGStates*2)+2);
-        fprintf(file, "%5.3G    ", equ->population[index]);
-      }
-      int terms = atom.numGStates * atom.numGStates * 2;
-      for (int f = 0; f < atom.numFStates; f++) {
-        index = terms + f*((atom.numFStates*2)+2);
-        fprintf(file, "%5.3G    ", equ->population[index]);
-      }
-      terms += (atom.numFStates * atom.numFStates * 2);
-      for (int e = 0; e < atom.numEStates; e++) {
-        index = terms + e*((atom.numEStates*2)+2);
-        fprintf(file, "%5.3G   ", equ->population[index]);
-      }
-    }
-    fprintf(file, "\n");
-  }
-  gsl_odeiv2_driver_free(d);
-  */
-  //  delete[] ground_IzJz_Decomp;
-  // delete[] excited_IzJz_Decomp;
   return 0;
 }
 

@@ -41,6 +41,7 @@ class OpticalPumping_Method {
   double set_coupling(int I2, int Jg2, int Fg2, int Mg2,
                       int Je2, int Fe2, int Me2, int q);
   void setup_pop_uniform_ground();
+  void switch_off_laser(int las); /* las = 1: g-->e; las = 2: f-->e */
 
   // Struct to hold atom, laser and eignenvector information
   Eigenvector_Helper eigen;

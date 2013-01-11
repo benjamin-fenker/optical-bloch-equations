@@ -30,7 +30,7 @@ Density_Matrix::Density_Matrix(Eigenvector_Helper set_eigen,
                                             gsl_complex_rect(0.0, 0.0))),
     ddelta_fg(numFStates, vector<gsl_complex>(numGStates,
                                             gsl_complex_rect(0.0, 0.0))) {
-  //  printf("DensityMatrix::Density_Matrix(...)\n\n");
+  // printf("DensityMatrix::Density_Matrix(...)\n\n");
   es_Zeeman = flags.zCoherences;
   gs_Zeeman = flags.zCoherences;
   es_hyperfine = flags.hfCoherences_ex;
@@ -485,7 +485,7 @@ void Density_Matrix::update_population(double dt) {
         // B. Dalton and P. Knight J. Phys. B 15 (1982) 3997-4015 (fig 2)
         // double real = M_PI*(laser_fe.linewidth + laser_ge.linewidth);
         // double real = M_PI*(laser_fe.linewidth + laser_ge.linewidth);
-        double real = 500.0;
+        double real = 500.0 * _Hz;
         double imag = 2*M_PI*((fabs(nu_F[f] - nu_G[g]))
                               - (laser_ge.nu - laser_fe.nu));
         gsl_complex decayTerm = gsl_complex_rect(real, imag);

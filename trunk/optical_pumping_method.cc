@@ -37,7 +37,7 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
                                              gsl_complex_rect(0.0, 0.0))),
     delta_fg(numFStates, vector<gsl_complex>(numGStates,
                                              gsl_complex_rect(0.0, 0.0))) {
-  //   printf("\nOpticalPumping_Method::OpticalPumping_Method(...)\n");
+  // printf("\nOpticalPumping_Method::OpticalPumping_Method(...)\n");
   if (op_verbose) {
     printf("G = %d F = %d E = %d\n", numGStates, numFStates, numEStates);
   }
@@ -542,11 +542,14 @@ void OpticalPumping_Method::print_density_matrix(FILE *des) {
   }
 }
 
-/*
-int OpticalPumping_Method::update_population_gsl(double t, const double y[],
-                                                 double f[], void *params) {
-  printf("OpticalPumping_Method::update_population_gsl\n");
-  printf("Nothing is happening!\n");
-  return -2;
+void OpticalPumping_Method::switch_off_laser(int las) {
+  printf("Turning off laser %d\n", las);
+  if (las == 1) {               // g --> e
+    laser_ge.switch_off(tau);   // Need tau for saturation intensity
+  } else if (las == 2) {        // f --> e
+    laser_fe.switch_off(tau);   // Need tau for saturation intensity
+  } else {
+    printf("***Warning***\nAttmpeting to switch off laser %d.", las);
+    printf(", but there is no such laser.  No action taken\n***Warning***\n");
+  }
 }
-*/
