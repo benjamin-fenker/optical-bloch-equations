@@ -43,6 +43,7 @@ class Laser_data {
   Laser_data(double nu, double power, double detune, double linewidth,
              double s3_over_s0, double tau);
   void set_saturation_intensity(double tau);
+  void switch_off(double tau);
   // and set I_sat in mW/cm^2
   double nu;  // Frequency of laser.  Energy = h * nu
   double power, intensity[3], field[3];

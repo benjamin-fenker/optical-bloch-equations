@@ -60,3 +60,13 @@ void Laser_data::set_intensity_components() {
     // printf("intensity[%d] = %8.6G mW/cm2\n", i, intensity[i]/(_mW/_cm2));
   }
 }
+
+void Laser_data::switch_off(double tau) {
+  power = 0.0;
+  set_saturation_intensity(tau);
+  for (int i = 0; i < 4; i++) {
+    stokes[i] = 0.0;
+  }
+  set_field_components();
+  set_intensity_components();
+}

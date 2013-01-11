@@ -11,7 +11,7 @@
 using std::string;
 
 bool op_verbose = false;
-char outFile[] = "opData_d.dat";
+char outFile[50] = "opData.dat";
 
 void readAndCheckFromFile(FILE *f, char *parameter, string *s) {
   char tempL[40] = "";
@@ -64,8 +64,8 @@ int main(int argc, char* argv[]) {
   printf("\n");
   string method = "O";  // O for OBE and R for Rate Equations
 
-  bool zCoherences = false;
-  bool hfCoherences_ex = false;
+  bool zCoherences = true;
+  bool hfCoherences_ex = true;
   bool hfCoherences_gr = true;
 
   double laser_fe_I = 200.0 * (_uW/_cm2);  // uW/cm^2
@@ -92,6 +92,8 @@ int main(int argc, char* argv[]) {
   double laser_fe_linewidth = 0.2 *_MHz;  // MHz (FWHM)
   double laser_ge_linewidth = 0.2 *_MHz;  // MHz (FWHM)
 
+  double laser_fe_offTime = -1;  // <0 implies always on
+  double laser_ge_offTime = -1;  // <0 implies aways on
   double B_z = 2.0 * _G;  // G
   double B_x = 0.0 * _G;  // G
   // *******************************
@@ -184,6 +186,10 @@ int main(int argc, char* argv[]) {
         readAndCheckFromFile(file, expectedInput, &laser_fe_detune);
         laser_fe_detune *= _MHz;            // Have to get the units right!
 
+        snprintf(expectedInput, sizeof(expectedInput), "laser_fe_offTime");
+        readAndCheckFromFile(file, expectedInput, &laser_fe_offTime);
+        laser_fe_offTime *= _ns;            // Have to get the units right!
+
         snprintf(expectedInput, sizeof(expectedInput), "laser_ge_power");
         readAndCheckFromFile(file, expectedInput, &laser_ge_I);
         laser_ge_I *= _uW/_cm2;            // Have to get the units right!
@@ -201,6 +207,10 @@ int main(int argc, char* argv[]) {
         snprintf(expectedInput, sizeof(expectedInput), "laser_ge_detune");
         readAndCheckFromFile(file, expectedInput, &laser_ge_detune);
         laser_ge_detune *= _MHz;            // Have to get the units right!
+
+        snprintf(expectedInput, sizeof(expectedInput), "laser_ge_offTime");
+        readAndCheckFromFile(file, expectedInput, &laser_ge_offTime);
+        laser_ge_offTime *= _ns;            // Have to get the units right!
 
         snprintf(expectedInput, sizeof(expectedInput), "B_z");
         readAndCheckFromFile(file, expectedInput, &B_z);
@@ -249,7 +259,8 @@ int main(int argc, char* argv[]) {
                            laser_fe_I, laser_ge_I, laser_fe_detune,
                            laser_ge_detune, laser_fe_linewidth,
                            laser_ge_linewidth, laser_fe_s3_over_s0,
-                           laser_ge_s3_over_s0, B_z);
+                           laser_ge_s3_over_s0, laser_fe_offTime,
+                           laser_ge_offTime, B_z);
   printf("\nCompleted with status = %d\n\n", status);
   return status;
 }

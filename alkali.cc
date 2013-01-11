@@ -130,7 +130,7 @@ double Alkali::getLaserFrequency(atom_data atom, magnetic_field_data field,
 double Alkali::getGamma(double tau, double laser_power) {
   // No power broadening yet.  Which I_laser do I use if they are different?
   // Which lambda do I use; they will be different!
-  double gamma = 1.0 / tau;
+  double gamma = (1.0 / tau);
   double one = laser_power / laser_power;
   gamma *= one;
   return gamma;
