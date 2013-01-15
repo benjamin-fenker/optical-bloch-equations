@@ -71,8 +71,9 @@ void Density_Matrix::update_population(double dt) {
   // Hyperfine coherences are off-diagonal where M_f = M_f`
   for (int e = 0; e < numEStates; e++) {
     for (int ep = 0; ep < numEStates; ep++) {
-      if ((e == ep) || (es_Zeeman && MFe2_Vector[e] == MFe2_Vector[ep]) ||
-          (es_hyperfine && Fe2_Vector[e] == Fe2_Vector[ep]) ||
+      if ((e == ep) ||
+          (es_hyperfine && MFe2_Vector[e] == MFe2_Vector[ep]) ||
+          (es_Zeeman && Fe2_Vector[e] == Fe2_Vector[ep]) ||
           (es_hyperfine && es_Zeeman)) {
         { // G-laser term
           gsl_complex q_sum = gsl_complex_rect(0.0, 0.0);
@@ -127,7 +128,7 @@ void Density_Matrix::update_population(double dt) {
           drho_ee[e][ep] = gsl_complex_add(drho_ee[e][ep], q_sum);
         }  // End F-Laser term (no loop or if, just an arbitrary block
         {  // Spontaneous decay term
-          double angFrequency = 2*M_PI*fabs(nu_E[e] - nu_E[ep]);
+          double angFrequency = 2*M_PI*(nu_E[e] - nu_E[ep]);
           gsl_complex sp_decay = gsl_complex_rect(data.atom.linewidth,
                                                   angFrequency);
           sp_decay = gsl_complex_mul(sp_decay, rho_ee[e][ep]);
@@ -142,7 +143,7 @@ void Density_Matrix::update_population(double dt) {
   for (int g = 0; g < numGStates; g++) {
     for (int gp = 0; gp < numGStates; gp++) {
       gsl_complex oCoherences = gsl_complex_rect(0.0, 0.0);
-      if ((g == gp) || (gs_Zeeman && MFg2_Vector[g] == MFg2_Vector[gp])) {
+      if ((g == gp) || (gs_Zeeman)) {
         for (int q = 0; q < 3; q +=2) {  // Only q = 0, 2 will have lasers
           gsl_complex qTerm = gsl_complex_rect(0.0, 0.0);
           for (int epp = 0; epp < numEStates; epp++) {
@@ -188,7 +189,7 @@ void Density_Matrix::update_population(double dt) {
             }    // End ep sum
           }      // End e sum
           spon_decay = gsl_complex_mul_real(spon_decay, data.atom.linewidth);
-          double angFrequency = 2*M_PI*fabs(nu_G[gp] - nu_G[g]);
+          double angFrequency = 2*M_PI*(nu_G[gp] - nu_G[g]);
           gsl_complex right = gsl_complex_mul_imag(rho_gg[g][gp],
                                                    angFrequency);
           spon_decay = gsl_complex_sub(spon_decay, right);
@@ -197,13 +198,12 @@ void Density_Matrix::update_population(double dt) {
       }  // End if coherences
     }    // End gp
   }      // End g
-
   // F-Ground states rho_ff:  Equation 33
   // Zeeman coherences are when f != f`
   for (int f = 0; f < numFStates; f++) {
     for (int fp = 0; fp < numFStates; fp++) {
       gsl_complex oCoherences = gsl_complex_rect(0.0, 0.0);
-      if ((f == fp) || (gs_Zeeman && MFf2_Vector[f] == MFf2_Vector[fp])) {
+      if ((f == fp) || (gs_Zeeman)) {
         for (int q = 0; q < 3; q += 2) {  // Only q = 0, 2 will have lasers
           gsl_complex qTerm = gsl_complex_rect(0.0, 0.0);
           for (int epp = 0; epp < numEStates; epp++) {
@@ -249,7 +249,7 @@ void Density_Matrix::update_population(double dt) {
             }    // End ep sum
           }      // End e sum
           spon_decay = gsl_complex_mul_real(spon_decay, data.atom.linewidth);
-          double angFrequency = 2*M_PI*fabs(nu_F[fp] - nu_F[f]);
+          double angFrequency = 2*M_PI*(nu_F[fp] - nu_F[f]);
           gsl_complex right = gsl_complex_mul_imag(rho_ff[f][fp],
                                                    angFrequency);
           spon_decay = gsl_complex_sub(spon_decay, right);
@@ -258,7 +258,6 @@ void Density_Matrix::update_population(double dt) {
       }  // End if doing coherences
     }    // End fp loop
   }      // End f loop
-
   // EG-Optical Coherences delta_eg:  Equation 36
   bool debug_eg = false;
   for (int e = 0; e < numEStates; e++) {
@@ -288,9 +287,6 @@ void Density_Matrix::update_population(double dt) {
       gLaser_term = gsl_complex_mul_imag(gLaser_term, 1.0/(2.0*_planck_hbar));
       ddelta_eg[e][g] = gsl_complex_add(ddelta_eg[e][g], gLaser_term);
 
-      // ***********************************************************************
-      // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ******
-      // ***********************************************************************
       // GS-Hyperfine coherence term
       if (gs_hyperfine) {
         gsl_complex dotProduct = gsl_complex_rect(0.0, 0.0);
@@ -311,9 +307,6 @@ void Density_Matrix::update_population(double dt) {
                                                           0.5/_planck_hbar);
         ddelta_eg[e][g] = gsl_complex_add(ddelta_eg[e][g], hyperfine_term);
       }  // End if gs_hyperfine
-      // ***********************************************************************
-      // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ******
-      // ***********************************************************************
 
       // Detuning term -i(\omega_eg - \omega_1)*\delta_eg
       double detune_d = -2*M_PI*((nu_E[e] - nu_G[g]) - laser_ge.nu);
@@ -353,9 +346,6 @@ void Density_Matrix::update_population(double dt) {
       fLaser_term = gsl_complex_mul_imag(fLaser_term, 1.0/(2.0*_planck_hbar));
       ddelta_ef[e][f] = gsl_complex_add(ddelta_ef[e][f], fLaser_term);
 
-      // ***********************************************************************
-      // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ******
-      // ***********************************************************************
       // GS-Hyperfine coherence term
       if (gs_hyperfine) {
         gsl_complex dotProduct = gsl_complex_rect(0.0, 0.0);
@@ -377,9 +367,6 @@ void Density_Matrix::update_population(double dt) {
                                                           0.5/_planck_hbar);
         ddelta_ef[e][f] = gsl_complex_add(ddelta_ef[e][f], hyperfine_term);
       }  // End if gs_hyperfine
-      // ***********************************************************************
-      // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ******
-      // ***********************************************************************
 
       // Detuning term -i(\omega_ef - \omega_1)*\delta_ef
       double detune_d = -2*M_PI*((nu_E[e] - nu_F[f]) - laser_fe.nu);
@@ -390,9 +377,6 @@ void Density_Matrix::update_population(double dt) {
     }  //  End f
   }    // End e
 
-  // ***************************************************************************
-  // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF **********
-  // ***************************************************************************
   // FG-Ground state hyperfine coherences: Equation 37
   if (gs_hyperfine) {
     bool debug_fg = false;
@@ -496,10 +480,6 @@ void Density_Matrix::update_population(double dt) {
       }   // End loop over g states
     }     // End loop over f states
   }       // End if doing gs_hyperine coherences
-  // ***************************************************************************
-  // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF **********
-  // ***************************************************************************
-
 
   for (int e = 0; e < numEStates; e++) {
     for (int ep = 0; ep < numEStates; ep++) {
@@ -526,16 +506,10 @@ void Density_Matrix::update_population(double dt) {
         rho_ff[f][fp] = gsl_complex_rect(0.0, 0.0);
       }
     }
-    // *************************************************************************
-    // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ********
-    // *************************************************************************
     for (int g = 0; g < numGStates; g++) {
       ddelta_fg[f][g] = gsl_complex_mul_real(ddelta_fg[f][g], dt);
       delta_fg[f][g] = gsl_complex_add(delta_fg[f][g], ddelta_fg[f][g]);
     }
-    // *************************************************************************
-    // *** NEW STUFF ****** NEW STUFF ****** NEW STUFF ****** NEW STUFF ********
-    // *************************************************************************
   }
   for (int g = 0; g < numGStates; g++) {
     for (int gp = 0; gp < numGStates; gp++) {

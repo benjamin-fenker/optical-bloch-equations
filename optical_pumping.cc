@@ -226,7 +226,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
       fprintf(file, "%d \t ", 0);
     }
     if (hfCoherences_ex) {
-      fprintf(file, "%d \t ", 1);
+      fprintf(file, "%d \n ", 1);
     } else {
       fprintf(file, "%d \n ", 0);
     }
@@ -297,7 +297,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     // **********************************************************************
     equ->update_population(tStep);  // **************************************
     // **********************************************************************
-
+    // equ->print_density_matrix(stdout);
     if (!equ->is_hermitian()) {
       printf("DENSITY MATRIX NOT HERMITIAN AT t = %4.2G ns\n", time/_ns);
       equ->print_density_matrix(stdout);
