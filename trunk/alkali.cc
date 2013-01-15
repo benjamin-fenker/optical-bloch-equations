@@ -78,7 +78,8 @@ int Alkali::lookupParameters(string isotope, int Je2, int* I2, double* Aj_g,
     set_Aj_g = (254.0/2.0)*_MHz;
     set_Aj_e = (30.5 /2.0)*_MHz;
     set_g_I = -0.00007790600;
-    set_tau = 26.37*_ns;
+    //    set_tau = 26.37*_ns;
+    set_tau = 26.69*_ns;
     double lambda = 770.1079191*_nm;
     if (Je2 == 3) {
       lambda = 766.70045870*_nm;

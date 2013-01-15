@@ -55,8 +55,6 @@ int Density_Matrix::update_population_gsl(double t, const double y[],
 void Density_Matrix::update_population(double dt) {
   reset_dPop();
   //  printf("DENSITY MATRIX!!!\n");
-  // The bare minimum is to include only diagonal matrix elements as well
-  // as the optical coherences.  Spontaneous decay will be included as well
   /*
   int e_check = 3;
   int g_check = 0;

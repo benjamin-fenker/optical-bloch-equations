@@ -1,25 +1,26 @@
-file opData.dat
+file zCoherences.dat
 method  O
 isotope 41K
 Je2 1
 tstep 0.1
-tmax 1200000
-zCoherences 0
+tmax 625000
+zCoherences 1
 hfCoherences_gr 1
 hfCoherences_ex 0
-laser_fe_power 600.0
+laser_fe_power 800.0
 laser_fe_s3 1.0
 laser_fe_linewidth 0.2
-laser_fe_nomTune 0
+laser_fe_nomTune 2
 laser_fe_detune 0.0
 laser_fe_offTime -1
-laser_ge_power 360.0
+laser_ge_power 580.0
 laser_ge_s3 1.0
 laser_ge_linewidth 0.2
-laser_ge_nomTune 0
+laser_ge_nomTune 2
 laser_ge_detune 0.0
 laser_ge_offTime -1
 B_z 1.51
 B_x 0.0
 
 Units must be ns, uW/cm^2, MHz, G where appropriate
+Laser offTime should be < 0 for 'always on' (the usual case)

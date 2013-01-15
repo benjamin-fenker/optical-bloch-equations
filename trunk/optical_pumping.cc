@@ -124,7 +124,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
 
   printf("\nLaser g->e (Laser 1) data:\n\tDetuned %5.2G MHz from the |",
          laser_ge.detune/_MHz);
-  printf("%i/2,%i> ---> |%i/2,%i>", tuned_G_F2, 0, tuned_E_F2, 0);
+  printf("%i/2,%i/2> ---> |%i/2,%i/2>", tuned_G_F2, nominalSublevelTune2_eg,
+         tuned_E_F2, nominalSublevelTune2_eg);
   printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
          laser_ge.nu/_MHz, laser_ge.linewidth/_MHz);
   printf("\tIntensity = %5.2G mW/cm^2\n", laser_ge.power/(_mW/_cm2));
@@ -136,7 +137,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
 
   printf("\nLaser f->e (Laser 2) data:\n\tDetuned %5.2G MHz from the |",
          laser_fe.detune/_MHz);
-  printf("%i/2,%i> ---> |%i/2,%i>", tuned_F_F2, 0, tuned_E_F2, 0);
+  printf("%i/2,%i/2> ---> |%i/2,%i/2>", tuned_F_F2, nominalSublevelTune2_ef,
+         tuned_E_F2, nominalSublevelTune2_ef);
   printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
          laser_fe.nu/_MHz, laser_fe.linewidth/_MHz);
   printf("\tIntensity = %5.2G mW/cm^2\n", laser_fe.power/(_mW/_cm2));
