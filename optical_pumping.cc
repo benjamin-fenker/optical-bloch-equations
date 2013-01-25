@@ -22,6 +22,7 @@
 using std::string;
 using std::max;
 extern char outFile[];
+extern bool op_batch;
 
 int OpticalPumping::pump(string isotope, string method, double tmax,
                          double tStep, bool zCoherences, bool hfCoherences_ex,
@@ -40,7 +41,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
 
   magnetic_field_data field;
   // **Physical constant**
-  printf("mu_B = %10.8G MHz/G\n", _bohr_magneton/_planck_h/(_MHz/_G));
+  // printf("mu_B = %10.8G MHz/G\n", _bohr_magneton/_planck_h/(_MHz/_G));
   field.B_z = set_B_z;
   field.B_x = 0.0;
 
@@ -76,12 +77,14 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   double laser_fe_nu = alk.getLaserFrequency(atom, field, tuned_F_F2,
                                              nominalSublevelTune2_ef,
                                              tuned_E_F2,
-                                             nominalSublevelTune2_ef,
+                                             // nominalSublevelTune2_ef,
+                                             tuned_E_F2,  // Tunes max sublevel
                                              laser_fe_detune);
   double laser_ge_nu = alk.getLaserFrequency(atom, field, tuned_G_F2,
                                              nominalSublevelTune2_eg,
                                              tuned_E_F2,
-                                             nominalSublevelTune2_eg,
+                                             // nominalSublevelTune2_eg,
+                                             tuned_E_F2,  // Tunes max sublevel
                                              laser_ge_detune);
 
   Laser_data laser_fe(laser_fe_nu, laser_fe_power, laser_fe_detune,
@@ -102,51 +105,54 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     return 2;
   }
 
-  printf("** OPTICAL PUMPING **\n");
-  printf("%s\n\n", longMethod.c_str());
+  if (!op_batch) {
+    printf("** OPTICAL PUMPING **\n");
+    printf("%s\n\n", longMethod.c_str());
 
-  printf("Pumping %s\n\tAs = %8.6G MHz \n ", isotope.c_str(), atom.Aj_g/_MHz);
-  printf("\tAp = %8.6G MHz \n \tg-Factor = %8.6G\n", atom.Aj_e/_MHz, atom.g_I);
-  printf("\tatom.nu_excited = %14.10G MHz\n", atom.nu_excited/_MHz);
-  if (atom.I2%2 == 0) {
-    printf("\tNuclear spin: %d \n", atom.I2/2);
-  } else {
-    printf("\tNuclear spin: %d/2 \n", atom.I2);
+    printf("Pumping %s\n\tAs = %8.6G MHz \n ", isotope.c_str(), atom.Aj_g/_MHz);
+    printf("\tAp = %8.6G MHz \n \tg-Factor = %8.6G\n", atom.Aj_e/_MHz,
+           atom.g_I);
+    printf("\tatom.nu_excited = %14.10G MHz\n", atom.nu_excited/_MHz);
+    if (atom.I2%2 == 0) {
+      printf("\tNuclear spin: %d \n", atom.I2/2);
+    } else {
+      printf("\tNuclear spin: %d/2 \n", atom.I2);
+    }
+    printf("\tG States: %i\tF States: %i\tE States %i\n\n",
+           atom.numGStates, atom.numFStates, atom.numEStates);
+
+
+    printf("\tTau: %5.2G ns\n\tgamma_spon = %5.2G MHz \n\n", atom.tau/_ns,
+           atom.gamma_spon/_MHz);
+    printf("Tmax: %8.1G ns \nTime Step: %4.2G ns \n", tmax/_ns, tStep/_ns);
+    printf("Magnetic Field: %4.2G G\n\n", field.B_z/_G);
+
+    printf("\nLaser g->e (Laser 1) data:\n\tDetuned %5.2G MHz from the |",
+           laser_ge.detune/_MHz);
+    printf("%i/2,%i/2> ---> |%i/2,%i/2>", tuned_G_F2, nominalSublevelTune2_eg,
+           tuned_E_F2, nominalSublevelTune2_eg);
+    printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
+           laser_ge.nu/_MHz, laser_ge.linewidth/_MHz);
+    printf("\tIntensity = %5.2G mW/cm^2\n", laser_ge.power/(_mW/_cm2));
+    printf("\ts3 = %5.3G V^2/m^2--> I = <%8.6G, %8.6G> mW/cm^2\n",
+           laser_ge.stokes[3]/(_V*_V/_m*_m), laser_ge.intensity[0]/(_mW/_cm2),
+           laser_ge.intensity[2]/(_mW/_cm2));
+    printf("\t                         E = <%8.6G, %8.6G> V/m\n",
+           laser_ge.field[0]/(_V/_m), laser_ge.field[2]/(_V/_m));
+
+    printf("\nLaser f->e (Laser 2) data:\n\tDetuned %5.2G MHz from the |",
+           laser_fe.detune/_MHz);
+    printf("%i/2,%i/2> ---> |%i/2,%i/2>", tuned_F_F2, nominalSublevelTune2_ef,
+           tuned_E_F2, nominalSublevelTune2_ef);
+    printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
+           laser_fe.nu/_MHz, laser_fe.linewidth/_MHz);
+    printf("\tIntensity = %5.2G mW/cm^2\n", laser_fe.power/(_mW/_cm2));
+    printf("\ts3 = %5.3G V^2/m^2 --> I = <%8.6G, %8.6G> mW/cm^2\n",
+           laser_fe.stokes[3]/(_V*_V/_m*_m), laser_fe.intensity[0]/(_mW/_cm2),
+           laser_fe.intensity[2]/(_mW/_cm2));
+    printf("\t                          E = <%8.6G, %8.6G> V/m\n\n",
+           laser_fe.field[0]/(_V/_m), laser_fe.field[2]/(_V/_m));
   }
-  printf("\tG States: %i\tF States: %i\tE States %i\n\n",
-         atom.numGStates, atom.numFStates, atom.numEStates);
-
-
-  printf("\tTau: %5.2G ns\n\tgamma_spon = %5.2G MHz \n\n", atom.tau/_ns,
-         atom.gamma_spon/_MHz);
-  printf("Tmax: %8.1G ns \nTime Step: %4.2G ns \n", tmax/_ns, tStep/_ns);
-  printf("Magnetic Field: %4.2G G\n\n", field.B_z/_G);
-
-  printf("\nLaser g->e (Laser 1) data:\n\tDetuned %5.2G MHz from the |",
-         laser_ge.detune/_MHz);
-  printf("%i/2,%i/2> ---> |%i/2,%i/2>", tuned_G_F2, nominalSublevelTune2_eg,
-         tuned_E_F2, nominalSublevelTune2_eg);
-  printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
-         laser_ge.nu/_MHz, laser_ge.linewidth/_MHz);
-  printf("\tIntensity = %5.2G mW/cm^2\n", laser_ge.power/(_mW/_cm2));
-  printf("\ts3 = %5.3G V^2/m^2--> I = <%8.6G, %8.6G> mW/cm^2\n",
-         laser_ge.stokes[3]/(_V*_V/_m*_m), laser_ge.intensity[0]/(_mW/_cm2),
-         laser_ge.intensity[2]/(_mW/_cm2));
-  printf("\t                         E = <%8.6G, %8.6G> V/m\n",
-         laser_ge.field[0]/(_V/_m), laser_ge.field[2]/(_V/_m));
-
-  printf("\nLaser f->e (Laser 2) data:\n\tDetuned %5.2G MHz from the |",
-         laser_fe.detune/_MHz);
-  printf("%i/2,%i/2> ---> |%i/2,%i/2>", tuned_F_F2, nominalSublevelTune2_ef,
-         tuned_E_F2, nominalSublevelTune2_ef);
-  printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
-         laser_fe.nu/_MHz, laser_fe.linewidth/_MHz);
-  printf("\tIntensity = %5.2G mW/cm^2\n", laser_fe.power/(_mW/_cm2));
-  printf("\ts3 = %5.3G V^2/m^2 --> I = <%8.6G, %8.6G> mW/cm^2\n",
-         laser_fe.stokes[3]/(_V*_V/_m*_m), laser_fe.intensity[0]/(_mW/_cm2),
-         laser_fe.intensity[2]/(_mW/_cm2));
-  printf("\t                          E = <%8.6G, %8.6G> V/m\n\n",
-         laser_fe.field[0]/(_V/_m), laser_fe.field[2]/(_V/_m));
 
   // Call function to retrieve vectors holding the Iz/Jz decomposotion of the
   // F, Mf eigenstates.
@@ -190,7 +196,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
 
   FILE * file;
   if (!debug) {
-    printf("Opening file...%s\n", outFile);
+    if (!op_batch) printf("Opening file...%s\n", outFile);
     file = fopen(outFile, "w");
     if (file == NULL) {
       printf("could not open file %s\n", outFile);
