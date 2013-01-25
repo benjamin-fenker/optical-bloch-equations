@@ -17,6 +17,7 @@
 
 using std::string;
 extern bool op_verbose;
+extern bool op_batch;
 
 Eigenvector_Helper::Eigenvector_Helper(atom_data set_atom,
                                        magnetic_field_data set_field)
@@ -69,9 +70,11 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
     printf("FATAL ERROR.  L MUST EQUAL 0 OR 1\n L = %d\n", L);
     exit(1);
   }
-  printf("Decomposing nuclear spin I = %i/2 for the L = %i ; ", atom.I2, L);
-  printf("J = %i/2 state.\n\tAj = %6.4G MHz\n", J2, Aj/_MHz);
-  printf("\tB = %6.4G z + %6.4G x G\n\n", field.B_z/_G, field.B_x/_G);
+  if (!op_batch) {
+    printf("Decomposing nuclear spin I = %i/2 for the L = %i ; ", atom.I2, L);
+    printf("J = %i/2 state.\n\tAj = %6.4G MHz\n", J2, Aj/_MHz);
+    printf("\tB = %6.4G z + %6.4G x G\n\n", field.B_z/_G, field.B_x/_G);
+  }
   int numBasisStates = (atom.I2 + 1)*(J2+1);
   // genAtomicState::numBasisStates = numBasisStates;
 

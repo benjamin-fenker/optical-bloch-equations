@@ -11,6 +11,8 @@
 using std::string;
 
 bool op_verbose = false;
+bool op_batch = false;
+
 char outFile[50] = "opData.dat";
 
 void readAndCheckFromFile(FILE *f, char *parameter, string *s) {
@@ -62,6 +64,10 @@ void readAndCheckFromFile(FILE *f, char *parameter, double *i) {
 
 int main(int argc, char* argv[]) {
   printf("\n");
+  if (op_batch && op_verbose) {
+    printf("Can't be both batch and verbose. See setup_optical_pumping.cc\n");
+    exit(1);
+  }
   string method = "O";  // O for OBE and R for Rate Equations
 
   bool zCoherences = true;
@@ -115,8 +121,12 @@ int main(int argc, char* argv[]) {
              laser_fe_detune/_MHz);
       printf("Seventh parameter is g --> e laser detune in MHz [%3.1G]\n",
              laser_ge_detune/_MHz);
-      printf("Eigth paramter is linewidth (both lasers) in MHz [%3.1G]\n",
+      printf("Eigth parameter is linewidth (both lasers) in MHz [%3.1G]\n",
              laser_fe_linewidth/_MHz);
+      printf("Ninth parameter is f --> e laser power in uW/cm^2 [%5.3G]\n",
+             laser_fe_I/(_uW/_cm2));
+      printf("Tenth parametr is g --> e laser power in uW/cm^2 [%5.3G]\n",
+             laser_ge_I/(_uW/_cm2));
       printf("\n\n");
       return 0;
     } else if (strcmp(argv[1], "-f") == 0) {  // accept input from file
@@ -240,8 +250,14 @@ int main(int argc, char* argv[]) {
                 if (argc > 7) {
                   laser_ge_detune = atof(argv[7]) * _MHz;
                   if (argc > 8) {
-                  laser_fe_linewidth = atof(argv[8]) *_MHz;
-                  laser_ge_linewidth = atof(argv[8]) *_MHz;
+                    laser_fe_linewidth = atof(argv[8]) *_MHz;
+                    laser_ge_linewidth = atof(argv[8]) *_MHz;
+                    if (argc > 9) {
+                      laser_fe_I = atof(argv[9]) * _uW/_cm2;
+                      if (argc > 10) {
+                        laser_ge_I = atof(argv[10]) * _uW/_cm2;
+                      }
+                    }
                   }
                 }
               }
@@ -251,7 +267,6 @@ int main(int argc, char* argv[]) {
       }
     }
   }
-
   OpticalPumping pumper;
   int status = pumper.pump(isotope, method, tmax, dt, zCoherences,
                            hfCoherences_ex, hfCoherences_gr, Je2,
@@ -263,4 +278,4 @@ int main(int argc, char* argv[]) {
                            laser_ge_offTime, B_z);
   printf("\nCompleted with status = %d\n\n", status);
   return status;
-}
+  }
