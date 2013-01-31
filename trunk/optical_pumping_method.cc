@@ -9,6 +9,7 @@
 #include "include/units.h"
 using std::vector;
 extern bool op_verbose;
+extern bool op_batch;
 OpticalPumping_Method::OpticalPumping_Method() {}
 OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
                                              Laser_data set_laser_fe,
@@ -460,14 +461,18 @@ void OpticalPumping_Method::print_data(FILE *des, double time) {
   double exc = get_excited_state_total();
 
   fprintf(des, "%8.6G\t", time/_us);
-  for (int g = 0; g < numGStates; g++) fprintf(des, "%8.6G\t",
-                                               GSL_REAL(rho_gg[g][g]));
-  for (int f = 0; f < numFStates; f++) fprintf(des, "%8.6G\t",
-                                               GSL_REAL(rho_ff[f][f]));
-  for (int e = 0; e < numEStates; e++) fprintf(des, "%8.6G\t",
-                                               GSL_REAL(rho_ee[e][e]));
-  fprintf(des, "%8.6G\t%8.6G\t%8.6G\t%8.6G", pop, pol, ali, exc);
-  fprintf(des, "\n");
+  if (op_batch) {
+    fprintf(des, "%8.6G\t", exc);
+  } else {
+    for (int g = 0; g < numGStates; g++) fprintf(des, "%8.6G\t",
+                                                 GSL_REAL(rho_gg[g][g]));
+    for (int f = 0; f < numFStates; f++) fprintf(des, "%8.6G\t",
+                                                 GSL_REAL(rho_ff[f][f]));
+    for (int e = 0; e < numEStates; e++) fprintf(des, "%8.6G\t",
+                                                 GSL_REAL(rho_ee[e][e]));
+    fprintf(des, "%8.6G\t%8.6G\t%8.6G\t%8.6G", pop, pol, ali, exc);
+  }
+    fprintf(des, "\n");
 }
 
 void OpticalPumping_Method::print_density_matrix(FILE *des) {

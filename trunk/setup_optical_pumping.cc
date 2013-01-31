@@ -11,7 +11,7 @@
 using std::string;
 
 bool op_verbose = false;
-bool op_batch = false;
+bool op_batch = true;
 
 char outFile[50] = "opData.dat";
 
@@ -63,12 +63,12 @@ void readAndCheckFromFile(FILE *f, char *parameter, double *i) {
 }
 
 int main(int argc, char* argv[]) {
-  printf("\n");
+  if (!op_batch) printf("\n");
   if (op_batch && op_verbose) {
     printf("Can't be both batch and verbose. See setup_optical_pumping.cc\n");
     exit(1);
   }
-  string method = "O";  // O for OBE and R for Rate Equations
+  string method = "R";  // O for OBE and R for Rate Equations
 
   bool zCoherences = true;
   bool hfCoherences_ex = true;
@@ -127,6 +127,10 @@ int main(int argc, char* argv[]) {
              laser_fe_I/(_uW/_cm2));
       printf("Tenth parametr is g --> e laser power in uW/cm^2 [%5.3G]\n",
              laser_ge_I/(_uW/_cm2));
+      printf("Eleventh parameter is g --> laser S3 parameter [%3.1G]\n",
+             laser_ge_s3_over_s0);
+      printf("Twelth parameter is f --> laser S3 parameter [%3.1G]\n",
+             laser_fe_s3_over_s0);
       printf("\n\n");
       return 0;
     } else if (strcmp(argv[1], "-f") == 0) {  // accept input from file
@@ -256,6 +260,12 @@ int main(int argc, char* argv[]) {
                       laser_fe_I = atof(argv[9]) * _uW/_cm2;
                       if (argc > 10) {
                         laser_ge_I = atof(argv[10]) * _uW/_cm2;
+                        if (argc > 11) {
+                          laser_fe_s3_over_s0 = atof(argv[11]);
+                          if (argc > 12) {
+                            laser_ge_s3_over_s0 = atof(argv[12]);
+                          }
+                        }
                       }
                     }
                   }
@@ -276,6 +286,6 @@ int main(int argc, char* argv[]) {
                            laser_ge_linewidth, laser_fe_s3_over_s0,
                            laser_ge_s3_over_s0, laser_fe_offTime,
                            laser_ge_offTime, B_z);
-  printf("\nCompleted with status = %d\n\n", status);
+  if (!op_batch) printf("\nCompleted with status = %d\n\n", status);
   return status;
   }
