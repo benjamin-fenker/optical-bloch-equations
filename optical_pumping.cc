@@ -182,7 +182,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // allowing the print frquency to be higher, matching the physics frequency
   // ******CAUTION******
 
-  const int max_out = 10000;  // Maximum number of time steps to write to a file
+  const int max_out = 1000;  // Maximum number of time steps to write to a file
   double print_frequency;  // Number of ns between print statements
   int total_print;  // Total number of print statements
   if (tmax/tStep <= max_out) {
@@ -195,49 +195,51 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // Setup File I/O for later use
 
   FILE * file;
+  file = fopen(outFile, "w");
   if (!debug) {
     if (!op_batch) printf("Opening file...%s\n", outFile);
-    file = fopen(outFile, "w");
     if (file == NULL) {
       printf("could not open file %s\n", outFile);
     }
-    // Print data for plotting
-    fprintf(file, "%d \t ", atom.numEStates+atom.numFStates+atom.numGStates);
-    fprintf(file, "%d \t %6.2G \t %d \t %d \t ", atom.numEStates, 1.0,
-            total_print, atom.I2);
-    fprintf(file, "%d \t 4.0\n", atom.Je2);
+    if (!op_batch) {
+      // Print data for plotting
+      fprintf(file, "%d \t ", atom.numEStates+atom.numFStates+atom.numGStates);
+      fprintf(file, "%d \t %6.2G \t %d \t %d \t ", atom.numEStates, 1.0,
+              total_print, atom.I2);
+      fprintf(file, "%d \t 4.0\n", atom.Je2);
 
-    // Print laser data
-    fprintf(file, "%4.2G \t %4.2G \t %4.2G \t %4.2G \t %d \t %4.2G \n ",
-            laser_fe.power/(_mW/_cm2), laser_fe.nu/_MHz,
-            laser_fe.detune/_MHz, laser_fe.stokes[3]/laser_fe.stokes[0],
-            nominalSublevelTune2_ef, laser_fe_offTime/_us);
-    fprintf(file, "%4.2G \t %4.2G \t %4.2G \t %4.2G \t %d \t %4.2G \n ",
-            laser_ge.power/(_mW/_cm2), laser_ge.nu/_MHz,
-            laser_ge.detune/_MHz, laser_ge.stokes[3]/laser_ge.stokes[0],
-            nominalSublevelTune2_eg, laser_ge_offTime/_us);
+      // Print laser data
+      fprintf(file, "%4.2G \t %4.2G \t %4.2G \t %4.2G \t %d \t %4.2G \n ",
+              laser_fe.power/(_mW/_cm2), laser_fe.nu/_MHz,
+              laser_fe.detune/_MHz, laser_fe.stokes[3]/laser_fe.stokes[0],
+              nominalSublevelTune2_ef, laser_fe_offTime/_us);
+      fprintf(file, "%4.2G \t %4.2G \t %4.2G \t %4.2G \t %d \t %4.2G \n ",
+              laser_ge.power/(_mW/_cm2), laser_ge.nu/_MHz,
+              laser_ge.detune/_MHz, laser_ge.stokes[3]/laser_ge.stokes[0],
+              nominalSublevelTune2_eg, laser_ge_offTime/_us);
 
-    // Print magnetic field data
-    fprintf(file, "%4.2G \t %4.2G \n", field.B_z/_G, field.B_x/_G);
+      // Print magnetic field data
+      fprintf(file, "%4.2G \t %4.2G \n", field.B_z/_G, field.B_x/_G);
 
-    // Print atomic data
-    if (zCoherences) {
-      fprintf(file, "%d \t ", 1);
-    } else {
-      fprintf(file, "%d \t ", 0);
+      // Print atomic data
+      if (zCoherences) {
+        fprintf(file, "%d \t ", 1);
+      } else {
+        fprintf(file, "%d \t ", 0);
+      }
+      if (hfCoherences_gr) {
+        fprintf(file, "%d \t ", 1);
+      } else {
+        fprintf(file, "%d \t ", 0);
+      }
+      if (hfCoherences_ex) {
+        fprintf(file, "%d \n ", 1);
+      } else {
+        fprintf(file, "%d \n ", 0);
+      }
+      fprintf(file, "%s\n", isotope.c_str());
+      fprintf(file, "%s\n", method.c_str());
     }
-    if (hfCoherences_gr) {
-      fprintf(file, "%d \t ", 1);
-    } else {
-      fprintf(file, "%d \t ", 0);
-    }
-    if (hfCoherences_ex) {
-      fprintf(file, "%d \n ", 1);
-    } else {
-      fprintf(file, "%d \n ", 0);
-    }
-    fprintf(file, "%s\n", isotope.c_str());
-    fprintf(file, "%s\n", method.c_str());
 
   } else {
     file = stdout;
@@ -281,9 +283,11 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   bool laser_fe_Off = false;
   bool laser_ge_Off = false;
   while (time < tmax) {
-    if ((fabs(time - nextUpdate))/_ns < pow(10, -2)) {
-      printf(" t = %8.6G ns\n", time/_ns);
-      nextUpdate += updateFreq;
+    if (!op_batch) {
+      if ((fabs(time - nextUpdate))/_ns < pow(10, -2)) {
+        printf(" t = %8.6G ns\n", time/_ns);
+        nextUpdate += updateFreq;
+      }
     }
     if ((fabs(time - nextPrint))/_ns < pow(10, -2)) {
       equ->print_data(file, time);
