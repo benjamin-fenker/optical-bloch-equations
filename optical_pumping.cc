@@ -65,7 +65,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   atom.numGStates = alk.getNumberOfGroundStates_g(atom.I2);
   atom.numBasisStates_ground = atom.numGStates + atom.numFStates;
   atom.numBasisStates_excited = atom.numEStates;
-  atom.linewidth = 1 / atom.tau;
+  atom.linewidth = 1.0 / (2*M_PI*atom.tau);
 
   // These will hold the F quantum number of the two ground and one excited
   // state that the lasers will be detuned from
@@ -77,14 +77,16 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   double laser_fe_nu = alk.getLaserFrequency(atom, field, tuned_F_F2,
                                              nominalSublevelTune2_ef,
                                              tuned_E_F2,
-                                             // nominalSublevelTune2_ef,
-                                             tuned_E_F2,  // Tunes max sublevel
+                                             nominalSublevelTune2_ef,
+                                             // tuned_E_F2,
+                                             // Tunes max sublevel
                                              laser_fe_detune);
   double laser_ge_nu = alk.getLaserFrequency(atom, field, tuned_G_F2,
                                              nominalSublevelTune2_eg,
                                              tuned_E_F2,
-                                             // nominalSublevelTune2_eg,
-                                             tuned_E_F2,  // Tunes max sublevel
+                                             nominalSublevelTune2_eg,
+                                             // tuned_E_F2,
+                                             // Tunes max sublevel
                                              laser_ge_detune);
 
   Laser_data laser_fe(laser_fe_nu, laser_fe_power, laser_fe_detune,
@@ -192,6 +194,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     print_frequency = tmax / static_cast<double>(max_out);
     total_print = max_out;
   }
+  // print_frequency = 0.2 * _us;
   // Setup File I/O for later use
 
   FILE * file;
