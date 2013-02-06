@@ -28,11 +28,13 @@ int Alkali::lookupParameters(string isotope, int Je2, int* I2, double* Aj_g,
       strcmp(isotope.c_str(), "37K") == 0 ) {
     // See Besch 1968 and DM Thesis
     set_I2 = 3;
-    set_Aj_g = 120.1336 *_MHz;
-    set_Aj_e = 14.45 *_MHz;
+    set_Aj_g = 120.15 *_MHz;            // Williamson97
+    set_Aj_e = 14.4 *_MHz;              // Williamson97
     set_g_I = .39094;
-    set_tau = 26.2 * _ns;
-    double lambda = 769.9 * _nm;  // m
+    // set_tau = (26.2 * _ns;
+    set_tau = (1./0.382E+08)*_s;        // 26.2 ns
+    // double lambda = 769.9 * _nm;  // m
+    double lambda = (1./12985.) * _cm;  // 770 nm
 
     if (Je2 == 3) {
       lambda = 766.7 * _nm;  // m
@@ -45,10 +47,10 @@ int Alkali::lookupParameters(string isotope, int Je2, int* I2, double* Aj_g,
              strcmp(isotope.c_str(), "38K") == 0 ) {
     // See Besch 1968 and DM Thesis
     set_I2 = 6;
-    set_Aj_g = 707.65 *_MHz;
-    set_Aj_e = 85.3 *_MHz;
+    set_Aj_g = 707.65 *_MHz;            // Williamson97
+    set_Aj_e = 85.3 *_MHz;              // Williamson97
     set_g_I = .2029;
-    set_tau = 26.2 * _ns;
+    set_tau = (1./0.382E+08)*_s;        // 26.2 ns
     double lambda = 769.9 * _nm;
 
     if (Je2 == 3) {
@@ -64,7 +66,7 @@ int Alkali::lookupParameters(string isotope, int Je2, int* I2, double* Aj_g,
     set_Aj_g = 707.65*_MHz;
     set_Aj_e = 85.3*_MHz;
     set_g_I = .2029;
-    set_tau = 26.2 * _ns;
+    set_tau = (1./0.382E+08)*_s;        // 26.2 ns
     double lambda = 769.9 * _nm;
     if (Je2 == 3) {
       lambda = 766.7 * _nm;
@@ -75,8 +77,8 @@ int Alkali::lookupParameters(string isotope, int Je2, int* I2, double* Aj_g,
   } else if (strcmp(isotope.c_str(), "K41") == 0 ||
             strcmp(isotope.c_str(), "41K") == 0 ) {
     set_I2 = 3;                 // Nuclear spin 3/2
-    set_Aj_g = (254.0/2.0)*_MHz;
-    set_Aj_e = (30.5 /2.0)*_MHz;
+    set_Aj_g = (254.0/2.0)*_MHz;        // Tiecke10
+    set_Aj_e = (30.5 /2.0)*_MHz;        // Tiecke10
     set_g_I = -0.00007790600;
     //    set_tau = 26.37*_ns;
     set_tau = 26.69*_ns;

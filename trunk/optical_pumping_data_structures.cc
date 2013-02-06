@@ -33,7 +33,7 @@ void Laser_data::set_saturation_intensity(double tau) {
   I_s /= pow(_speed_of_light, 2.0);
   I_s *= _planck_h * pow(nu, 3);
   saturation_intensity = I_s;
-  if (op_verbose) printf("I_s = %6.4G mW/cm^2\n", I_s/(_mW/_cm2));
+  if (op_verbose) printf("I_s = %10.8G mW/cm^2\n", I_s/(_mW/_cm2));
 }
 
 void Laser_data::set_field_components() {

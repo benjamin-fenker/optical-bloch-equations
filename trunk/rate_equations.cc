@@ -142,26 +142,30 @@ void Rate_Equations::setup_transition_rates(double linewidth) {
         if (op_verbose) {
           printf("|g=%d>-->|e=%d (%d)\t nu_eg = %14.10G MHz\t", g, e, q,
                  transition_freq/_MHz);
-          printf("nu_L = %14.10G MHz\t", laser_ge.nu/_MHz);
+          printf("nu_L = %14.10G MHz\n", laser_ge.nu/_MHz);
         }
+        // The tuned laser
         transition_rate_eg[e][g][q] = set_transition_rate(
-                                          laser_ge.intensity[q],
-                                          laser_ge.saturation_intensity,
-                                          linewidth, laser_ge.linewidth,
-                                          transition_freq, laser_ge.nu);
+            laser_ge.intensity[q], laser_ge.saturation_intensity, linewidth,
+            laser_ge.linewidth, transition_freq, laser_ge.nu);
+        // The other (off resonance) laser
+        transition_rate_eg[e][g][q] += set_transition_rate(
+            laser_fe.intensity[q], laser_fe.saturation_intensity, linewidth,
+            laser_fe.linewidth, transition_freq, laser_fe.nu);
       }  // End g-loop
       for (int f = 0; f < numFStates; f++) {
         double transition_freq = nu_E[e] - nu_F[f];
         if (op_verbose) {
           printf("|f=%d>-->|e=%d (%d)\t nu_eg = %14.10G MHz\t", f, e, q,
                  transition_freq);
-          printf("nu_L = %14.10G MHz\t", laser_fe.nu/_MHz);
+          printf("nu_L = %14.10G MHz\n", laser_fe.nu/_MHz);
         }
         transition_rate_ef[e][f][q] = set_transition_rate(
-                                          laser_fe.intensity[q],
-                                          laser_fe.saturation_intensity,
-                                          linewidth, laser_fe.linewidth,
-                                          transition_freq, laser_fe.nu);
+            laser_fe.intensity[q], laser_fe.saturation_intensity, linewidth,
+            laser_fe.linewidth, transition_freq, laser_fe.nu);
+        transition_rate_ef[e][f][q] += set_transition_rate(
+            laser_ge.intensity[q], laser_ge.saturation_intensity, linewidth,
+            laser_ge.linewidth, transition_freq, laser_ge.nu);
       }  // End f-loop
     }    // End e-loop
   }      // End q-loop
@@ -182,10 +186,15 @@ double Rate_Equations::set_transition_rate(double laser_power,
   // lorentzian = pow(laser_lw + atom_lw, 2.0);
   // Uncommenting the line above turns off the detuning factor
   lorentzian = (laser_lw + atom_lw)/lorentzian;
-  rate *= lorentzian;
+  rate *= lorentzian;                   // The right way
   if (op_verbose) {
-    printf("Detune = %8.6G MHz\tLorentzian = %8.6G ns\t rate = %8.6G MHz\n",
+    printf("\tDetune = %8.6G MHz\tLorentzian = %8.6G ns\t rate = %10.8G MHz\n",
            (fabs(laser_freq-atom_freq))/_MHz, lorentzian/_ns, rate/_MHz);
+    // printf("I_l: %8.6G wW/cm^2\t I_s = %8.6G mW/cm^2\t tau = %8.6G ns\t",
+    //        laser_power/(_mW/_cm2), sat_intensity/(_mW/_cm2),
+    //        (1.0/(2*M_PI*atom_lw))/_ns);
+    // printf("Compare to JB: %8.6G\n",
+    //        (laser_power*2*M_PI*atom_lw/2.0/sat_intensity)/_MHz);
   }
   return rate;
 }

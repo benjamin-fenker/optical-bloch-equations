@@ -1,5 +1,5 @@
-file 37K-OBE
-method  O
+file behr.dat
+method  R
 isotope 37K
 Je2 1
 tstep 0.1
@@ -7,19 +7,19 @@ tmax 100000
 zCoherences 0
 hfCoherences_gr 0
 hfCoherences_ex 0
-laser_fe_power 800.0
-laser_fe_s3 0.98
-laser_fe_linewidth 0.2
-laser_fe_nomTune 2
-laser_fe_detune 0.0
+laser_fe_power 200.0
+laser_fe_s3 0.8
+laser_fe_linewidth 0.0
+laser_fe_nomTune 0
+laser_fe_detune 1.0
 laser_fe_offTime -1
-laser_ge_power 580.0
-laser_ge_s3 0.98
-laser_ge_linewidth 0.2
-laser_ge_nomTune 2
-laser_ge_detune -0.5
+laser_ge_power 200.0
+laser_ge_s3 0.8
+laser_ge_linewidth 0.0
+laser_ge_nomTune 0
+laser_ge_detune 1.0
 laser_ge_offTime -1
-B_z 1.51
+B_z 2.0
 B_x 0.0
 
 Units must be ns, uW/cm^2, MHz, G where appropriate

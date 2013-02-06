@@ -10,8 +10,8 @@
 
 using std::string;
 
-bool op_verbose = false;
-bool op_batch = true;
+bool op_verbose = true;
+bool op_batch = false;
 
 char outFile[50] = "opData.dat";
 
@@ -70,6 +70,7 @@ int main(int argc, char* argv[]) {
   }
   string method = "R";  // O for OBE and R for Rate Equations
 
+  // These have to be `true' for the -f option to work correctly
   bool zCoherences = true;
   bool hfCoherences_ex = true;
   bool hfCoherences_gr = true;
