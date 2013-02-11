@@ -553,7 +553,7 @@ double Density_Matrix::set_dipole_moment(double gamma, double omega_ex,
            fabs(omega_ex-omega_gr)/_MHz);
     printf("dipole moment = %8.6G e*nm\t", dipole/(_elementary_charge*_nm));
     printf("laser rate = %8.6G MHz\n",
-           (dipole*data.laser_fe.field[1]/(2*_planck_hbar))/_MHz);
+           (dipole*data.laser_fe.field[2]/(2*_planck_hbar))/_MHz);
   }
   return dipole;
 }

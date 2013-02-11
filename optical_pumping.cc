@@ -194,7 +194,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     print_frequency = tmax / static_cast<double>(max_out);
     total_print = max_out;
   }
-  // print_frequency = 0.2 * _us;
+  if (op_batch) print_frequency = 0.2 * _us;
   // Setup File I/O for later use
 
   FILE * file;

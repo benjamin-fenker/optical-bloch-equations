@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
     printf("Can't be both batch and verbose. See setup_optical_pumping.cc\n");
     exit(1);
   }
-  string method = "R";  // O for OBE and R for Rate Equations
+  string method = "O";  // O for OBE and R for Rate Equations
 
   // These have to be `true' for the -f option to work correctly
   bool zCoherences = true;
