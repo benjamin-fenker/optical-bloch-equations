@@ -57,21 +57,24 @@ Float_t opModel(Double_t *time, Double_t *par) {
 
   // Penalties work better than bounds on parameters
   if (norm < 0.0) return -20.0;         // Big penalty
-  if (s3 < 0.0 || s3 > 1.0) return -25.0; // Big penalty
+  if (s3 <= 0.0 || s3 > 1.0) return -25.0; // Big penalty
   if (power < 0.0) return -30.0;          // Big penalty
 
   if (timeCorr > 0) {
     // printf("At time %g...", timeCorr);
-    if ((fabs(power - lastComputedPower)) > eps ||
-        (fabs(s3 - lastComputedS3)) > eps ||
-        (fabs(detune - lastComputedDetune))) {
+    // if ((fabs(power - lastComputedPower)) > eps ||
+    //     (fabs(s3 - lastComputedS3)) > eps ||
+    //     (fabs(detune - lastComputedDetune))) {
+    if ((power != lastComputedPower) ||
+        (s3 != lastComputedS3) ||
+        (detune != lastComputedDetune))  {
       numOPCodeCalls++;
       // Call my cpp-code again
       char command[200];
       snprintf(command, sizeof(command),
                "./opticalPumping 41K 1 %g 5 2.0 %g %g 0.2 %g %g %g %g",
                op_tmax*pow(10, 9), detune, detune, power, power, s3, s3);
-      printf("%s\n", command);
+      // printf("%s\n", command);
       gSystem -> Exec(command);
 
       FILE *fitFile = fopen("opData.dat", "r");
@@ -124,10 +127,10 @@ void fitOP() {
   runNumber = 99;  bgRunNumber = 101; negL = -0.1E-3; posL = 0.04E-3; posR = 0.0011;
   // runNumber = 100;  bgRunNumber = 102; negL = -0.1E-3; posL = 0.04E-3; posR = 0.0011;
   // runNumber = 105;  bgRunNumber = 103; negL = -20E-6; posL = 0.04E-3; posR = 0.22E-3;
-  // runNumber = 106;  bgRunNumber = 104; negL = -20E-6; posL = 0.04E-3; posR = 0.22E-3;
+  // runNumber = 106;  bgRunNumber = 104; negL = -20E-6; posL = 0.04E-3; posR = 0.22E-3;  // Sawtooth pattern
 
 
-  Bool_t shortie = kTRUE;                    // false --> long
+  Bool_t shortie = kFALSE;                    // false --> long
 
 
   char fileName[100];
@@ -173,7 +176,7 @@ void fitOP() {
   TF1 *posFit = new TF1("posFit", "[0]", posL, posR);
   bg -> Fit(posFit, "R");
   backgroundPlus = posFit -> GetParameter(0);
-
+  TF1 *sinFit = new TF1("sinFit", "[0]*sin(([1]*x)+[2])", 4E-6, 12E-6);
   TCanvas *c1 = new TCanvas("fit results", "fit", 40, 30, 700, 700);
   c1 -> Divide(1, 2);
   c1 -> cd(1);
@@ -191,7 +194,10 @@ void fitOP() {
 
   
   // Set tolerances and precision stuff
-  ROOT::Math::MinimizerOptions::SetDefaultPrecision(1E-9);
+  // ROOT::Math::MinimizerOptions::SetDefaultStrategy(0);
+  ROOT::Math::MinimizerOptions::SetDefaultPrintLevel(3);
+  ROOT::Math::MinimizerOptions::SetDefaultTolerance(1);
+  // ROOT::Math::MinimizerOptions::SetDefaultPrecision(1E-9);
   // ROOT::Math::MinimizerOptions::SetDefaultMaxFunctionCalls(10E30);
   // ROOT::Math::MinimizerOptions::SetDefaultMaxIterations(10E30);
 
@@ -214,15 +220,15 @@ void fitOP() {
                          "background", "t0", "detuning");
   // Set up power - don't use limits unless you have to!
   // fitFunc -> SetParLimits(kPower, 0.0, 10000.0);
-  fitFunc -> FixParameter(kPower, 420.392);
+  fitFunc -> SetParameter(kPower, 400);
 
   // Set up S3
   // fitFunc -> SetParLimits(kS3, 0.0, 1.0);
-  fitFunc -> SetParameter(kS3, 0.999047);
+  fitFunc -> SetParameter(kS3, 0.95);
 
   // Set up normalization
   // fitFunc -> SetParLimits(kNormalization, 0, 1000.0);
-  fitFunc -> SetParameter(kNormalization, 0.128206);
+  fitFunc -> FixParameter(kNormalization, 0.15);
 
   // Set up background
   fitFunc -> FixParameter(kBackground, 0.0);
@@ -233,7 +239,7 @@ void fitOP() {
   fitFunc -> FixParameter(kt_0, 0.0);
 
   // Set up the detuning
-  fitFunc -> SetParameter(kDetune, -0.738384);
+  fitFunc -> FixParameter(kDetune, -0.739874);
 
   // ...and do the fit
   TFitResultPtr r = dataGoodErrs -> Fit(fitFunc, "SBR");
