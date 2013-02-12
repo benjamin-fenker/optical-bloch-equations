@@ -35,7 +35,7 @@ Density_Matrix::Density_Matrix(Eigenvector_Helper set_eigen,
   gs_Zeeman = flags.zCoherences;
   es_hyperfine = flags.hfCoherences_ex;
   gs_hyperfine = flags.hfCoherences_gr;
-  setup_dipole_moments(1/eigen.atom.tau);
+  setup_dipole_moments(1.0/eigen.atom.tau);
   if (op_verbose) print_rabi_frequencies(stdout);
 }
 
@@ -129,7 +129,7 @@ void Density_Matrix::update_population(double dt) {
         }  // End F-Laser term (no loop or if, just an arbitrary block
         {  // Spontaneous decay term
           double angFrequency = 2*M_PI*(nu_E[e] - nu_E[ep]);
-          gsl_complex sp_decay = gsl_complex_rect(1.0/data.atom.tau,
+          gsl_complex sp_decay = gsl_complex_rect((1.0/data.atom.tau),
                                                   angFrequency);
           sp_decay = gsl_complex_mul(sp_decay, rho_ee[e][ep]);
           drho_ee[e][ep] = gsl_complex_sub(drho_ee[e][ep], sp_decay);
@@ -188,7 +188,7 @@ void Density_Matrix::update_population(double dt) {
               }  // End if M_f sublevels satisfy m_e - m_e` = m_f - m_f`
             }    // End ep sum
           }      // End e sum
-          spon_decay = gsl_complex_mul_real(spon_decay, 1.0/data.atom.tau);
+          spon_decay = gsl_complex_mul_real(spon_decay, ((1.0/data.atom.tau)));
           double angFrequency = 2*M_PI*(nu_G[gp] - nu_G[g]);
           gsl_complex right = gsl_complex_mul_imag(rho_gg[g][gp],
                                                    angFrequency);
@@ -248,7 +248,7 @@ void Density_Matrix::update_population(double dt) {
               }  // End if M_f sublevels satisfy m_e - m_e` = m_f - m_f`
             }    // End ep sum
           }      // End e sum
-          spon_decay = gsl_complex_mul_real(spon_decay, 1.0/data.atom.tau);
+          spon_decay = gsl_complex_mul_real(spon_decay, ((1.0/data.atom.tau)));
           double angFrequency = 2*M_PI*(nu_F[fp] - nu_F[f]);
           gsl_complex right = gsl_complex_mul_imag(rho_ff[f][fp],
                                                    angFrequency);
@@ -310,7 +310,8 @@ void Density_Matrix::update_population(double dt) {
 
       // Detuning term -i(\omega_eg - \omega_1)*\delta_eg
       double detune_d = -2*M_PI*((nu_E[e] - nu_G[g]) - laser_ge.nu);
-      double linewidth = -M_PI*((1.0/data.atom.tau) + laser_ge.linewidth);
+      double linewidth = -0.5*((1.0/data.atom.tau) +
+                               (2*M_PI*laser_ge.linewidth));
       gsl_complex detune_g = gsl_complex_rect(linewidth, detune_d);
       detune_g = gsl_complex_mul(detune_g, delta_eg[e][g]);
       ddelta_eg[e][g] = gsl_complex_add(ddelta_eg[e][g], detune_g);
@@ -370,7 +371,8 @@ void Density_Matrix::update_population(double dt) {
 
       // Detuning term -i(\omega_ef - \omega_1)*\delta_ef
       double detune_d = -2*M_PI*((nu_E[e] - nu_F[f]) - laser_fe.nu);
-      double linewidth = -M_PI*((1.0/data.atom.tau) + laser_fe.linewidth);
+      double linewidth = -0.5*((1.0/data.atom.tau) +
+                               (2.0*M_PI*laser_fe.linewidth));
       gsl_complex detune_f = gsl_complex_rect(linewidth, detune_d);
       detune_f = gsl_complex_mul(detune_f, delta_ef[e][f]);
       ddelta_ef[e][f] = gsl_complex_add(ddelta_ef[e][f], detune_f);
