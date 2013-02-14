@@ -203,9 +203,9 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   gsl_matrix_complex_scale(Hbz, g_Ip);
 
   gsl_matrix_complex_add(tempz, &J_z_view.matrix);
-  if (debug) printf("Scaling Jz by g_J = %8.6G\n\n", calc_gj(1.0, L*2, 1.0));
+  if (debug) printf("Scaling Jz by g_J = %8.6G\n\n", calc_gj(1, L*2, 1));
   gsl_matrix_complex_scale(tempz,
-                           gsl_complex_rect(calc_gj(1.0, L*2, 1.0), 0.0));
+                           gsl_complex_rect(calc_gj(1, L*2, 1), 0.0));
 
   gsl_matrix_complex_add(Hbz, tempz);
   gsl_matrix_complex_scale(Hbz,
