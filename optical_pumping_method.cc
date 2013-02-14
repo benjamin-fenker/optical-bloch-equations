@@ -463,7 +463,7 @@ void OpticalPumping_Method::print_data(FILE *des, double time) {
 
   if (op_batch) {
     fprintf(des, "%26.24G\t", time/_us);
-    fprintf(des, "%26.24G\t", exc);
+    fprintf(des, "%26.24G\t%26.24G\t%26.24G", exc, pol, ali);
   } else {
     fprintf(des, "%8.6G\t", time/_us);
     for (int g = 0; g < numGStates; g++) fprintf(des, "%8.6G\t",
