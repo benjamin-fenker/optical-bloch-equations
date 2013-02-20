@@ -10,8 +10,8 @@
 
 using std::string;
 
-bool op_verbose = false;
-bool op_batch = true;
+bool op_verbose = true;
+bool op_batch = false;
 
 char outFile[50] = "opData.dat";
 
@@ -266,10 +266,10 @@ int main(int argc, char* argv[]) {
                           laser_fe_s3_over_s0 = atof(argv[11]);
                           if (argc > 12) {
                             laser_ge_s3_over_s0 = atof(argv[12]);
-			    if (argc > 13) {
-			      snprintf(outFile, sizeof(outFile), "%s",
-				       argv[13]);
-			    }
+                            if (argc > 13) {
+                              snprintf(outFile, sizeof(outFile), "%s",
+                                       argv[13]);
+                            }
                           }
                         }
                       }

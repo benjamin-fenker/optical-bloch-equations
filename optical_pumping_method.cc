@@ -560,3 +560,11 @@ void OpticalPumping_Method::switch_off_laser(int las) {
     printf(", but there is no such laser.  No action taken\n***Warning***\n");
   }
 }
+
+void OpticalPumping_Method::change_magnetic_field(double newField) {
+  eigen.field.B_z = newField;
+  setup_frequencies_excited(eigen.atom, eigen.field);
+  setup_frequencies_ground(eigen.atom, eigen.field);
+  eigen.IzJz_decomp_ground = eigen.diagH(0);
+  eigen.IzJz_decomp_excited = eigen.diagH(1);
+}
