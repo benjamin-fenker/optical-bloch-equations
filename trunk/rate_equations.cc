@@ -190,11 +190,11 @@ double Rate_Equations::set_transition_rate(double laser_power,
   if (op_verbose) {
     printf("\tDetune = %8.6G MHz\tLorentzian = %8.6G ns\t rate = %10.8G MHz\n",
            (fabs(laser_freq-atom_freq))/_MHz, lorentzian/_ns, rate/_MHz);
-    // printf("I_l: %8.6G wW/cm^2\t I_s = %8.6G mW/cm^2\t tau = %8.6G ns\t",
-    //        laser_power/(_mW/_cm2), sat_intensity/(_mW/_cm2),
-    //        (1.0/(2*M_PI*atom_lw))/_ns);
-    // printf("Compare to JB: %8.6G\n",
-    //        (laser_power*2*M_PI*atom_lw/2.0/sat_intensity)/_MHz);
   }
   return rate;
+}
+
+void Rate_Equations::switch_off_laser(int las) {
+  OpticalPumping_Method::switch_off_laser(las);
+  setup_transition_rates(eigen.atom.linewidth);
 }
