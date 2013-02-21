@@ -10,8 +10,8 @@
 
 using std::string;
 
-bool op_verbose = true;
-bool op_batch = false;
+bool op_verbose = false;
+bool op_batch = true;
 
 char outFile[50] = "opData.dat";
 

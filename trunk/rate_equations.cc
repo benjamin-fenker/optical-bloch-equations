@@ -198,3 +198,8 @@ void Rate_Equations::switch_off_laser(int las) {
   OpticalPumping_Method::switch_off_laser(las);
   setup_transition_rates(eigen.atom.linewidth);
 }
+
+void Rate_Equations::change_magnetic_field(double newField) {
+  OpticalPumping_Method::change_magnetic_field(newField);
+  setup_transition_rates(eigen.atom.linewidth);
+}

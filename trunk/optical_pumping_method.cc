@@ -562,6 +562,7 @@ void OpticalPumping_Method::switch_off_laser(int las) {
 }
 
 void OpticalPumping_Method::change_magnetic_field(double newField) {
+  // printf("OP::change_magnetic_field\n");
   eigen.field.B_z = newField;
   setup_frequencies_excited(eigen.atom, eigen.field);
   setup_frequencies_ground(eigen.atom, eigen.field);

@@ -28,6 +28,7 @@ class Rate_Equations: public OpticalPumping_Method {
                              double atom_freq, double laser_freq);
   void update_population(double dt);
   void switch_off_laser(int las);
+  void change_magnetic_field(double newfield);
   static int update_population_gsl(double t, const double y[],
                                double dydt[], void *params);
   static int jacobian(double t, const double y[], double *dfdy, double dfdt[],

@@ -70,7 +70,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
     printf("FATAL ERROR.  L MUST EQUAL 0 OR 1\n L = %d\n", L);
     exit(1);
   }
-  if (!op_batch) {
+  if (op_verbose) {
     printf("Decomposing nuclear spin I = %i/2 for the L = %i ; ", atom.I2, L);
     printf("J = %i/2 state.\n\tAj = %6.4G MHz\n", J2, Aj/_MHz);
     printf("\tB = %6.4G z + %6.4G x G\n\n", field.B_z/_G, field.B_x/_G);

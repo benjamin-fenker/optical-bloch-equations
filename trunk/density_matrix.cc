@@ -631,3 +631,8 @@ void Density_Matrix::reset_dPop() {
     }
   }
 }
+
+ void Density_Matrix::change_magnetic_field(double newfield) {
+   OpticalPumping_Method::change_magnetic_field(newfield);
+   setup_dipole_moments(1.0/eigen.atom.tau);   
+ }

@@ -307,6 +307,9 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
       printf("Switching off fe laser at time = %6.4G ns\n", time/_ns);
       equ -> switch_off_laser(2);
     }
+    if (time > -2.0*_ns) {
+      // equ -> change_magnetic_field(0.0);
+    }
     // **********************************************************************
     equ->update_population(tStep);  // **************************************
     // **********************************************************************
