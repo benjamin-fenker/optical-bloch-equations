@@ -26,6 +26,10 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
                                              vector<double>(3, 0.0))),
     a_ef(numEStates, vector<vector<double> >(numFStates,
                                              vector<double>(3, 0.0))),
+    gFactor_E(numEStates, 0.0), cPlus_E(numEStates, 0.0),
+    cPlus_F(numFStates, 0.0), cPlus_G(numGStates, 0.0),
+    cMins_E(numEStates, 0.0), cMins_F(numFStates, 0.0),
+    cMins_G(numGStates, 0.0),
     rho_ee(numEStates, vector<gsl_complex>(numEStates,
                                            gsl_complex_rect(0.0, 0.0))),
     rho_ff(numFStates, vector<gsl_complex>(numFStates,
@@ -43,6 +47,9 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
     printf("G = %d F = %d E = %d\n", numGStates, numFStates, numEStates);
   }
   setup_quantum_numbers(eigen.atom);
+  setup_raising();
+  setup_lowering();
+  setup_gFactors(eigen.atom);
   setup_frequencies_excited(eigen.atom, eigen.field);
   setup_frequencies_ground(eigen.atom, eigen.field);
   setup_eg_coupling(eigen.atom);
@@ -107,13 +114,23 @@ void OpticalPumping_Method::setup_quantum_numbers(atom_data atom) {
   setup_quantum_numbers(atom.I2, atom.Je2);
 }
 
+void OpticalPumping_Method::setup_gFactors(atom_data atom) {
+  Eigenvector_Helper alk;
+  gFactor_G = alk.calc_gf(Fg2_Vector[0], 1, atom.I2, 0, 1, atom.g_I);
+  gFactor_F = alk.calc_gf(Ff2_Vector[0], 1, atom.I2, 0, 1, atom.g_I);
+  for (int e = 0; e < numEStates; e++) {
+    gFactor_E[e] = alk.calc_gf(Fe2_Vector[e], atom.Je2, atom.I2, 2, 1,
+                               atom.g_I);
+    printf("E-state[%d] g-Factor %g\n", e, gFactor_E[e]);
+  }
+}
 void OpticalPumping_Method::setup_frequencies_excited(int I2, int Je2,
                                                       double excitation,
                                                       double hyperfine_const,
-                                                      double g_I, double B_z) {
+                                                      double B_z) {
   for (int e = 0; e < numEStates; e++) {
     nu_E[e] = set_frequency(excitation, I2, Je2, Fe2_Vector[e], MFe2_Vector[e],
-                            2, hyperfine_const, g_I, B_z);
+                            hyperfine_const, B_z, gFactor_E[e]);
   }
 }
 
@@ -121,36 +138,33 @@ void OpticalPumping_Method::setup_frequencies_excited(
                                atom_data atom,
                                magnetic_field_data field) {
   setup_frequencies_excited(atom.I2, atom.Je2, atom.nu_excited, atom.Aj_e,
-                            atom.g_I, field.B_z);
+                            field.B_z);
 }
 
 void OpticalPumping_Method::setup_frequencies_ground(int I2,
                                                      double hyperfine_const,
-                                                     double g_I, double B_z) {
+                                                     double B_z) {
   for (int g = 0; g < numGStates; g++) {
-    nu_G[g] = set_frequency(0.0, I2, 1, Fg2_Vector[g], MFg2_Vector[g], 0,
-                            hyperfine_const, g_I, B_z);
+    nu_G[g] = set_frequency(0.0, I2, 1, Fg2_Vector[g], MFg2_Vector[g],
+                            hyperfine_const, B_z, gFactor_G);
   }
   for (int f = 0; f < numFStates; f++) {
-    nu_F[f] = set_frequency(0.0, I2, 1, Ff2_Vector[f], MFf2_Vector[f], 0,
-                            hyperfine_const, g_I, B_z);
+    nu_F[f] = set_frequency(0.0, I2, 1, Ff2_Vector[f], MFf2_Vector[f],
+                            hyperfine_const, B_z, gFactor_F);
   }
 }
 
 void OpticalPumping_Method::setup_frequencies_ground(
                                 atom_data atom,
                                 magnetic_field_data field) {
-  setup_frequencies_ground(atom.I2, atom.Aj_g, atom.g_I, field.B_z);
+  setup_frequencies_ground(atom.I2, atom.Aj_g, field.B_z);
 }
 
 double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
-                                            int F2, int Mf2, int L2,
+                                            int F2, int Mf2,
                                             double hyperfine_const,
-                                            double g_I, double B_z) const {
+                                            double B_z, double g_f) {
   bool debug = false;
-  Eigenvector_Helper alk;
-  double g_f = alk.calc_gf(F2, J2, I2, L2, 1, g_I);
-
   // See DM equation 3.7
   double hyperfine = static_cast<double>((F2*(F2+2)) - (I2*(I2+2)) -
                                          (J2*(J2+2)));
@@ -164,6 +178,15 @@ double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
   if (debug) printf("Total: %15.10G MHz\n",
                     (excitation + hyperfine + zeeman)/_MHz);
   return (excitation + hyperfine + zeeman);
+}
+
+double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
+                                            int F2, int Mf2, int L2,
+                                            double hyperfine_const,
+                                            double g_I, double B_z) {
+  Eigenvector_Helper alk;
+  double g_f = alk.calc_gf(F2, J2, I2, L2, 1, g_I);
+  return set_frequency(excitation, I2, J2, F2, Mf2, hyperfine_const, B_z, g_f);
 }
 
 void OpticalPumping_Method::setup_eg_coupling(int I2, int Je2) {
@@ -211,6 +234,42 @@ double OpticalPumping_Method::set_coupling(int I2, int Jg2, int Fg2, int Mg2,
   coupling *= gsl_sf_coupling_3j(Fe2, 2, Fg2, -Me2, q, Mg2);
   coupling *= gsl_sf_coupling_6j(Fe2, 2, Fg2, Jg2, I2, Je2);
   return coupling;
+}
+
+void OpticalPumping_Method::setup_raising() {
+  for (int e = 0; e < numEStates; e++) {
+    cPlus_E[e] = set_raising(Fe2_Vector[e], MFe2_Vector[e]);
+  }
+  for (int f = 0; f < numFStates; f++) {
+    cPlus_F[f] = set_raising(Ff2_Vector[f], MFf2_Vector[f]);
+  }
+  for (int g = 0; g < numGStates; g++) {
+    cPlus_G[g] = set_raising(Fg2_Vector[g], MFg2_Vector[g]);
+  }
+}
+
+void OpticalPumping_Method::setup_lowering() {
+  for (int e = 0; e < numEStates; e++) {
+    cMins_E[e] = set_lowering(Fe2_Vector[e], MFe2_Vector[e]);
+  }
+  for (int f = 0; f < numFStates; f++) {
+    cMins_F[f] = set_lowering(Ff2_Vector[f], MFf2_Vector[f]);
+  }
+  for (int g = 0; g < numGStates; g++) {
+    cMins_G[g] = set_lowering(Fg2_Vector[g], MFg2_Vector[g]);
+  }
+}
+
+double OpticalPumping_Method::set_raising(int F2, int M2) {
+  double F = (static_cast<double>(F2))/2.0;
+  double M = (static_cast<double>(M2))/2.0;
+  return sqrt((F-M)*(F+M+1));
+}
+
+double OpticalPumping_Method::set_lowering(int F2, int M2) {
+  double F = (static_cast<double>(F2))/2.0;
+  double M = (static_cast<double>(M2))/2.0;
+  return sqrt((F+M)*(F-M+1));
 }
 
 void OpticalPumping_Method::setup_pop_uniform_ground() {
