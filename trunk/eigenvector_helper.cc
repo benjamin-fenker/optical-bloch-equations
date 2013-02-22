@@ -51,7 +51,7 @@ Eigenvector_Helper::Eigenvector_Helper(atom_data set_atom,
 }
 
 vector<vector<double> > Eigenvector_Helper::diagH(int L) {
-  bool debug = false;
+  bool debug = true;
   // Figure out some parameters to use based on J
   int J2;
   double Aj;
@@ -153,7 +153,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   }
   if (debug) {
     for (int i = 0; i < (2*numBasisStates*numBasisStates) -1; i+=2) {
-      printf("%6.4G", I_z[i]);
+      printf("%6.4G", J_plus[i]);
       if ((i+2) %(2*numBasisStates) == 0) {
         printf("\n");
       }

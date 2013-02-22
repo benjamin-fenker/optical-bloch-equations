@@ -23,23 +23,30 @@ class OpticalPumping_Method {
   virtual ~OpticalPumping_Method();
   void setup_quantum_numbers(int I2, int J2);
   void setup_quantum_numbers(atom_data atom);
+  void setup_gFactors(atom_data atom);
   void setup_frequencies_excited(int I2, int Je2, double excitation,
-                                 double hyperfine_const, double g_I,
+                                 double hyperfine_const,
                                  double B_z);
   void setup_frequencies_excited(atom_data atom, magnetic_field_data field);
-  void setup_frequencies_ground(int I2, double hyperfine_const, double g_I,
+  void setup_frequencies_ground(int I2, double hyperfine_const,
                                 double B_z);
   void setup_frequencies_ground(atom_data atom, magnetic_field_data field);
   /* const guarantees that this won't change the state */
   double set_frequency(double excitation, int I2, int J2, int F2, int Mf2,
                        int L2, double hyperfine_const, double g_I,
-                       double B_z) const;
+                       double B_z);
+  double set_frequency(double excitation, int I2, int J2, int F2, int Mf2,
+                       double hyperfine_const, double B_z, double _gf);
   void setup_eg_coupling(int I2, int Je2);
   void setup_eg_coupling(atom_data atom);
   void setup_ef_coupling(int I2, int Je2);
   void setup_ef_coupling(atom_data atom);
   double set_coupling(int I2, int Jg2, int Fg2, int Mg2,
                       int Je2, int Fe2, int Me2, int q);
+  void setup_raising();
+  void setup_lowering();
+  double set_raising(int F2, int M2);
+  double set_lowering(int F2, int M2);
   void setup_pop_uniform_ground();
   virtual void switch_off_laser(int las); /* las = 1: g-->e; las = 2: f-->e */
   virtual void change_magnetic_field(double newField);
@@ -101,6 +108,22 @@ class OpticalPumping_Method {
   // in evaluating the reduced matrix element.  Perhaps similarly with Metcalf
   vector<vector<vector<double> > > a_eg;
   vector<vector<vector<double> > > a_ef;
+
+  /* Gyromagetic factor for each state */
+  vector<double> gFactor_E;     /* Different g-Factor for each F-manifold    */
+  double gFactor_F;             /* All have F = I + 1/2 so g-factor the same */
+  double gFactor_G;             /* All have F = I - 1/2 so g-factor the same */
+
+  /* Raising and lowering eigenvalues for each state
+     (see Renzoni 2001, below 2c.  Store them here so don't have to calculate
+     them at every time step */
+  vector<double> cPlus_E;
+  vector<double> cPlus_F;
+  vector<double> cPlus_G;
+
+  vector<double> cMins_E;
+  vector<double> cMins_F;
+  vector<double> cMins_G;
 
   /* Density matrix is broken up into siz parts to match T&J.  
      1st part is rho_ee which will hold the excited state population on the
