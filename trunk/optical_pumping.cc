@@ -34,7 +34,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                          double laser_fe_linewidth, double laser_ge_linewidth,
                          double laser_fe_s3_over_s0, double laser_ge_s3_over_s0,
                          double laser_fe_offTime, double laser_ge_offTime,
-                         double set_B_z) {
+                         double set_B_z, double set_B_x) {
   bool debug = false;
   atom_data atom;
   atom.Je2 = temp_Je2;
@@ -43,7 +43,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // **Physical constant**
   // printf("mu_B = %10.8G MHz/G\n", _bohr_magneton/_planck_h/(_MHz/_G));
   field.B_z = set_B_z;
-  field.B_x = 0.0;
+  field.B_x = set_B_x;
 
   coherence_flags flags;
   flags.zCoherences = zCoherences;
