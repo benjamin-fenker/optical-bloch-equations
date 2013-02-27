@@ -10,7 +10,7 @@
 
 using std::string;
 
-bool op_verbose = true;
+bool op_verbose = false;
 bool op_batch = false;
 
 char outFile[50] = "opData.dat";
@@ -117,22 +117,23 @@ int main(int argc, char* argv[]) {
              Je2);
       printf("Third parameter is tmax in ns [%3.1G]\n", tmax/_ns);
       printf("Fourth paramter is dt in ns [%3.1G]\n", dt/_ns);
-      printf("Fifth parameter is B_ext in G [%3.1G]\n", B_z/_G);
-      printf("Sixth parameter is f --> e laser detune in MHz [%3.1G]\n",
+      printf("Fifth parameter is B_z in G [%3.1G]\n", B_z/_G);
+      printf("Sixth parameter is B_x in G [%3.1G]\n", B_x/_G);
+      printf("Seventh parameter is f --> e laser detune in MHz [%3.1G]\n",
              laser_fe_detune/_MHz);
-      printf("Seventh parameter is g --> e laser detune in MHz [%3.1G]\n",
+      printf("Eigth parameter is g --> e laser detune in MHz [%3.1G]\n",
              laser_ge_detune/_MHz);
-      printf("Eigth parameter is linewidth (both lasers) in MHz [%3.1G]\n",
+      printf("Ninth parameter is linewidth (both lasers) in MHz [%3.1G]\n",
              laser_fe_linewidth/_MHz);
-      printf("Ninth parameter is f --> e laser power in uW/cm^2 [%5.3G]\n",
+      printf("Tenth parameter is f --> e laser power in uW/cm^2 [%5.3G]\n",
              laser_fe_I/(_uW/_cm2));
-      printf("Tenth parametr is g --> e laser power in uW/cm^2 [%5.3G]\n",
+      printf("Eleventh parametr is g --> e laser power in uW/cm^2 [%5.3G]\n",
              laser_ge_I/(_uW/_cm2));
-      printf("Eleventh parameter is g --> laser S3 parameter [%3.1G]\n",
+      printf("Twelth parameter is g --> laser S3 parameter [%3.1G]\n",
              laser_ge_s3_over_s0);
-      printf("Twelth parameter is f --> laser S3 parameter [%3.1G]\n",
+      printf("Thirteenth parameter is f --> laser S3 parameter [%3.1G]\n",
              laser_fe_s3_over_s0);
-      printf("Thirteenth parameter is output file [%s]\n", outFile);
+      printf("Fourteenth parameter is output file [%s]\n", outFile);
       printf("\n\n");
       return 0;
     } else if (strcmp(argv[1], "-f") == 0) {  // accept input from file
@@ -251,24 +252,27 @@ int main(int argc, char* argv[]) {
             dt = atof(argv[4])*_ns;
             if (argc > 5) {
               B_z = atof(argv[5])*_G;
-              if (argc > 6) {
-                laser_fe_detune = atof(argv[6]) *_MHz;
+              if (argc > 60) {
+                B_x = atof(argv[6])*_G;
                 if (argc > 7) {
-                  laser_ge_detune = atof(argv[7]) * _MHz;
+                  laser_fe_detune = atof(argv[7]) *_MHz;
                   if (argc > 8) {
-                    laser_fe_linewidth = atof(argv[8]) *_MHz;
-                    laser_ge_linewidth = atof(argv[8]) *_MHz;
+                    laser_ge_detune = atof(argv[8]) * _MHz;
                     if (argc > 9) {
-                      laser_fe_I = atof(argv[9]) * _uW/_cm2;
+                      laser_fe_linewidth = atof(argv[9]) *_MHz;
+                      laser_ge_linewidth = atof(argv[9]) *_MHz;
                       if (argc > 10) {
-                        laser_ge_I = atof(argv[10]) * _uW/_cm2;
+                        laser_fe_I = atof(argv[10]) * _uW/_cm2;
                         if (argc > 11) {
-                          laser_fe_s3_over_s0 = atof(argv[11]);
+                          laser_ge_I = atof(argv[11]) * _uW/_cm2;
                           if (argc > 12) {
-                            laser_ge_s3_over_s0 = atof(argv[12]);
+                            laser_fe_s3_over_s0 = atof(argv[12]);
                             if (argc > 13) {
-                              snprintf(outFile, sizeof(outFile), "%s",
-                                       argv[13]);
+                              laser_ge_s3_over_s0 = atof(argv[13]);
+                              if (argc > 14) {
+                                snprintf(outFile, sizeof(outFile), "%s",
+                                         argv[14]);
+                              }
                             }
                           }
                         }
@@ -291,7 +295,7 @@ int main(int argc, char* argv[]) {
                            laser_ge_detune, laser_fe_linewidth,
                            laser_ge_linewidth, laser_fe_s3_over_s0,
                            laser_ge_s3_over_s0, laser_fe_offTime,
-                           laser_ge_offTime, B_z);
+                           laser_ge_offTime, B_z, B_x);
   if (!op_batch) printf("\nCompleted with status = %d\n\n", status);
   return status;
   }

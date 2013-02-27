@@ -181,20 +181,19 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
                                                       numBasisStates);
   gsl_matrix_complex *tempz = gsl_matrix_complex_calloc(numBasisStates,
                                                         numBasisStates);
-  /*
+  
   gsl_matrix_complex *Jx = gsl_matrix_complex_calloc(numBasisStates,
                                                      numBasisStates);
   gsl_matrix_complex *Ix = gsl_matrix_complex_calloc(numBasisStates,
                                                      numBasisStates);
-  gsl_matrix_complex *Jy = gsl_matrix_complex_calloc(numBasisStates,
-                                                     numBasisStates);
-  gsl_matrix_complex *Iy = gsl_matrix_complex_calloc(numBasisStates,
-                                                     numBasisStates);
+  // gsl_matrix_complex *Jy = gsl_matrix_complex_calloc(numBasisStates,
+  //                                                    numBasisStates);
+  // gsl_matrix_complex *Iy = gsl_matrix_complex_calloc(numBasisStates,
+  //                                                    numBasisStates);
   gsl_matrix_complex *Hbt = gsl_matrix_complex_calloc(numBasisStates,
                                                       numBasisStates);
   gsl_matrix_complex *tempt = gsl_matrix_complex_calloc(numBasisStates,
                                                         numBasisStates);
-  */
   const double memn = 1.0/1836.152701;
   gsl_complex g_Ip = gsl_complex_rect(-atom.g_I * memn, 0.0);
 
@@ -212,7 +211,6 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
                    gsl_complex_rect((_bohr_magneton/_planck_h*field.B_z), 0.0));
 
   // Now for the transverse field components!
-  /*
   gsl_matrix_complex_add(Jx, &J_plus_view.matrix);
   gsl_matrix_complex_add(Jx, &J_minus_view.matrix);
   gsl_matrix_complex_scale(Jx, gsl_complex_rect(0.5, 0.0));
@@ -221,13 +219,13 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   gsl_matrix_complex_add(Ix, &I_minus_view.matrix);
   gsl_matrix_complex_scale(Ix, gsl_complex_rect(0.5, 0.0));
 
-  gsl_matrix_complex_add(Jy, &J_minus_view.matrix);
-  gsl_matrix_complex_sub(Jy, &J_plus_view.matrix);
-  gsl_matrix_complex_scale(Jy, gsl_complex_rect(0.0, 0.5));
+  // gsl_matrix_complex_add(Jy, &J_minus_view.matrix);
+  // gsl_matrix_complex_sub(Jy, &J_plus_view.matrix);
+  // gsl_matrix_complex_scale(Jy, gsl_complex_rect(0.0, 0.5));
 
-  gsl_matrix_complex_add(Iy, &I_minus_view.matrix);
-  gsl_matrix_complex_sub(Iy, &I_plus_view.matrix);
-  gsl_matrix_complex_scale(Iy, gsl_complex_rect(0.0, 0.5));
+  // gsl_matrix_complex_add(Iy, &I_minus_view.matrix);
+  // gsl_matrix_complex_sub(Iy, &I_plus_view.matrix);
+  // gsl_matrix_complex_scale(Iy, gsl_complex_rect(0.0, 0.5));
 
   // gsl_matrix_complex_fprintf(stdout, Iy, "%g");
   // gsl_matrix_complex_fprintf(stdout, Hb, "%g");
@@ -242,9 +240,12 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
                            gsl_complex_rect(calc_gj(1.0, L*2, 1.0), 0.0));
 
   gsl_matrix_complex_add(Hbt, tempt);
-  gsl_matrix_complex_scale(Hbt, gsl_complex_rect((_bohr_magneton/_planck_h*field.B_x), 0.0));
-  */
-  // gsl_matrix_complex_fprintf(stdout,Hbt,"%g");
+  // Calculating in units of MHz
+  gsl_matrix_complex_scale(Hbt,
+                       gsl_complex_rect((_bohr_magneton*field.B_x/_planck_h),
+                                        0.0));
+
+
   // *****************************************************************
 
   gsl_blas_zgemm(CblasNoTrans, CblasNoTrans, gsl_complex_rect(1.0, 0.0),
@@ -261,8 +262,13 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
 
   gsl_matrix_complex_scale(&H_view.matrix, gsl_complex_rect(Aj, 0.0));
 
+
+  gsl_matrix_complex_fprintf(stdout, Hbt, "%g");
+  printf("*******************\n");
+  gsl_matrix_complex_fprintf(stdout, Hbz, "%g");
+
   gsl_matrix_complex_add(&H_view.matrix, Hbz);
-  // gsl_matrix_complex_add(&H_view.matrix, Hbt);
+  gsl_matrix_complex_add(&H_view.matrix, Hbt);
 
   /*
   printf("\nH=\n[");
@@ -318,24 +324,24 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
     Fz2[i] = setFz2;
     // genAtomicState::Fz2vec[L][i] = setFz2;
   }
-  /*
-  for(int i = 0; i < numBasisStates; i++) {
-    double eval_i = gsl_vector_get(eval,i);
-    gsl_vector_complex_view evec_i = gsl_matrix_complex_column(evec,i);
-    printf("eigenvalue = %8.6G ", eval_i);
-    printf("\t\t | %d/2, %d/2 > = eigenvector = \n", F2[i], Fz2[i]);
-    for(int k = 0; k < numBasisStates; k++) {
-      gsl_complex adMix = gsl_vector_complex_get(&evec_i.vector,k);
-      if( fabs(GSL_REAL(adMix)) > pow(10,-10)) {
-        printf("%8.6G | %d", GSL_REAL(adMix), Iz2[2*k]);
-        printf("/2, %d/2 > + ", Jz2[2*k]);
-      }
-    }
-    printf("\n\n");
-    //gsl_vector_fprintf(stdout,&evec_i.vector,"%g");
+  // // here
+  // for(int i = 0; i < numBasisStates; i++) {
+  //   double eval_i = gsl_vector_get(eval,i);
+  //   gsl_vector_complex_view evec_i = gsl_matrix_complex_column(evec,i);
+  //   printf("eigenvalue = %8.6G ", eval_i);
+  //   printf("\t\t | %d/2, %d/2 > = eigenvector = \n", F2[i], Fz2[i]);
+  //   for(int k = 0; k < numBasisStates; k++) {
+  //     gsl_complex adMix = gsl_vector_complex_get(&evec_i.vector,k);
+  //     if( fabs(GSL_REAL(adMix)) > pow(10,-10)) {
+  //       printf("%8.6G | %d", GSL_REAL(adMix), Iz2[2*k]);
+  //       printf("/2, %d/2 > + ", Jz2[2*k]);
+  //     }
+  //   }
+  //   printf("\n\n");
+  //   //gsl_vector_fprintf(stdout,&evec_i.vector,"%g");
     
-  }
-  */
+  // }
+  // // here
 
   int F2desired = abs(atom.I2 - J2);
   int Fz2desired = -F2desired;
@@ -386,14 +392,14 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   */
   for (int i = 0; i < numBasisStates; i++) {
     double eval_i = gsl_vector_get(eval, i);
-    if (debug) printf("%12.10G   ", eval_i/_MHz);
+    if (debug) printf("%12.10G\t", eval_i/_MHz);
   }
   if (debug) printf("\n\n");
   for (int i = 0; i < numBasisStates; i++) {
     for (int j = 0; j < numBasisStates; j++) {
       gsl_vector_complex_view evec_j = gsl_matrix_complex_column(evec, j);
       gsl_complex ev = gsl_vector_complex_get(&evec_j.vector, i);
-      if (debug) printf("%12.10G   ", GSL_REAL(ev));
+      if (debug) printf("%12.10G\t", GSL_REAL(ev));
     }
     if (debug) printf("\n");
   }
