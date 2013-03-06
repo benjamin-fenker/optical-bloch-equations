@@ -133,8 +133,61 @@ void Density_Matrix::update_population(double dt) {
                                                   angFrequency);
           sp_decay = gsl_complex_mul(sp_decay, rho_ee[e][ep]);
           drho_ee[e][ep] = gsl_complex_sub(drho_ee[e][ep], sp_decay);
+          // printf("Without B_x, drho_ee[%d][%d] = %g + %g i\t", e, ep,
+          //        GSL_REAL(drho_ee[e][ep]), GSL_IMAG(drho_ee[e][ep]));
         }  // End spontaneous decay term
-      }    // End if coherences
+
+        // Get ready for transverse magnetic field!
+        gsl_complex Bx = gsl_complex_rect(0.0, 0.0);
+        gsl_complex left = gsl_complex_rect(0.0, 0.0);
+        gsl_complex rigt = gsl_complex_rect(0.0, 0.0);
+        // printf("For e = %d, comparing %d to %d\n", e, MFe2_Vector[e],
+        //        MFe2_Vector[e+1]);
+        // Is there a state with Mf` = Mf+1 and F` = F?
+        if (e+1 < numEStates) {         // Keep things in bounds
+          if (MFe2_Vector[e]+2 == MFe2_Vector[e+1]) {  // Sanity check
+            gsl_complex tmp = rho_ee[e+1][ep];
+            // printf("Bx = %g + %g i + ", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cPlus_E[e]);
+            left = gsl_complex_add(left, tmp);
+          }
+        }
+        // Is there a state with Mf` = Mf-1 and F` = F?
+        if (e > 0) {                    // Keep things in bounds
+          if (MFe2_Vector[e]-2 == MFe2_Vector[e-1]) {  // Sanity check
+            gsl_complex tmp = rho_ee[e-1][ep];
+            // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cMins_E[e]);
+            left = gsl_complex_add(left, tmp);
+          }
+        }
+        left = gsl_complex_mul_real(left, gFactor_E[e]);
+        // Is there a state with Mf` = Mf+1 and F` = F?
+        if (ep+1 < numEStates) {         // Keep things in bounds
+          if (MFe2_Vector[ep]+2 == MFe2_Vector[ep+1]) {  // Sanity check
+            gsl_complex tmp = rho_ee[e][ep+1];
+            // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cPlus_E[ep]);
+            rigt = gsl_complex_sub(rigt, tmp);
+          }
+        }
+        // Is there a state with Mf` = Mf-1 and F` = F?
+        if (ep > 0) {         // Keep things in bounds
+          if (MFe2_Vector[ep]-2 == MFe2_Vector[ep-1]) {
+            gsl_complex tmp = rho_ee[e][ep-1];
+            // printf("%g + %g i\n", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cMins_E[ep]);
+            rigt = gsl_complex_sub(rigt, tmp);
+          }
+        }
+        rigt = gsl_complex_mul_real(rigt, gFactor_E[ep]);
+        Bx = gsl_complex_add(left, rigt);
+        Bx = gsl_complex_mul_imag(Bx,
+                                  -_bohr_magneton*eigen.field.B_x
+                                  /2.0/_planck_hbar);
+        // printf("Bx contribution is %g + %g i\n", GSL_REAL(Bx), GSL_IMAG(Bx));
+        drho_ee[e][ep] = gsl_complex_add(drho_ee[e][ep], Bx);
+      }   // End if coherences
     }      // End ep
   }        // End e
 
@@ -195,6 +248,56 @@ void Density_Matrix::update_population(double dt) {
           spon_decay = gsl_complex_sub(spon_decay, right);
           drho_gg[g][gp] = gsl_complex_add(drho_gg[g][gp], spon_decay);
         }  // End spontaneous decay term
+        // Get ready for transverse magnetic field!
+        gsl_complex Bx = gsl_complex_rect(0.0, 0.0);
+        gsl_complex left = gsl_complex_rect(0.0, 0.0);
+        gsl_complex rigt = gsl_complex_rect(0.0, 0.0);
+        // printf("For e = %d, comparing %d to %d\n", e, MFe2_Vector[e],
+        //        MFe2_Vector[e+1]);
+        // Is there a state with Mf` = Mf+1 and F` = F?
+        if (g+1 < numGStates) {         // Keep things in bounds
+          if (MFg2_Vector[g]+2 == MFg2_Vector[g+1]) {  // Sanity check
+            gsl_complex tmp = rho_gg[g+1][gp];
+            // printf("Bx = %g + %g i + ", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cPlus_G[g]);
+            left = gsl_complex_add(left, tmp);
+          }
+        }
+        // Is there a state with Mf` = Mf-1 and F` = F?
+        if (g > 0) {         // Keep things in bounds
+          if (MFg2_Vector[g]-2 == MFg2_Vector[g-1]) {  // Sanity check
+            gsl_complex tmp = rho_gg[g-1][gp];
+            // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cMins_G[g]);
+            left = gsl_complex_add(left, tmp);
+          }
+        }
+        left = gsl_complex_mul_real(left, gFactor_G);
+        // Is there a state with Mf` = Mf+1 and F` = F?
+        if (gp + 1 < numGStates) {      // Keep things in bounds
+          if (MFg2_Vector[gp]+2 == MFg2_Vector[gp+1]) {  // Sanity check
+            gsl_complex tmp = rho_gg[g][gp+1];
+            // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cPlus_G[gp]);
+            rigt = gsl_complex_sub(rigt, tmp);
+          }
+        }
+        // Is there a state with Mf` = Mf-1 and F` = F?
+        if (gp > 0) {                   // Keep things in bounds
+          if (MFg2_Vector[gp]-2 == MFg2_Vector[gp-1]) {  // Sanity check
+            gsl_complex tmp = rho_gg[g][gp-1];
+            // printf("%g + %g i\n", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cMins_G[gp]);
+            rigt = gsl_complex_sub(rigt, tmp);
+          }
+        }
+        rigt = gsl_complex_mul_real(rigt, gFactor_G);
+        Bx = gsl_complex_add(left, rigt);
+        Bx = gsl_complex_mul_imag(Bx,
+                                  -_bohr_magneton*eigen.field.B_x
+                                  /2.0/_planck_hbar);
+        // printf("Bx contribution is %g + %g i\n", GSL_REAL(Bx), GSL_IMAG(Bx));
+        drho_gg[g][gp] = gsl_complex_add(drho_gg[g][gp], Bx);
       }  // End if coherences
     }    // End gp
   }      // End g
@@ -255,6 +358,56 @@ void Density_Matrix::update_population(double dt) {
           spon_decay = gsl_complex_sub(spon_decay, right);
           drho_ff[f][fp] = gsl_complex_add(drho_ff[f][fp], spon_decay);
         }  // End spontaneous decay term
+        // Get ready for transverse magnetic field!
+        gsl_complex Bx = gsl_complex_rect(0.0, 0.0);
+        gsl_complex left = gsl_complex_rect(0.0, 0.0);
+        gsl_complex rigt = gsl_complex_rect(0.0, 0.0);
+        // printf("For e = %d, comparing %d to %d\n", e, MFe2_Vector[e],
+        //        MFe2_Vector[e+1]);
+        // Is there a state with Mf` = Mf+1 and F` = F?
+        if (f+1 < numFStates) {         // Keep things in bounds
+          if (MFf2_Vector[f]+2 == MFf2_Vector[f+1]) {  // Sanity check
+            gsl_complex tmp = rho_ff[f+1][fp];
+            // printf("Bx = %g + %g i + ", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cPlus_F[f]);
+            left = gsl_complex_add(left, tmp);
+          }
+        }
+        // Is there a state with Mf` = Mf-1 and F` = F?
+        if (f > 0) {                    // Keep things in bounds
+          if (MFf2_Vector[f]-2 == MFf2_Vector[f-1]) {  // Sanity check
+            gsl_complex tmp = rho_ff[f-1][fp];
+            // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cMins_F[f]);
+            left = gsl_complex_add(left, tmp);
+          }
+        }
+        left = gsl_complex_mul_real(left, gFactor_F);
+        // Is there a state with Mf` = Mf+1 and F` = F?
+        if (fp+1 < numFStates) {        // Keep things in bounds
+          if (MFf2_Vector[fp]+2 == MFf2_Vector[fp+1]) {  // Sanity check
+            gsl_complex tmp = rho_ff[f][fp+1];
+            // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cPlus_F[fp]);
+            rigt = gsl_complex_sub(rigt, tmp);
+          }
+        }
+        // Is there a state with Mf` = Mf-1 and F` = F?
+        if (fp > 0) {                   // Keep things in bounds
+          if (MFf2_Vector[fp]-2 == MFf2_Vector[fp-1]) {  // Sanity check
+            gsl_complex tmp = rho_ff[f][fp-1];
+            // printf("%g + %g i\n", GSL_REAL(tmp), GSL_IMAG(tmp));
+            gsl_complex_mul_real(tmp, cMins_F[fp]);
+            rigt = gsl_complex_sub(rigt, tmp);
+          }
+        }
+        rigt = gsl_complex_mul_real(rigt, gFactor_F);
+        Bx = gsl_complex_add(left, rigt);
+        Bx = gsl_complex_mul_imag(Bx,
+                                  -_bohr_magneton*eigen.field.B_x
+                                  /2.0/_planck_hbar);
+        // printf("Bx contribution is %g + %g i\n", GSL_REAL(Bx), GSL_IMAG(Bx));
+        drho_ff[f][fp] = gsl_complex_add(drho_ff[f][fp], Bx);
       }  // End if doing coherences
     }    // End fp loop
   }      // End f loop
@@ -315,6 +468,57 @@ void Density_Matrix::update_population(double dt) {
       gsl_complex detune_g = gsl_complex_rect(linewidth, detune_d);
       detune_g = gsl_complex_mul(detune_g, delta_eg[e][g]);
       ddelta_eg[e][g] = gsl_complex_add(ddelta_eg[e][g], detune_g);
+
+      // Get ready for transverse magnetic field!
+      gsl_complex Bx = gsl_complex_rect(0.0, 0.0);
+      gsl_complex left = gsl_complex_rect(0.0, 0.0);
+      gsl_complex rigt = gsl_complex_rect(0.0, 0.0);
+      // printf("For e = %d, comparing %d to %d\n", e, MFe2_Vector[e],
+      //        MFe2_Vector[e+1]);
+      // Is there a state with Mf` = Mf+1 and F` = F?
+      if (e+1 < numEStates) {           // Keep things in bounds
+        if (MFe2_Vector[e]+2 == MFe2_Vector[e+1]) {  // Sanity check
+          gsl_complex tmp = delta_eg[e+1][g];
+          // printf("Bx = %g + %g i + ", GSL_REAL(tmp), GSL_IMAG(tmp));
+          gsl_complex_mul_real(tmp, cPlus_E[e]);
+          left = gsl_complex_add(left, tmp);
+        }
+      }
+      // Is there a state with Mf` = Mf-1 and F` = F?
+      if (e > 0) {                      // Keep things in bounds
+        if (MFe2_Vector[e]-2 == MFe2_Vector[e-1]) {  // Sanity check
+          gsl_complex tmp = delta_eg[e-1][g];
+          // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+          gsl_complex_mul_real(tmp, cMins_E[e]);
+          left = gsl_complex_add(left, tmp);
+        }
+      }
+      left = gsl_complex_mul_real(left, gFactor_E[e]);
+      // Is there a state with Mf` = Mf+1 and F` = F?
+      if (g+1 < numGStates) {           // Keep things in bounds
+        if (MFg2_Vector[g]+2 == MFg2_Vector[g+1]) {  // Sanity check
+          gsl_complex tmp = delta_eg[e][g+1];
+          // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+          gsl_complex_mul_real(tmp, cPlus_G[g]);
+          rigt = gsl_complex_sub(rigt, tmp);
+        }
+      }
+      // Is there a state with Mf` = Mf-1 and F` = F?
+      if (g > 0) {                      // Keep things in bounds
+        if (MFg2_Vector[g]-2 == MFg2_Vector[g-1]) {  // Sanity check
+          gsl_complex tmp = delta_eg[e][g-1];
+          // printf("%g + %g i\n", GSL_REAL(tmp), GSL_IMAG(tmp));
+          gsl_complex_mul_real(tmp, cMins_G[g]);
+          rigt = gsl_complex_sub(rigt, tmp);
+        }
+      }
+      rigt = gsl_complex_mul_real(rigt, gFactor_G);
+      Bx = gsl_complex_add(left, rigt);
+      Bx = gsl_complex_mul_imag(Bx,
+                                -_bohr_magneton*eigen.field.B_x
+                                /2.0/_planck_hbar);
+      // printf("Bx contribution is %g + %g i\n", GSL_REAL(Bx), GSL_IMAG(Bx));
+      ddelta_eg[e][g] = gsl_complex_add(ddelta_eg[e][g], Bx);
     }  //  End g
   }    // End e
 
@@ -376,6 +580,57 @@ void Density_Matrix::update_population(double dt) {
       gsl_complex detune_f = gsl_complex_rect(linewidth, detune_d);
       detune_f = gsl_complex_mul(detune_f, delta_ef[e][f]);
       ddelta_ef[e][f] = gsl_complex_add(ddelta_ef[e][f], detune_f);
+
+      // Get ready for transverse magnetic field!
+      gsl_complex Bx = gsl_complex_rect(0.0, 0.0);
+      gsl_complex left = gsl_complex_rect(0.0, 0.0);
+      gsl_complex rigt = gsl_complex_rect(0.0, 0.0);
+      // printf("For e = %d, comparing %d to %d\n", e, MFe2_Vector[e],
+      //        MFe2_Vector[e+1]);
+      // Is there a state with Mf` = Mf+1 and F` = F?
+      if (e+1 < numEStates) {           // Keep things in bounds
+        if (MFe2_Vector[e]+2 == MFe2_Vector[e+1]) {  // Sanity check
+          gsl_complex tmp = delta_ef[e+1][f];
+          // printf("Bx = %g + %g i + ", GSL_REAL(tmp), GSL_IMAG(tmp));
+          gsl_complex_mul_real(tmp, cPlus_E[e]);
+          left = gsl_complex_add(left, tmp);
+        }
+      }
+      // Is there a state with Mf` = Mf-1 and F` = F?
+      if (e > 0) {                      // Keep things in bounds
+        if (MFe2_Vector[e]-2 == MFe2_Vector[e-1]) {  // Sanity check
+          gsl_complex tmp = delta_ef[e-1][f];
+          // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+          gsl_complex_mul_real(tmp, cMins_E[e]);
+          left = gsl_complex_add(left, tmp);
+        }
+      }
+      left = gsl_complex_mul_real(left, gFactor_E[e]);
+      // Is there a state with Mf` = Mf+1 and F` = F?
+      if (f+1 < numFStates) {           // Keep things in bounds
+        if (MFf2_Vector[f]+2 == MFf2_Vector[f+1]) {  // Sanity check
+          gsl_complex tmp = delta_ef[e][f+1];
+          // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+          gsl_complex_mul_real(tmp, cPlus_F[f]);
+          rigt = gsl_complex_sub(rigt, tmp);
+        }
+      }
+      // Is there a state with Mf` = Mf-1 and F` = F?
+      if (f > 0) {                      // Keep things in bounds
+        if (MFf2_Vector[f]-2 == MFf2_Vector[f-1]) {  // Sanity check
+          gsl_complex tmp = delta_ef[e][f-1];
+          // printf("%g + %g i\n", GSL_REAL(tmp), GSL_IMAG(tmp));
+          gsl_complex_mul_real(tmp, cMins_F[f]);
+          rigt = gsl_complex_sub(rigt, tmp);
+        }
+      }
+      rigt = gsl_complex_mul_real(rigt, gFactor_F);
+      Bx = gsl_complex_add(left, rigt);
+      Bx = gsl_complex_mul_imag(Bx,
+                                -_bohr_magneton*eigen.field.B_x
+                                /2.0/_planck_hbar);
+      // printf("Bx contribution is %g + %g i\n", GSL_REAL(Bx), GSL_IMAG(Bx));
+      ddelta_ef[e][f] = gsl_complex_add(ddelta_ef[e][f], Bx);
     }  //  End f
   }    // End e
 
@@ -478,6 +733,57 @@ void Density_Matrix::update_population(double dt) {
                  GSL_IMAG(decayTerm));
         }
         ddelta_fg[f][g] = gsl_complex_sub(ddelta_fg[f][g], decayTerm);
+
+      // Get ready for transverse magnetic field!
+      gsl_complex Bx = gsl_complex_rect(0.0, 0.0);
+      gsl_complex left = gsl_complex_rect(0.0, 0.0);
+      gsl_complex rigt = gsl_complex_rect(0.0, 0.0);
+      // printf("For e = %d, comparing %d to %d\n", e, MFe2_Vector[e],
+      //        MFe2_Vector[e+1]);
+      // Is there a state with Mf` = Mf+1 and F` = F?
+      // if (f+1 < numFStates) {           // Keep things in bounds
+      //   if (MFf2_Vector[f]+2 == MFf2_Vector[f+1]) {  // Sanity check
+      //     gsl_complex tmp = delta_fg[f+1][g];
+      //     // printf("Bx = %g + %g i + ", GSL_REAL(tmp), GSL_IMAG(tmp));
+      //     gsl_complex_mul_real(tmp, cPlus_F[f]);
+      //     left = gsl_complex_add(left, tmp);
+      //   }
+      // }
+      // // Is there a state with Mf` = Mf-1 and F` = F?
+      // if (f > 0) {                      // Keep things in bounds
+      //   if (MFf2_Vector[f]-2 == MFf2_Vector[f-1]) {  // Sanity check
+      //     gsl_complex tmp = delta_fg[f-1][g];
+      //     // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+      //     gsl_complex_mul_real(tmp, cMins_F[f]);
+      //     left = gsl_complex_add(left, tmp);
+      //   }
+      // }
+      // left = gsl_complex_mul_real(left, gFactor_F);
+      // // Is there a state with Mf` = Mf+1 and F` = F?
+      // if (g+1 < numGStates) {           // Keep things in bounds
+      //   if (MFg2_Vector[g]+2 == MFg2_Vector[g+1]) {  // Sanity check
+      //     gsl_complex tmp = delta_fg[f][g+1];
+      //     // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
+      //     gsl_complex_mul_real(tmp, cPlus_G[g]);
+      //     rigt = gsl_complex_sub(rigt, tmp);
+      //   }
+      // }
+      // // Is there a state with Mf` = Mf-1 and F` = F?
+      // if (g > 0) {                      // Keep things in bounds
+      //   if (MFg2_Vector[g]-2 == MFg2_Vector[g-1]) {  // Sanity check
+      //     gsl_complex tmp = delta_fg[f][g-1];
+      //     // printf("%g + %g i\n", GSL_REAL(tmp), GSL_IMAG(tmp));
+      //     gsl_complex_mul_real(tmp, cMins_G[g]);
+      //     rigt = gsl_complex_sub(rigt, tmp);
+      //   }
+      // }
+      // rigt = gsl_complex_mul_real(rigt, gFactor_G);
+      Bx = gsl_complex_add(left, rigt);
+      Bx = gsl_complex_mul_imag(Bx,
+                                -_bohr_magneton*eigen.field.B_x
+                                /2.0/_planck_hbar);
+      // printf("Bx contribution is %g + %g i\n", GSL_REAL(Bx), GSL_IMAG(Bx));
+      // ddelta_fg[f][g] = gsl_complex_add(ddelta_fg[f][g], Bx);
       }   // End loop over g states
     }     // End loop over f states
   }       // End if doing gs_hyperine coherences

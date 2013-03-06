@@ -36,5 +36,9 @@ class Eigenvector_Helper {
   vector<int> total_atomic_spin_excited;
   vector<vector<double> > IzJz_decomp_ground;
   vector<vector<double> > IzJz_decomp_excited;
+
+  /* Store the eigenvalues in vectors */
+  vector<double> eShift_excited;
+  vector<double> eShift_ground;
 };
 #endif  // INCLUDE_EIGENVECTOR_HELPER_H_

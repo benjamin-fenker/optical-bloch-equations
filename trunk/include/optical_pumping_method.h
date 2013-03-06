@@ -108,7 +108,6 @@ class OpticalPumping_Method {
   // in evaluating the reduced matrix element.  Perhaps similarly with Metcalf
   vector<vector<vector<double> > > a_eg;
   vector<vector<vector<double> > > a_ef;
-
   /* Gyromagetic factor for each state */
   vector<double> gFactor_E;     /* Different g-Factor for each F-manifold    */
   double gFactor_F;             /* All have F = I + 1/2 so g-factor the same */
