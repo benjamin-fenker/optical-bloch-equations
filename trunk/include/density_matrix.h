@@ -24,6 +24,15 @@ class Density_Matrix: public OpticalPumping_Method {
   double set_dipole_moment(double gamma, double omega_ex, double omega_gr);
   void print_rabi_frequencies(FILE * des);
   void reset_dPop();
+  void apply_dPop(double dt);
+
+  void integrate_ee();
+  void integrate_gg();
+  void integrate_ff();
+  void integrate_eg();
+  void integrate_ef();
+  void integrate_fg();
+
   void change_magnetic_field(double newfield);
   vector<vector<double> > dipole_moment_eg;
   vector<vector<double> > dipole_moment_ef;
