@@ -118,10 +118,11 @@ void OpticalPumping_Method::setup_gFactors(atom_data atom) {
   Eigenvector_Helper alk;
   gFactor_G = alk.calc_gf(Fg2_Vector[0], 1, atom.I2, 0, 1, atom.g_I);
   gFactor_F = alk.calc_gf(Ff2_Vector[0], 1, atom.I2, 0, 1, atom.g_I);
+  printf("F-state g-Factor: %g\n", gFactor_G);
   for (int e = 0; e < numEStates; e++) {
     gFactor_E[e] = alk.calc_gf(Fe2_Vector[e], atom.Je2, atom.I2, 2, 1,
                                atom.g_I);
-    printf("E-state[%d] g-Factor %g\n", e, gFactor_E[e]);
+    // printf("E-state[%d] g-Factor %g\n", e, gFactor_E[e]);
   }
 }
 void OpticalPumping_Method::setup_frequencies_excited(int I2, int Je2,
@@ -388,7 +389,8 @@ double OpticalPumping_Method::get_polarization() {
   return state_pol;
 }
 
-double OpticalPumping_Method::get_alignment() {  bool debug = false;
+double OpticalPumping_Method::get_alignment() {
+  bool debug = false;
   // As in Pathria and Beale Ch5: <G> = Tr(rho*G) where G is any operator and
   // rho is the density matrix.  (They are matrix multiplied.)  For the nuclear
   // polarization, I use equation 3.26 from Dan's thesis.  Since I_z is

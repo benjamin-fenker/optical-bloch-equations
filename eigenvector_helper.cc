@@ -21,15 +21,17 @@ extern bool op_batch;
 
 Eigenvector_Helper::Eigenvector_Helper(atom_data set_atom,
                                        magnetic_field_data set_field)
-  :atom(set_atom), field(set_field),
-  nuclear_spin_ground(2*atom.numBasisStates_ground, 0),
-  nuclear_spin_excited(2*atom.numBasisStates_excited, 0),
-  total_atomic_spin_ground(2*atom.numBasisStates_ground, 0),
-  total_atomic_spin_excited(2*atom.numBasisStates_excited, 0),
-  IzJz_decomp_ground(atom.numBasisStates_ground,
-                     vector<double>(atom.numBasisStates_ground, 0.0)),
-  IzJz_decomp_excited(atom.numBasisStates_excited,
-                     vector<double>(atom.numBasisStates_excited, 0.0)) {
+    :atom(set_atom), field(set_field),
+     nuclear_spin_ground(2*atom.numBasisStates_ground, 0),
+     nuclear_spin_excited(2*atom.numBasisStates_excited, 0),
+     total_atomic_spin_ground(2*atom.numBasisStates_ground, 0),
+     total_atomic_spin_excited(2*atom.numBasisStates_excited, 0),
+     IzJz_decomp_ground(atom.numBasisStates_ground,
+                        vector<double>(atom.numBasisStates_ground, 0.0)),
+     IzJz_decomp_excited(atom.numBasisStates_excited,
+                         vector<double>(atom.numBasisStates_excited, 0.0)),
+     eShift_excited(atom.numEStates, 0.0),
+     eShift_ground(atom.numFStates+atom.numGStates, 0.0) {
   if (op_verbose) printf("Eigenvector_Helper::Eigenvector_Helper(...)\n");
   nuclear_spin_ground = get_nuclear_spin(atom.numBasisStates_ground);
   nuclear_spin_excited = get_nuclear_spin(atom.numBasisStates_excited);
@@ -51,7 +53,7 @@ Eigenvector_Helper::Eigenvector_Helper(atom_data set_atom,
 }
 
 vector<vector<double> > Eigenvector_Helper::diagH(int L) {
-  bool debug = true;
+  bool debug = false;
   // Figure out some parameters to use based on J
   int J2;
   double Aj;
@@ -181,7 +183,6 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
                                                       numBasisStates);
   gsl_matrix_complex *tempz = gsl_matrix_complex_calloc(numBasisStates,
                                                         numBasisStates);
-  
   gsl_matrix_complex *Jx = gsl_matrix_complex_calloc(numBasisStates,
                                                      numBasisStates);
   gsl_matrix_complex *Ix = gsl_matrix_complex_calloc(numBasisStates,
@@ -263,23 +264,23 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   gsl_matrix_complex_scale(&H_view.matrix, gsl_complex_rect(Aj, 0.0));
 
 
-  gsl_matrix_complex_fprintf(stdout, Hbt, "%g");
-  printf("*******************\n");
-  gsl_matrix_complex_fprintf(stdout, Hbz, "%g");
+  // gsl_matrix_complex_fprintf(stdout, Hbt, "%g");
+  // printf("*******************\n");
+  // gsl_matrix_complex_fprintf(stdout, Hbz, "%g");
 
   gsl_matrix_complex_add(&H_view.matrix, Hbz);
   gsl_matrix_complex_add(&H_view.matrix, Hbt);
 
-  /*
-  printf("\nH=\n[");
-  for(int i = 0; i < (2*numBasisStates*numBasisStates)-1; i+=2) {
-    printf("%4.3G", H[i]);
-    if( (i+2) % (2*numBasisStates) == 0) {
-      printf("\n");
-    }
-  }
-  printf("\n\n\n");
-  */
+
+  // printf("\nH=\n[");
+  // for(int i = 0; i < (2*numBasisStates*numBasisStates)-1; i+=2) {
+  //   printf("%8.6G\t", H[i]);
+  //   if( (i+2) % (2*numBasisStates) == 0) {
+  //     printf("\n");
+  //   }
+  // }
+  // printf("\n\n\n");
+
 
   gsl_vector *eval = gsl_vector_alloc(numBasisStates);
   gsl_matrix_complex *evec = gsl_matrix_complex_alloc(numBasisStates,
@@ -297,6 +298,9 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   int F2current = abs(atom.I2 - J2);
   int Fz2current = -F2current;
 
+  // Assumes weak field.
+  // Assumes that each F-manifold is well seperated and that the energies
+  // increase with increasing F
   for (int i = 0; i < numBasisStates; i++) {
     F2[i] = F2current;
     Fz2current += 2;
@@ -307,23 +311,24 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   }
 
   for (int i = 0; i < numBasisStates; i++) {
+    // printf("i = %d", i);
     // Now for the Fz value
-    int setFz2 = 0;
-    bool firstAdMix = true;
-
+    int kWithMaxAdmix = -1;
+    double max_real_admix = -1.0;
     gsl_vector_complex_view evec_i = gsl_matrix_complex_column(evec, i);
       for (int k = 0; k < numBasisStates; k++) {
         gsl_complex adMix = gsl_vector_complex_get(&evec_i.vector, k);
-        if (fabs(GSL_REAL(adMix)) > pow(10, -10)) {
-          if (firstAdMix) {  // This is the first time through
-            setFz2 = Iz2[2*k] + Jz2[2*k];
-            firstAdMix = false;
-          }
+        // printf("\tk = %d, trying adMix = %g\n", k, GSL_REAL(adMix));
+        if (fabs(GSL_REAL(adMix)) > max_real_admix) {
+          // printf("\t\t...its the new biggest\n");
+          max_real_admix = fabs(GSL_REAL(adMix));
+          kWithMaxAdmix = k;
         }
       }
-    Fz2[i] = setFz2;
+      Fz2[i] = Iz2[2*(kWithMaxAdmix)] + Jz2[2*(kWithMaxAdmix)];
     // genAtomicState::Fz2vec[L][i] = setFz2;
   }
+
   // // here
   // for(int i = 0; i < numBasisStates; i++) {
   //   double eval_i = gsl_vector_get(eval,i);
@@ -339,7 +344,6 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   //   }
   //   printf("\n\n");
   //   //gsl_vector_fprintf(stdout,&evec_i.vector,"%g");
-    
   // }
   // // here
 
@@ -390,8 +394,10 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
 
   }
   */
+  vector<double> eShift(numBasisStates, 0.0);
   for (int i = 0; i < numBasisStates; i++) {
     double eval_i = gsl_vector_get(eval, i);
+    eShift[i] = eval_i;
     if (debug) printf("%12.10G\t", eval_i/_MHz);
   }
   if (debug) printf("\n\n");
@@ -404,6 +410,19 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
     if (debug) printf("\n");
   }
   if (debug) printf("\n");
+
+  if (L == 0) {
+    eShift_ground = eShift;
+  } else if (L == 1) {
+    eShift_excited = eShift;
+  } else {
+    printf("Eigenvector_Helper::diagH --> L must be 0 or 1\n\n");
+    exit(1);
+  }
+  // printf("for l = 0\n");
+  // for (int i = 0; i < numBasisStates; i++) {
+  //   printf("%g\n", eShift_ground[i]);
+  // }
 
   //  delete[] Iz2;
   //  delete[] Jz2;

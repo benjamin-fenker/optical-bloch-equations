@@ -24,7 +24,7 @@ void readAndCheckFromFile(FILE *f, char *parameter, string *s) {
     printf("Read error.\n");
     exit(1);
   }
-  printf("READ %s\n", tempR);
+  // printf("READ %s\n", tempR);
   if (strcmp(parameter, tempL) != 0) {
     printf("Unexpected line in input file: %s\n",
            tempR);

@@ -292,11 +292,11 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
         nextUpdate += updateFreq;
       }
     }
-    if ((fabs(time - nextPrint))/_ns < pow(10, -2)) {
+    // if ((fabs(time - nextPrint))/_ns < pow(10, -2)) {
       equ->print_data(file, time);
       // equ->print_density_matrix(stdout);
       nextPrint += print_frequency;
-    }
+      //    }
     if (!laser_ge_Off && laser_ge_offTime > 0 && time >= laser_ge_offTime) {
       laser_ge_Off = true;
       printf("Switching off ge laser at time = %6.4G ns\n", time/_ns);
@@ -319,7 +319,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
       equ->print_density_matrix(stdout);
       return 1;
     }
-    if (fabs(equ->get_total_population() - 1.0) > pow(10, -8)) {
+    if (fabs(equ->get_total_population() - 1.0) > pow(10, -5)) {
       printf("PARTICLES NOT CONSERVED AT t = %4.2G ns\n", time/_ns);
       equ->print_data(stdout, time);
       return 1;
