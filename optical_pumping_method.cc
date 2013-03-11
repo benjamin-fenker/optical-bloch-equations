@@ -18,6 +18,7 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
     numEStates(eigen.atom.numEStates), numFStates(eigen.atom.numFStates),
     numGStates(eigen.atom.numGStates), tau(eigen.atom.tau),
     laser_ge(set_laser_ge), laser_fe(set_laser_fe), Fe2_Vector(numEStates, 0),
+
     MFe2_Vector(numEStates, 0), Ff2_Vector(numFStates, 0),
     MFf2_Vector(numFStates, 0), Fg2_Vector(numGStates, 0),
     MFg2_Vector(numGStates, 0), nu_E(numEStates, 0.0), nu_F(numFStates, 0.0),
@@ -29,19 +30,9 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
     gFactor_E(numEStates, 0.0), cPlus_E(numEStates, 0.0),
     cPlus_F(numFStates, 0.0), cPlus_G(numGStates, 0.0),
     cMins_E(numEStates, 0.0), cMins_F(numFStates, 0.0),
-    cMins_G(numGStates, 0.0),
-    rho_ee(numEStates, vector<gsl_complex>(numEStates,
-                                           gsl_complex_rect(0.0, 0.0))),
-    rho_ff(numFStates, vector<gsl_complex>(numFStates,
-                                           gsl_complex_rect(0.0, 0.0))),
-    rho_gg(numGStates, vector<gsl_complex>(numGStates,
-                                           gsl_complex_rect(0.0, 0.0))),
-    delta_ef(numEStates, vector<gsl_complex>(numFStates,
-                                             gsl_complex_rect(0.0, 0.0))),
-    delta_eg(numEStates, vector<gsl_complex>(numGStates,
-                                             gsl_complex_rect(0.0, 0.0))),
-    delta_fg(numFStates, vector<gsl_complex>(numGStates,
-                                             gsl_complex_rect(0.0, 0.0))) {
+    cMins_G(numGStates, 0.0) {
+  dm_status = new DM_container(numEStates, numFStates, numGStates);
+  dm_derivs = new DM_container(numEStates, numFStates, numGStates);
   // printf("\nOpticalPumping_Method::OpticalPumping_Method(...)\n");
   if (op_verbose) {
     printf("G = %d F = %d E = %d\n", numGStates, numFStates, numEStates);
@@ -74,6 +65,13 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
 }
 
 OpticalPumping_Method::~OpticalPumping_Method() {}
+
+void OpticalPumping_Method::update_population_euler(double dt) {
+  reset_dPop();
+  calculate_derivs(this -> dm_status);
+  DM_container::mul(dm_derivs, dt);
+  DM_container::add(dm_status, dm_derivs);
+}
 
 void OpticalPumping_Method::setup_quantum_numbers(int I2, int Je2) {
   bool debug = false;
@@ -119,12 +117,14 @@ void OpticalPumping_Method::setup_gFactors(atom_data atom) {
   gFactor_G = alk.calc_gf(Fg2_Vector[0], 1, atom.I2, 0, 1, atom.g_I);
   gFactor_F = alk.calc_gf(Ff2_Vector[0], 1, atom.I2, 0, 1, atom.g_I);
   printf("F-state g-Factor: %g\n", gFactor_G);
+  printf("G-state g-Factor: %g\n", gFactor_F);
   for (int e = 0; e < numEStates; e++) {
     gFactor_E[e] = alk.calc_gf(Fe2_Vector[e], atom.Je2, atom.I2, 2, 1,
                                atom.g_I);
     // printf("E-state[%d] g-Factor %g\n", e, gFactor_E[e]);
   }
 }
+
 void OpticalPumping_Method::setup_frequencies_excited(int I2, int Je2,
                                                       double excitation,
                                                       double hyperfine_const,
@@ -276,8 +276,10 @@ double OpticalPumping_Method::set_lowering(int F2, int M2) {
 void OpticalPumping_Method::setup_pop_uniform_ground() {
   double startPop = numFStates + numGStates;
   startPop = 1.0 / startPop;
-  for (int f = 0; f < numFStates; f++) GSL_SET_REAL(&rho_ff[f][f], startPop);
-  for (int g = 0; g < numGStates; g++) GSL_SET_REAL(&rho_gg[g][g], startPop);
+  for (int f = 0; f < numFStates; f++) GSL_SET_REAL(&dm_status->ff[f][f],
+                                                    startPop);
+  for (int g = 0; g < numGStates; g++) GSL_SET_REAL(&dm_status->gg[g][g],
+                                                    startPop);
 }
 
 void OpticalPumping_Method::print_couplings(FILE * des) {
@@ -325,9 +327,9 @@ void OpticalPumping_Method::print_couplings(FILE * des) {
 
 double OpticalPumping_Method::get_total_population() {
   double sum = 0.0;
-  for (int g = 0; g < numGStates; g++) sum += GSL_REAL(rho_gg[g][g]);
-  for (int f = 0; f < numFStates; f++) sum += GSL_REAL(rho_ff[f][f]);
-  for (int e = 0; e < numEStates; e++) sum += GSL_REAL(rho_ee[e][e]);
+  for (int g = 0; g < numGStates; g++) sum += GSL_REAL(dm_status->gg[g][g]);
+  for (int f = 0; f < numFStates; f++) sum += GSL_REAL(dm_status->ff[f][f]);
+  for (int e = 0; e < numEStates; e++) sum += GSL_REAL(dm_status->ee[e][e]);
   return sum;
 }
 
@@ -353,7 +355,7 @@ double OpticalPumping_Method::get_polarization() {
       double tmp = (static_cast<double>(eigen.nuclear_spin_ground[2*decomp]));
       tmp /= 2.0;
       tmp *= pow(eigen.IzJz_decomp_ground[decomp][state], 2.0);
-      tmp *= GSL_REAL(rho_gg[state][state]);
+      tmp *= GSL_REAL(dm_status->gg[state][state]);
       state_pol += tmp;
     }
   }
@@ -367,7 +369,7 @@ double OpticalPumping_Method::get_polarization() {
       double tmp = (static_cast<double>(eigen.nuclear_spin_ground[2*decomp]));
       tmp /= 2.0;
       tmp *= pow(eigen.IzJz_decomp_ground[decomp][state], 2.0);
-      tmp *= GSL_REAL(rho_ff[state-numGStates][state-numGStates]);
+      tmp *= GSL_REAL(dm_status->ff[state-numGStates][state-numGStates]);
       state_pol += tmp;
     }
   }
@@ -381,7 +383,7 @@ double OpticalPumping_Method::get_polarization() {
       double tmp = (static_cast<double>(eigen.nuclear_spin_excited[2*decomp]));
       tmp /= 2.0;
       tmp *= pow(eigen.IzJz_decomp_excited[decomp][state], 2.0);
-      tmp *= GSL_REAL(rho_ee[state][state]);
+      tmp *= GSL_REAL(dm_status->ee[state][state]);
       state_pol += tmp;
     }
   }
@@ -415,7 +417,7 @@ double OpticalPumping_Method::get_alignment() {
       tmp /= 2.0;
       tmp = pow(tmp, 2.0);
       tmp *= pow(eigen.IzJz_decomp_ground[decomp][state], 2.0);
-      tmp *= GSL_REAL(rho_gg[state][state]);
+      tmp *= GSL_REAL(dm_status->gg[state][state]);
       state_align += tmp;
     }
   }
@@ -430,7 +432,7 @@ double OpticalPumping_Method::get_alignment() {
       tmp /= 2.0;
       tmp = pow(tmp, 2.0);
       tmp *= pow(eigen.IzJz_decomp_ground[decomp][state], 2.0);
-      tmp *= GSL_REAL(rho_ff[state-numGStates][state-numGStates]);
+      tmp *= GSL_REAL(dm_status->ff[state-numGStates][state-numGStates]);
       state_align += tmp;
     }
   }
@@ -445,7 +447,7 @@ double OpticalPumping_Method::get_alignment() {
       tmp /= 2.0;
       tmp = pow(tmp, 2.0);
       tmp *= pow(eigen.IzJz_decomp_excited[decomp][state], 2.0);
-      tmp *= GSL_REAL(rho_ee[state][state]);
+      tmp *= GSL_REAL(dm_status->ee[state][state]);
       state_align += tmp;
     }
   }
@@ -460,7 +462,7 @@ double OpticalPumping_Method::get_excited_state_total() {
   // the number of photions (unnormalized of course).
   double ePop = 0.0;
   for (int e = 0; e < numEStates; e++) {
-    ePop += GSL_REAL(rho_ee[e][e]);
+    ePop += GSL_REAL(dm_status->ee[e][e]);
   }
   return ePop;
 }
@@ -475,40 +477,40 @@ bool OpticalPumping_Method::is_hermitian() {
   double eps = pow(10, -8);     // Tolerance for hermitian-checking
   // First check that the diagonals are real
   for (int g = 0; g < numGStates; g++) {
-    if (fabs(GSL_IMAG(rho_gg[g][g])) > eps) hermit = false;
+    if (fabs(GSL_IMAG(dm_status->gg[g][g])) > eps) hermit = false;
   }
   for (int f = 0; f < numFStates; f++) {
-    if (fabs(GSL_IMAG(rho_ff[f][f])) > eps) hermit = false;
+    if (fabs(GSL_IMAG(dm_status->ff[f][f])) > eps) hermit = false;
   }
   for (int e = 0; e < numEStates; e++) {
-    if (fabs(GSL_IMAG(rho_ee[e][e])) > eps) hermit = false;
+    if (fabs(GSL_IMAG(dm_status->ee[e][e])) > eps) hermit = false;
   }
 
   // Now check that the off-diagonals have the appropriate symmetry
   for (int g = 0; g < numGStates; g++) {
     for (int gp = 0; gp < numGStates; gp++) {
-      double imaginary_sum = fabs(GSL_IMAG(rho_gg[g][gp]) +
-                                   GSL_IMAG(rho_gg[gp][g]));
-      double real_diff = fabs(GSL_REAL(rho_gg[g][gp]) -
-                               GSL_REAL(rho_gg[gp][g]));
+      double imaginary_sum = fabs(GSL_IMAG(dm_status->gg[g][gp]) +
+                                   GSL_IMAG(dm_status->gg[gp][g]));
+      double real_diff = fabs(GSL_REAL(dm_status->gg[g][gp]) -
+                               GSL_REAL(dm_status->gg[gp][g]));
       if ((imaginary_sum > eps) || (real_diff > eps)) hermit = false;
     }
   }
   for (int f = 0; f < numFStates; f++) {
     for (int fp = 0; fp < numFStates; fp++) {
-      double imaginary_sum = fabs(GSL_IMAG(rho_ff[f][fp]) +
-                                   GSL_IMAG(rho_ff[fp][f]));
-      double real_diff = fabs(GSL_REAL(rho_ff[f][fp]) -
-                               GSL_REAL(rho_ff[fp][f]));
+      double imaginary_sum = fabs(GSL_IMAG(dm_status->ff[f][fp]) +
+                                   GSL_IMAG(dm_status->ff[fp][f]));
+      double real_diff = fabs(GSL_REAL(dm_status->ff[f][fp]) -
+                               GSL_REAL(dm_status->ff[fp][f]));
       if ((imaginary_sum > eps) || (real_diff > eps)) hermit = false;
     }
   }
   for (int e = 0; e < numEStates; e++) {
     for (int ep = 0; ep < numGStates; ep++) {
-      double imaginary_sum = fabs(GSL_IMAG(rho_ee[e][ep]) +
-                                   GSL_IMAG(rho_ee[ep][e]));
-      double real_diff = fabs(GSL_REAL(rho_ee[e][ep]) -
-                               GSL_REAL(rho_ee[ep][e]));
+      double imaginary_sum = fabs(GSL_IMAG(dm_status->ee[e][ep]) +
+                                   GSL_IMAG(dm_status->ee[ep][e]));
+      double real_diff = fabs(GSL_REAL(dm_status->ee[e][ep]) -
+                               GSL_REAL(dm_status->ee[ep][e]));
       if ((imaginary_sum > eps) || (real_diff > eps)) hermit = false;
     }
   }
@@ -528,11 +530,11 @@ void OpticalPumping_Method::print_data(FILE *des, double time) {
   } else {
     fprintf(des, "%8.6G\t", time/_us);
     for (int g = 0; g < numGStates; g++) fprintf(des, "%8.6G\t",
-                                                 GSL_REAL(rho_gg[g][g]));
+                                                 GSL_REAL(dm_status->gg[g][g]));
     for (int f = 0; f < numFStates; f++) fprintf(des, "%8.6G\t",
-                                                 GSL_REAL(rho_ff[f][f]));
+                                                 GSL_REAL(dm_status->ff[f][f]));
     for (int e = 0; e < numEStates; e++) fprintf(des, "%8.6G\t",
-                                                 GSL_REAL(rho_ee[e][e]));
+                                                 GSL_REAL(dm_status->ee[e][e]));
     fprintf(des, "%8.6G\t%8.6G\t%8.6G\t%8.6G", pop, pol, ali, exc);
   }
     fprintf(des, "\n");
@@ -545,66 +547,66 @@ void OpticalPumping_Method::print_density_matrix(FILE *des) {
   fprintf(des, "rho_ee\n");
   for (int r = 0; r < numEStates; r++) {
     for (int c = 0; c < numEStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_REAL(rho_ee[r][c]));
+      fprintf(des, "%10.6G   ", GSL_REAL(dm_status->ee[r][c]));
     }
     fprintf(des, "\t\t");
     for (int c = 0; c < numEStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_IMAG(rho_ee[r][c]));
+      fprintf(des, "%10.6G   ", GSL_IMAG(dm_status->ee[r][c]));
     }
     fprintf(des, "\n");
   }
   fprintf(des, "rho_gg\n");
   for (int r = 0; r < numGStates; r++) {
     for (int c = 0; c < numGStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_REAL(rho_gg[r][c]));
+      fprintf(des, "%10.6G   ", GSL_REAL(dm_status->gg[r][c]));
     }
     fprintf(des, "\t\t");
     for (int c = 0; c < numGStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_IMAG(rho_gg[r][c]));
+      fprintf(des, "%10.6G   ", GSL_IMAG(dm_status->gg[r][c]));
     }
     fprintf(des, "\n");
   }
   fprintf(des, "rho_ff\n");
   for (int r = 0; r < numFStates; r++) {
     for (int c = 0; c < numFStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_REAL(rho_ff[r][c]));
+      fprintf(des, "%10.6G   ", GSL_REAL(dm_status->ff[r][c]));
     }
     fprintf(des, "\t\t");
     for (int c = 0; c < numFStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_IMAG(rho_ff[r][c]));
+      fprintf(des, "%10.6G   ", GSL_IMAG(dm_status->ff[r][c]));
     }
     fprintf(des, "\n");
   }
   fprintf(des, "delta_rho_eg\n");
   for (int r = 0; r < numEStates; r++) {
     for (int c = 0; c < numGStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_REAL(delta_eg[r][c]));
+      fprintf(des, "%10.6G   ", GSL_REAL(dm_status->eg[r][c]));
     }
     fprintf(des, "\t\t");
     for (int c = 0; c < numGStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_IMAG(delta_eg[r][c]));
+      fprintf(des, "%10.6G   ", GSL_IMAG(dm_status->eg[r][c]));
     }
     fprintf(des, "\n");
   }
   fprintf(des, "delta_rho_ef\n");
   for (int r = 0; r < numEStates; r++) {
     for (int c = 0; c < numFStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_REAL(delta_ef[r][c]));
+      fprintf(des, "%10.6G   ", GSL_REAL(dm_status->ef[r][c]));
     }
     fprintf(des, "\t\t");
     for (int c = 0; c < numFStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_IMAG(delta_ef[r][c]));
+      fprintf(des, "%10.6G   ", GSL_IMAG(dm_status->ef[r][c]));
     }
     fprintf(des, "\n");
   }
   fprintf(des, "delta_fg\n");
   for (int r = 0; r < numFStates; r++) {
     for (int c = 0; c < numGStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_REAL(delta_fg[r][c]));
+      fprintf(des, "%10.6G   ", GSL_REAL(dm_status->fg[r][c]));
     }
     fprintf(des, "\t\t");
     for (int c = 0; c < numGStates; c++) {
-      fprintf(des, "%10.6G   ", GSL_IMAG(delta_fg[r][c]));
+      fprintf(des, "%10.6G   ", GSL_IMAG(dm_status->fg[r][c]));
     }
     fprintf(des, "\n");
   }
@@ -629,4 +631,79 @@ void OpticalPumping_Method::change_magnetic_field(double newField) {
   setup_frequencies_ground(eigen.atom, eigen.field);
   eigen.IzJz_decomp_ground = eigen.diagH(0);
   eigen.IzJz_decomp_excited = eigen.diagH(1);
+}
+
+void OpticalPumping_Method::reset_dPop() {
+  for (int e = 0; e < numEStates; e++) {
+    for (int ep = 0; ep < numEStates; ep++) {
+      dm_derivs->ee[e][ep] = gsl_complex_rect(0.0, 0.0);
+    }
+    for (int f = 0; f < numFStates; f++) {
+      dm_derivs->ef[e][f] = gsl_complex_rect(0.0, 0.0);
+    }
+    for (int g = 0; g < numGStates; g++) {
+      dm_derivs->eg[e][g] = gsl_complex_rect(0.0, 0.0);
+    }
+  }
+  for (int f = 0; f < numFStates; f++) {
+    for (int fp = 0; fp < numFStates; fp++) {
+      dm_derivs->ff[f][fp] = gsl_complex_rect(0.0, 0.0);
+    }
+    for (int g = 0; g < numGStates; g++) {
+      dm_derivs->fg[f][g] = gsl_complex_rect(0.0, 0.0);
+    }
+  }
+  for (int g = 0; g < numGStates; g++) {
+    for (int gp = 0; gp < numGStates; gp++) {
+      dm_derivs->gg[g][gp] = gsl_complex_rect(0.0, 0.0);
+    }
+  }
+}
+
+void OpticalPumping_Method::apply_dPop(double dt) {
+  for (int e = 0; e < numEStates; e++) {
+    for (int ep = 0; ep < numEStates; ep++) {
+      dm_derivs->ee[e][ep] = gsl_complex_mul_real(dm_derivs->ee[e][ep], dt);
+      dm_status->ee[e][ep] = gsl_complex_add(dm_status->ee[e][ep],
+                                             dm_derivs->ee[e][ep]);
+      if ((e == ep) && GSL_REAL(dm_status->ee[e][ep]) < 0.0) {
+        dm_status->ee[e][ep] = gsl_complex_rect(0.0, 0.0);
+      }
+    }
+    for (int f = 0; f < numFStates; f++) {
+      dm_derivs->ef[e][f] = gsl_complex_mul_real(dm_derivs->ef[e][f], dt);
+      dm_status->ef[e][f] = gsl_complex_add(dm_status->ef[e][f],
+                                            dm_derivs->ef[e][f]);
+    }
+    for (int g = 0; g < numGStates; g++) {
+      dm_derivs->eg[e][g] = gsl_complex_mul_real(dm_derivs->eg[e][g], dt);
+      dm_status->eg[e][g] = gsl_complex_add(dm_status->eg[e][g],
+                                            dm_derivs->eg[e][g]);
+    }
+  }
+  for (int f = 0; f < numFStates; f++) {
+    for (int fp = 0; fp < numFStates; fp++) {
+      dm_derivs->ff[f][fp] = gsl_complex_mul_real(dm_derivs->ff[f][fp], dt);
+      dm_status->ff[f][fp] = gsl_complex_add(dm_status->ff[f][fp],
+                                             dm_derivs->ff[f][fp]);
+      if ((f == fp) && GSL_REAL(dm_status->ff[f][fp]) < 0.0) {
+        dm_status->ff[f][fp] = gsl_complex_rect(0.0, 0.0);
+      }
+    }
+    for (int g = 0; g < numGStates; g++) {
+      dm_derivs->fg[f][g] = gsl_complex_mul_real(dm_derivs->fg[f][g], dt);
+      dm_status->fg[f][g] = gsl_complex_add(dm_status->fg[f][g],
+                                            dm_derivs->fg[f][g]);
+    }
+  }
+  for (int g = 0; g < numGStates; g++) {
+    for (int gp = 0; gp < numGStates; gp++) {
+      dm_derivs->gg[g][gp] = gsl_complex_mul_real(dm_derivs->gg[g][gp], dt);
+      dm_status->gg[g][gp] = gsl_complex_add(dm_status->gg[g][gp],
+                                             dm_derivs->gg[g][gp]);
+      if ((g == gp) && GSL_REAL(dm_status->gg[g][gp]) < 0.0) {
+        dm_status->gg[g][gp] = gsl_complex_rect(0.0, 0.0);
+      }
+    }
+  }
 }

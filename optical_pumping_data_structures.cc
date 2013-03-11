@@ -4,9 +4,11 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+
 #include <gsl/gsl_const_mksa.h>
 #include "include/optical_pumping_data_structures.h"
 #include "include/units.h"
+
 
 extern bool op_verbose;
 
@@ -70,3 +72,82 @@ void Laser_data::switch_off(double tau) {
   set_field_components();
   set_intensity_components();
 }
+
+DM_container::DM_container(int setNumEStates, int setNumFStates,
+                           int setNumGStates) :
+    numEStates(setNumEStates), numFStates(setNumFStates),
+    numGStates(setNumGStates),
+    ee(numEStates,
+       vector<gsl_complex>(numEStates, gsl_complex_rect(0.0, 0.0))),
+    ff(numFStates,
+       vector<gsl_complex>(numFStates, gsl_complex_rect(0.0, 0.0))),
+    gg(numGStates,
+       vector<gsl_complex>(numGStates, gsl_complex_rect(0.0, 0.0))),
+    ef(numEStates,
+       vector<gsl_complex>(numFStates, gsl_complex_rect(0.0, 0.0))),
+    eg(numEStates,
+       vector<gsl_complex>(numGStates, gsl_complex_rect(0.0, 0.0))),
+    fg(numFStates,
+       vector<gsl_complex>(numGStates, gsl_complex_rect(0.0, 0.0))) {
+}
+
+void DM_container::add(DM_container* dm, DM_container *other) {
+  for (int e = 0; e < dm -> numEStates; e++) {
+    for (int ep = 0; ep < dm -> numEStates; ep++) {
+      dm -> ee[e][ep] = gsl_complex_add(dm -> ee[e][ep],
+                                            other -> ee[e][ep]);
+    }
+    for (int f = 0; f < dm -> numFStates; f++) {
+      dm -> ef[e][f] = gsl_complex_add(dm -> ef[e][f],
+                                           other -> ef[e][f]);
+    }
+    for (int g = 0; g < dm -> numGStates; g++) {
+      dm -> eg[e][g] = gsl_complex_add(dm -> eg[e][g],
+                                           other -> eg[e][g]);
+    }
+  }
+  for (int f = 0; f < dm -> numFStates; f++) {
+    for (int fp = 0; fp < dm -> numFStates; fp++) {
+      dm -> ff[f][fp] = gsl_complex_add(dm -> ff[f][fp],
+                                            other -> ff[f][fp]);
+    }
+    for (int g = 0; g < dm -> numGStates; g++) {
+      dm -> fg[f][g] = gsl_complex_add(dm -> fg[f][g],
+                                           other -> fg[f][g]);
+    }
+  }
+  for (int g = 0; g < dm -> numGStates; g++) {
+    for (int gp = 0; gp < dm -> numGStates; gp++) {
+      dm -> gg[g][gp] = gsl_complex_add(dm -> gg[g][gp],
+                                            other -> gg[g][gp]);
+    }
+  }
+}
+
+void DM_container::mul(DM_container *dm, double c) {
+  for (int e = 0; e < dm -> numEStates; e++) {
+    for (int ep = 0; ep < dm -> numEStates; ep++) {
+      dm -> ee[e][ep] = gsl_complex_mul_real(dm -> ee[e][ep], c);
+    }
+    for (int f = 0; f < dm -> numFStates; f++) {
+      dm -> ef[e][f] = gsl_complex_mul_real(dm -> ef[e][f], c);
+    }
+    for (int g = 0; g < dm -> numGStates; g++) {
+      dm -> eg[e][g] = gsl_complex_mul_real(dm -> eg[e][g], c);
+    }
+  }
+  for (int f = 0; f < dm -> numFStates; f++) {
+    for (int fp = 0; fp < dm -> numFStates; fp++) {
+      dm -> ff[f][fp] = gsl_complex_mul_real(dm -> ff[f][fp], c);
+    }
+    for (int g = 0; g < dm -> numGStates; g++) {
+      dm -> fg[f][g] = gsl_complex_mul_real(dm -> fg[f][g], c);
+    }
+  }
+  for (int g = 0; g < dm -> numGStates; g++) {
+    for (int gp = 0; gp < dm -> numGStates; gp++) {
+      dm -> gg[g][gp] = gsl_complex_mul_real(dm -> gg[g][gp], c);
+    }
+  }
+}
+
