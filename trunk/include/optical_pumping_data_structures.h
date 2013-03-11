@@ -4,9 +4,27 @@
 #ifndef INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
 #define INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
 
+#include <gsl/gsl_complex_math.h>
 #include <vector>
 
 using std::vector;
+
+class DM_container {
+ public:
+  DM_container(int numEStates, int numFStates, int numGStates);
+  static void add(DM_container* dm, DM_container *other);
+  static void mul(DM_container* dm, double c);
+
+  int numEStates, numFStates, numGStates;
+
+  vector<vector<gsl_complex> > ee;
+  vector<vector<gsl_complex> > ff;
+  vector<vector<gsl_complex> > gg;
+  vector<vector<gsl_complex> > ef;
+  vector<vector<gsl_complex> > eg;
+  vector<vector<gsl_complex> > fg;
+};
+
 // Struct to hold atomic data and make function calls clearer
 class atom_data {
  public:

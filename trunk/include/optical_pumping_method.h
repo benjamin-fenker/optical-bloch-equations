@@ -59,20 +59,20 @@ class OpticalPumping_Method {
   double get_excited_state_total();
   bool is_hermitian();
 
-  op_data_for_gsl data;
-  double *population;           // Necessary to work with GSL.  For OBE will
+  op_data_for_gsl data;                 /* Not really for GSL anymore */
+
   //  store the entire density matrix
   int totalTerms;
 
-  // Virtual methods for subclasses to override
+  void reset_dPop();
+  void apply_dPop(double dt);
+
   // The =0 defines it as a pure virtual function without an implementation.
   // Any subclass MUST fully implement this function
-  virtual void update_population(double dt) = 0;
-  // static int update_population_gsl(double t, const double y[], double f[],
-  //                               void *params);
+  virtual void calculate_derivs(DM_container *status) = 0;
 
-  //  virtual int update_population_gsl(double t, const double y[],
-  //                                double f[], void *params) = 0;
+  void update_population_euler(double dt);
+
   void print_couplings(FILE * des);
   void print_density_matrix(FILE *  des);
   void print_data(FILE *des, double time);
@@ -137,13 +137,15 @@ class OpticalPumping_Method {
      5th part is delta_rho_eg which holds e-g optical coherences
      6th part is delta_rho_fg which holds ground state hyperfine coherences
   */
-  vector<vector<gsl_complex> > rho_ee;
-  vector<vector<gsl_complex> > rho_ff;
-  vector<vector<gsl_complex> > rho_gg;
-  vector<vector<gsl_complex> > delta_ef;
-  vector<vector<gsl_complex> > delta_eg;
-  vector<vector<gsl_complex> > delta_fg;
 
+
+  /* vector<vector<gsl_complex> > rho_ee; */
+  /* vector<vector<gsl_complex> > rho_ff; */
+  /* vector<vector<gsl_complex> > rho_gg; */
+  /* vector<vector<gsl_complex> > delta_ef; */
+  /* vector<vector<gsl_complex> > delta_eg; */
+  /* vector<vector<gsl_complex> > delta_fg; */
+  DM_container *dm_status, *dm_derivs;
   /* Matrices to hold the ground and excited state decomposition. */
   vector<vector<double> > IzJz_ground;
   vector<vector<double> > IzJz_excited;

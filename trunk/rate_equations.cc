@@ -31,35 +31,13 @@ Rate_Equations::Rate_Equations(Eigenvector_Helper set_eigen,
   setup_transition_rates(eigen.atom.linewidth);
   totalTerms = eigen.atom.numFStates+eigen.atom.numGStates;
   totalTerms += eigen.atom.numEStates;
-
-  /* 
-  data.gStart = 0;
-  data.gEnd = data.numGStates;   // Means I'm going to use g < gEnd rather than
-  // g <= gEnd
-  data.fStart = data.gEnd;
-  data.fEnd = data.fStart + data.numFStates;
-  data.eStart = data.fEnd;
-  data.eEnd = data.eStart + data.numEStates;
-  data.transition_rate_eg = transition_rate_eg;
-  data.transition_rate_ef = transition_rate_ef;
-  */
-
-  population = new double[eigen.atom.numFStates+eigen.atom.numGStates+
-                          eigen.atom.numEStates];
-  int i, j;
-  for (i = 0; i < (numFStates+numGStates); i++) {
-    population[i] = 1.0 / (numFStates + numGStates);
-  }
-  for (j = i; j < totalTerms; j++) {
-    population[j] = 0.0;
-  }
 }
 
 Rate_Equations::~Rate_Equations() {
-  delete population;
+  // delete population;
 }
 
-void Rate_Equations::update_population(double dt) {
+void Rate_Equations::calculate_derivs(DM_container *status) {
   // This follows exactly what is done in Nafcha 1995 and DM's thesis.
   // I use the expressions from Nafcha as they are more clear where frequency
   // and angular frequency are concerned
@@ -72,7 +50,8 @@ void Rate_Equations::update_population(double dt) {
       // g <---> e
       for (int g = 0; g < numGStates; g++) {
         for (int q = 0; q < 3; q++) {
-          double pop_diff = (GSL_REAL(rho_gg[g][g])-GSL_REAL(rho_ee[e][e]));
+          double pop_diff = (GSL_REAL(status->gg[g][g])-
+                             GSL_REAL(status->ee[e][e]));
           if (debug) printf("|g=%d> <--> |e%d\t", g, e);
           if (debug) printf(" popDiff = %8.6G\t tran_rate = %8.6G ns^-1\t",
                             pop_diff, transition_rate_eg[e][g][q]/(1/_ns));
@@ -80,20 +59,24 @@ void Rate_Equations::update_population(double dt) {
           delta_laser = pop_diff * transition_rate_eg[e][g][q];
           delta_laser *= pow(a_eg[e][g][q], 2.0);
           if (debug) printf("delta_laser = %8.6G ns^-1\t", delta_laser/(1/_ns));
-          dPop_e[e] += delta_laser;
-          dPop_g[g] -= delta_laser;
-          if (debug) printf("dPop_e[%d] = %12.10G\t dPop_g[%d] = %12.10G\n",
-                            e, dt*dPop_e[e], g, dt*dPop_g[g]);
+          dm_derivs->ee[e][e] = gsl_complex_add_real(dm_derivs->ee[e][e],
+                                                     delta_laser);
+          dm_derivs->gg[g][g] = gsl_complex_sub_real(dm_derivs->gg[g][g],
+                                                     delta_laser);
         // Spontaneous emission
-        delta_spon = GSL_REAL(rho_ee[e][e]) * pow(a_eg[e][g][q], 2.0) / tau;
-        dPop_e[e] -= delta_spon;
-        dPop_g[g] += delta_spon;
+        delta_spon = GSL_REAL(status->ee[e][e]) *
+            pow(a_eg[e][g][q], 2.0) / tau;
+        dm_derivs->ee[e][e] = gsl_complex_sub_real(dm_derivs->ee[e][e],
+                                                   delta_spon);
+        dm_derivs->gg[g][g] = gsl_complex_add_real(dm_derivs->gg[g][g],
+                                                   delta_spon);
         }  // End q-loop
       }  // End g-loop
       // f <---> e
       for (int f =0; f < numFStates; f++) {
         for (int q = 0; q < 3; q++) {
-          double pop_diff = (GSL_REAL(rho_ff[f][f])-GSL_REAL(rho_ee[e][e]));
+          double pop_diff = (GSL_REAL(status->ff[f][f])-
+                             GSL_REAL(status->ee[e][e]));
           if (debug) printf("|f=%d> <--> |e=%d\t ", f, e);
           if (debug) printf("popDiff = %8.6G\t tran_rate = %8.6G ns^-1\t",
                             pop_diff, transition_rate_ef[e][f][q]/(1/_ns));
@@ -101,33 +84,20 @@ void Rate_Equations::update_population(double dt) {
           delta_laser = pop_diff * transition_rate_ef[e][f][q];
           delta_laser *=  pow(a_ef[e][f][q], 2.0);
           if (debug) printf("delta_laser = %8.6G ns^-1\t", delta_laser/(1/_ns));
-          dPop_e[e] += delta_laser;
-          dPop_f[f] -= delta_laser;
-          if (debug) printf("dPop_e[%d] = %12.10G\t dPop_f[%d] = %12.10G\n",
-                            e, dt*dPop_e[e], f, dt*dPop_f[f]);
+          dm_derivs->ee[e][e] = gsl_complex_add_real(dm_derivs->ee[e][e],
+                                                     delta_laser);
+          dm_derivs->ff[f][f] = gsl_complex_sub_real(dm_derivs->ff[f][f],
+                                                     delta_laser);
           // Spontaneous emission
-          delta_spon = GSL_REAL(rho_ee[e][e]) * pow(a_ef[e][f][q], 2.0) / tau;
-          dPop_e[e] -= delta_spon;
-          dPop_f[f] += delta_spon;
+          delta_spon = GSL_REAL(status->ee[e][e]) *
+              pow(a_ef[e][f][q], 2.0) / tau;
+          dm_derivs->ee[e][e] = gsl_complex_sub_real(dm_derivs->ee[e][e],
+                                                     delta_spon);
+          dm_derivs->ff[f][f] = gsl_complex_add_real(dm_derivs->ff[f][f],
+                                                     delta_spon);
         }  // End q-loop
       }  // End f-loop
     }    // End e-loop
-
-  for (int g = 0; g < numGStates; g++) {
-    GSL_SET_REAL(&rho_gg[g][g], GSL_REAL(rho_gg[g][g]) + dt*dPop_g[g]);
-  }
-  for (int e = 0; e < numEStates; e++) {
-    GSL_SET_REAL(&rho_ee[e][e], GSL_REAL(rho_ee[e][e]) + dt*dPop_e[e]);
-  }
-  for (int f = 0; f < numFStates; f++) {
-    GSL_SET_REAL(&rho_ff[f][f], GSL_REAL(rho_ff[f][f]) + dt*dPop_f[f]);
-  }
-}
-
-void Rate_Equations::reset_dPop() {
-  for (int g = 0; g < numGStates; g++) dPop_g[g] = 0.0;
-  for (int f = 0; f < numFStates; f++) dPop_f[f] = 0.0;
-  for (int e = 0; e < numEStates; e++) dPop_e[e] = 0.0;
 }
 
 void Rate_Equations::setup_transition_rates(double linewidth) {

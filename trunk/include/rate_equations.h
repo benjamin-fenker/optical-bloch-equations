@@ -26,14 +26,14 @@ class Rate_Equations: public OpticalPumping_Method {
   double set_transition_rate(double laser_power, double sat_intensity,
                              double atom_lw, double laser_lw,
                              double atom_freq, double laser_freq);
-  void update_population(double dt);
+  void calculate_derivs(DM_container *status);
   void switch_off_laser(int las);
   void change_magnetic_field(double newfield);
   static int update_population_gsl(double t, const double y[],
                                double dydt[], void *params);
   static int jacobian(double t, const double y[], double *dfdy, double dfdt[],
                void *params);
-  void reset_dPop();
+  /* void reset_dPop(); */
   vector<vector<vector<double> > > transition_rate_eg;  // e,g,q are the indexes
   vector<vector<vector<double> > > transition_rate_ef;  // e,g,q are the indexes
   vector<double> dPop_g;

@@ -127,7 +127,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     printf("\tTau: %5.2G ns\n\tgamma_spon = %5.2G MHz \n\n", atom.tau/_ns,
            atom.gamma_spon/_MHz);
     printf("Tmax: %8.1G ns \nTime Step: %4.2G ns \n", tmax/_ns, tStep/_ns);
-    printf("Magnetic Field: %4.2G G\n\n", field.B_z/_G);
+    printf("Magnetic Field: %4.2G z + %4.2G x G\n\n", field.B_z/_G,
+           field.B_x/_G);
 
     printf("\nLaser g->e (Laser 1) data:\n\tDetuned %5.2G MHz from the |",
            laser_ge.detune/_MHz);
@@ -293,6 +294,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
       }
     }
     if ((fabs(time - nextPrint))/_ns < pow(10, -2)) {
+      // equ -> print_data(stdout, time);
       equ->print_data(file, time);
       // equ->print_density_matrix(stdout);
       nextPrint += print_frequency;
@@ -311,7 +313,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
       // equ -> change_magnetic_field(0.0);
     }
     // **********************************************************************
-    equ->update_population(tStep);  // **************************************
+    equ->update_population_euler(tStep);  // ********************************
     // **********************************************************************
     // equ->print_density_matrix(stdout);
     if (!equ->is_hermitian()) {
