@@ -73,6 +73,51 @@ void OpticalPumping_Method::update_population_euler(double dt) {
   DM_container::add(dm_status, dm_derivs);
 }
 
+void OpticalPumping_Method::update_population_RK4(double dt) {
+
+  calculate_derivs(this -> dm_status);
+  DM_container *k1 = new DM_container(*dm_derivs);
+  // printf("k1 = %g + %g i\n", GSL_REAL(k1->ff[0][0]), GSL_IMAG(k1->ff[0][0]));
+
+  DM_container *arg = new DM_container(*k1);
+  DM_container::mul(arg, dt/2.0);
+  DM_container::add(arg, dm_status);
+  calculate_derivs(arg);
+  DM_container *k2 = new DM_container(*dm_derivs);
+
+  arg = new DM_container(*k2);
+  DM_container::mul(arg, dt/2.0);
+  DM_container::add(arg, dm_status);
+  calculate_derivs(arg);
+  DM_container *k3 = new DM_container(*dm_derivs);
+
+  arg = new DM_container(*k3);
+  DM_container::mul(arg, dt);
+  DM_container::add(arg, dm_status);
+  calculate_derivs(arg);
+  DM_container *k4 = new DM_container(*dm_derivs);
+
+  DM_container *inc = new DM_container(dm_status->numEStates,
+                                       dm_status->numFStates,
+                                       dm_status->numGStates);
+  DM_container::mul(k2, 2.0);
+  DM_container::mul(k3, 2.0);
+  
+  DM_container::add(inc, k1);
+  DM_container::add(inc, k2);
+  DM_container::add(inc, k3);
+  DM_container::add(inc, k4);
+  DM_container::mul(inc, dt/6.0);
+  DM_container::add(dm_status, inc);
+
+  delete k1;
+  delete k2;
+  delete k3;
+  delete k4;
+  delete arg;
+  delete inc;
+}
+
 void OpticalPumping_Method::setup_quantum_numbers(int I2, int Je2) {
   bool debug = false;
   int Fe2 = abs(I2 - Je2);
@@ -116,8 +161,8 @@ void OpticalPumping_Method::setup_gFactors(atom_data atom) {
   Eigenvector_Helper alk;
   gFactor_G = alk.calc_gf(Fg2_Vector[0], 1, atom.I2, 0, 1, atom.g_I);
   gFactor_F = alk.calc_gf(Ff2_Vector[0], 1, atom.I2, 0, 1, atom.g_I);
-  printf("F-state g-Factor: %g\n", gFactor_G);
-  printf("G-state g-Factor: %g\n", gFactor_F);
+  // printf("F-state g-Factor: %g\n", gFactor_G);
+  // printf("G-state g-Factor: %g\n", gFactor_F);
   for (int e = 0; e < numEStates; e++) {
     gFactor_E[e] = alk.calc_gf(Fe2_Vector[e], atom.Je2, atom.I2, 2, 1,
                                atom.g_I);
@@ -525,7 +570,7 @@ void OpticalPumping_Method::print_data(FILE *des, double time) {
 
 
   if (op_batch) {
-    fprintf(des, "%26.24G\t", time/_us);
+    fprintf(des, "%8.6g\t", time/_us);
     fprintf(des, "%26.24G\t%26.24G\t%26.24G", exc, pol, ali);
   } else {
     fprintf(des, "%8.6G\t", time/_us);

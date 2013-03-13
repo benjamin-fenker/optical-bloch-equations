@@ -21,7 +21,7 @@
 
 using std::string;
 using std::max;
-extern char outFile[];
+// extern char outFile[50];
 extern bool op_batch;
 
 int OpticalPumping::pump(string isotope, string method, double tmax,
@@ -34,7 +34,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                          double laser_fe_linewidth, double laser_ge_linewidth,
                          double laser_fe_s3_over_s0, double laser_ge_s3_over_s0,
                          double laser_fe_offTime, double laser_ge_offTime,
-                         double set_B_z, double set_B_x) {
+                         double set_B_z, double set_B_x, char *outFile) {
   bool debug = false;
   atom_data atom;
   atom.Je2 = temp_Je2;
@@ -195,7 +195,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     print_frequency = tmax / static_cast<double>(max_out);
     total_print = max_out;
   }
-  if (op_batch) print_frequency = 0.2 * _us;
+  if (op_batch) print_frequency = 0.02 * _us;
   // Setup File I/O for later use
 
   FILE * file;
@@ -313,7 +313,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
       // equ -> change_magnetic_field(0.0);
     }
     // **********************************************************************
-    equ->update_population_euler(tStep);  // ********************************
+    equ->update_population_RK4(tStep);  // ********************************
     // **********************************************************************
     // equ->print_density_matrix(stdout);
     if (!equ->is_hermitian()) {
@@ -331,4 +331,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   return 0;
 }
 
-
+int OpticalPumping::test() {
+  printf("here rwar\n");
+  return -1;
+}

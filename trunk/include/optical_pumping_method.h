@@ -72,6 +72,7 @@ class OpticalPumping_Method {
   virtual void calculate_derivs(DM_container *status) = 0;
 
   void update_population_euler(double dt);
+  void update_population_RK4(double dt);
 
   void print_couplings(FILE * des);
   void print_density_matrix(FILE *  des);
