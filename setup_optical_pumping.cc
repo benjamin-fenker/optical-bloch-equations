@@ -11,7 +11,7 @@
 using std::string;
 
 bool op_verbose = false;
-bool op_batch = false;
+bool op_batch = true;
 
 char outFile[50] = "opData.dat";
 
@@ -137,6 +137,7 @@ int main(int argc, char* argv[]) {
       printf("\n\n");
       return 0;
     } else if (strcmp(argv[1], "-f") == 0) {  // accept input from file
+      printf("with f\n");
       if (argc == 2) {                        // No file name given
         printf("File name required with -f option.\n");
         printf("opticalPumping -f in.in\n");
@@ -144,7 +145,7 @@ int main(int argc, char* argv[]) {
       }
       FILE *file;
       char* inFile = argv[2];
-      printf("Opening file %s\n", argv[2]);
+      // printf("Opening file %s\n", argv[2]);
       file = fopen(inFile, "r");
       if (file != NULL) {
         char expectedInput[40] = "file";
@@ -244,50 +245,26 @@ int main(int argc, char* argv[]) {
       }
     } else {
       isotope = argv[1];
-      if (argc > 2) {
-        Je2 = atoi(argv[2]);
-        if (argc > 3) {
-          tmax = atof(argv[3])*_ns;
-          if (argc > 4) {
-            dt = atof(argv[4])*_ns;
-            if (argc > 5) {
-              B_z = atof(argv[5])*_G;
-              if (argc > 60) {
-                B_x = atof(argv[6])*_G;
-                if (argc > 7) {
-                  laser_fe_detune = atof(argv[7]) *_MHz;
-                  if (argc > 8) {
-                    laser_ge_detune = atof(argv[8]) * _MHz;
-                    if (argc > 9) {
-                      laser_fe_linewidth = atof(argv[9]) *_MHz;
-                      laser_ge_linewidth = atof(argv[9]) *_MHz;
-                      if (argc > 10) {
-                        laser_fe_I = atof(argv[10]) * _uW/_cm2;
-                        if (argc > 11) {
-                          laser_ge_I = atof(argv[11]) * _uW/_cm2;
-                          if (argc > 12) {
-                            laser_fe_s3_over_s0 = atof(argv[12]);
-                            if (argc > 13) {
-                              laser_ge_s3_over_s0 = atof(argv[13]);
-                              if (argc > 14) {
-                                snprintf(outFile, sizeof(outFile), "%s",
-                                         argv[14]);
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
+      if (argc > 2) Je2 = atoi(argv[2]);
+      if (argc > 3) tmax = atof(argv[3])*_ns;
+      if (argc > 4) dt = atof(argv[4])*_ns;
+      if (argc > 5) B_z = atof(argv[5])*_G;
+      if (argc > 6) B_x = atof(argv[6])*_G;
+      if (argc > 7) laser_fe_detune = atof(argv[7]) *_MHz;
+      if (argc > 8) laser_ge_detune = atof(argv[8]) * _MHz;
+      if (argc > 9) {
+        laser_fe_linewidth = atof(argv[9]) *_MHz;
+        laser_ge_linewidth = atof(argv[9]) *_MHz;
       }
+      if (argc > 10) laser_fe_I = atof(argv[10]) * _uW/_cm2;
+      if (argc > 11) laser_ge_I = atof(argv[11]) * _uW/_cm2;
+      if (argc > 12) laser_fe_s3_over_s0 = atof(argv[12]);
+      if (argc > 13) laser_ge_s3_over_s0 = atof(argv[13]);
+      if (argc > 14) sprintf(outFile, "%s", argv[14]);
     }
   }
   OpticalPumping pumper;
+
   int status = pumper.pump(isotope, method, tmax, dt, zCoherences,
                            hfCoherences_ex, hfCoherences_gr, Je2,
                            nominalSublevelTune2_fe, nominalSublevelTune2_ge,
@@ -295,7 +272,7 @@ int main(int argc, char* argv[]) {
                            laser_ge_detune, laser_fe_linewidth,
                            laser_ge_linewidth, laser_fe_s3_over_s0,
                            laser_ge_s3_over_s0, laser_fe_offTime,
-                           laser_ge_offTime, B_z, B_x);
+                           laser_ge_offTime, B_z, B_x, outFile);
   if (!op_batch) printf("\nCompleted with status = %d\n\n", status);
   return status;
   }
