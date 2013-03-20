@@ -31,6 +31,10 @@ Rate_Equations::Rate_Equations(Eigenvector_Helper set_eigen,
   setup_transition_rates(eigen.atom.linewidth);
   totalTerms = eigen.atom.numFStates+eigen.atom.numGStates;
   totalTerms += eigen.atom.numEStates;
+  es_Zeeman = false;
+  gs_Zeeman = false;
+  es_hyperfine = false;
+  gs_hyperfine = false;
 }
 
 Rate_Equations::~Rate_Equations() {
@@ -98,6 +102,7 @@ void Rate_Equations::calculate_derivs(DM_container *status) {
         }  // End q-loop
       }  // End f-loop
     }    // End e-loop
+    apply_transverse_field(status);
 }
 
 void Rate_Equations::setup_transition_rates(double linewidth) {

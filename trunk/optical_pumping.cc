@@ -195,7 +195,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     print_frequency = tmax / static_cast<double>(max_out);
     total_print = max_out;
   }
-  if (op_batch) print_frequency = 0.02 * _us;
+  print_frequency = tStep;
+  print_frequency = 10*_us;
   // Setup File I/O for later use
 
   FILE * file;
@@ -280,6 +281,9 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     return(2);
   }
 
+
+  // double tStep_in = tStep;
+  // if (op_batch) tStep = 0.01*_us;
   double time = 0.0;
   double nextPrint = 0.0;
   double nextUpdate = 0.0;
@@ -293,7 +297,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
         nextUpdate += updateFreq;
       }
     }
-    if ((fabs(time - nextPrint))/_ns < pow(10, -2)) {
+    // if ((fabs(time - nextPrint))/_ns < pow(10, -2) {
+    if ((fabs(time - nextPrint)/_ns < pow(10, -2))) {
       // equ -> print_data(stdout, time);
       equ->print_data(file, time);
       // equ->print_density_matrix(stdout);
@@ -327,7 +332,12 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
       return 1;
     }
     time += tStep;
+    // if (time >= 3.999*_us) {
+    //   tStep = tStep_in;
+    //   print_frequency = 0.2*_us;
+    // }
   }
+  delete equ;
   return 0;
 }
 

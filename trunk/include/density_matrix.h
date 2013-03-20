@@ -25,6 +25,7 @@ class Density_Matrix: public OpticalPumping_Method {
   void print_rabi_frequencies(FILE * des);
   /* void reset_dPop(); */
 
+  void apply_transverse_field(DM_container *in);
 
   void integrate_ee(DM_container *in);
   void integrate_gg(DM_container *in);
@@ -34,6 +35,7 @@ class Density_Matrix: public OpticalPumping_Method {
   void integrate_fg(DM_container *in);
 
   void change_magnetic_field(double newfield);
+
   vector<vector<double> > dipole_moment_eg;
   vector<vector<double> > dipole_moment_ef;
 
@@ -43,8 +45,6 @@ class Density_Matrix: public OpticalPumping_Method {
   /* vector<vector<gsl_complex> > ddelta_ef; */
   /* vector<vector<gsl_complex> > ddelta_eg; */
   /* vector<vector<gsl_complex> > ddelta_fg; */
-
-  bool es_Zeeman, gs_Zeeman, es_hyperfine, gs_hyperfine;
 };
 
 #endif  // INCLUDE_DENSITY_MATRIX_H_

@@ -74,6 +74,14 @@ class OpticalPumping_Method {
   void update_population_euler(double dt);
   void update_population_RK4(double dt);
 
+  void apply_transverse_field(DM_container *in);
+  void apply_transverse_field_ee(DM_container *in);
+  void apply_transverse_field_gg(DM_container *in);
+  void apply_transverse_field_ff(DM_container *in);
+  void apply_transverse_field_eg(DM_container *in);
+  void apply_transverse_field_ef(DM_container *in);
+  void apply_transverse_field_fg(DM_container *in);
+
   void print_couplings(FILE * des);
   void print_density_matrix(FILE *  des);
   void print_data(FILE *des, double time);
@@ -150,5 +158,7 @@ class OpticalPumping_Method {
   /* Matrices to hold the ground and excited state decomposition. */
   vector<vector<double> > IzJz_ground;
   vector<vector<double> > IzJz_excited;
+
+  bool es_Zeeman, gs_Zeeman, es_hyperfine, gs_hyperfine;
 };
 #endif  // INCLUDE_OPTICAL_PUMPING_METHOD_H_
