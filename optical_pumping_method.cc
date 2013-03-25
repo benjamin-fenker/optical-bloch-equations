@@ -109,6 +109,7 @@ void OpticalPumping_Method::update_population_RK4(double dt) {
   DM_container::add(inc, k3);
   DM_container::add(inc, k4);
   DM_container::mul(inc, dt/6.0);
+  // if (inc -> equalsZero()) printf("Zero!\n");
   DM_container::add(dm_status, inc);
 
   delete k1;

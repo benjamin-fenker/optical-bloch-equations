@@ -11,7 +11,7 @@
 using std::string;
 
 bool op_verbose = false;
-bool op_batch = false;
+bool op_batch = true;
 
 char outFile[50] = "opData.dat";
 
@@ -68,7 +68,7 @@ int main(int argc, char* argv[]) {
     printf("Can't be both batch and verbose. See setup_optical_pumping.cc\n");
     exit(1);
   }
-  string method = "R";  // O for OBE and R for Rate Equations
+  string method = "O";  // O for OBE and R for Rate Equations
 
   // These have to be `true' for the -f option to work correctly
   bool zCoherences = true;
@@ -134,6 +134,7 @@ int main(int argc, char* argv[]) {
       printf("Thirteenth parameter is f --> laser S3 parameter [%3.1G]\n",
              laser_fe_s3_over_s0);
       printf("Fourteenth parameter is output file [%s]\n", outFile);
+      printf("Fifteenth parameter is method [%s]\n", method.c_str());
       printf("\n\n");
       return 0;
     } else if (strcmp(argv[1], "-f") == 0) {  // accept input from file
@@ -261,6 +262,7 @@ int main(int argc, char* argv[]) {
       if (argc > 12) laser_fe_s3_over_s0 = atof(argv[12]);
       if (argc > 13) laser_ge_s3_over_s0 = atof(argv[13]);
       if (argc > 14) snprintf(outFile, sizeof(outFile), "%s", argv[14]);
+      if (argc > 15) method = argv[15];
     }
   }
   OpticalPumping pumper;

@@ -23,6 +23,7 @@ using std::string;
 using std::max;
 // extern char outFile[50];
 extern bool op_batch;
+extern bool isZero;
 
 int OpticalPumping::pump(string isotope, string method, double tmax,
                          double tStep, bool zCoherences, bool hfCoherences_ex,
@@ -195,8 +196,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     print_frequency = tmax / static_cast<double>(max_out);
     total_print = max_out;
   }
-  print_frequency = tStep;
-  print_frequency = 10*_us;
+  if(op_batch) print_frequency = tStep;
+  // print_frequency = 10*_us;
   // Setup File I/O for later use
 
   FILE * file;
@@ -317,9 +318,11 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     if (time > -2.0*_ns) {
       // equ -> change_magnetic_field(0.0);
     }
-    // **********************************************************************
-    equ->update_population_RK4(tStep);  // ********************************
-    // **********************************************************************
+    if (!isZero) {
+      // **********************************************************************
+      equ->update_population_RK4(tStep);  // ********************************
+      // **********************************************************************
+    }
     // equ->print_density_matrix(stdout);
     if (!equ->is_hermitian()) {
       printf("DENSITY MATRIX NOT HERMITIAN AT t = %4.2G ns\n", time/_ns);
