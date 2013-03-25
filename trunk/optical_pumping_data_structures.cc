@@ -11,6 +11,7 @@
 
 
 extern bool op_verbose;
+bool isZero;
 
 Laser_data::Laser_data() {}
 
@@ -151,3 +152,39 @@ void DM_container::mul(DM_container *dm, double c) {
   }
 }
 
+bool DM_container::equalsZero() {
+  isZero = false;
+  double eps = pow(10, -9);
+  for (int e = 0; e < numEStates; e++) {
+    for (int ep = 0; ep < numEStates; ep++) {
+      if (fabs(GSL_REAL(ee[e][ep])) > eps) return false;
+      if (fabs(GSL_IMAG(ee[e][ep])) > eps) return false;
+    }
+    for (int f = 0; f < numFStates; f++) {
+      if (fabs(GSL_REAL(ef[e][f])) > eps) return false;
+      if (fabs(GSL_IMAG(ef[e][f])) > eps) return false;
+    }
+    for (int g = 0; g < numGStates; g++) {
+      if (fabs(GSL_REAL(eg[e][g])) > eps) return false;
+      if (fabs(GSL_IMAG(eg[e][g])) > eps) return false;
+    }
+  }
+  for (int f = 0; f < numFStates; f++) {
+    for (int fp = 0; fp < numFStates; fp++) {
+      if (fabs(GSL_REAL(ff[f][fp])) > eps) return false;
+      if (fabs(GSL_IMAG(ff[f][fp])) > eps) return false;
+    }
+    for (int g = 0; g < numGStates; g++) {
+      if (fabs(GSL_REAL(fg[f][g])) > eps) return false;
+      if (fabs(GSL_IMAG(fg[f][g])) > eps) return false;
+    }
+  }
+  for (int g = 0; g < numGStates; g++) {
+    for (int gp = 0; gp < numGStates; gp++) {
+      if (fabs(GSL_REAL(gg[g][gp])) > eps) return false;
+      if (fabs(GSL_IMAG(gg[g][gp])) > eps) return false;
+    }
+  }
+  isZero = true;
+  return true;
+}

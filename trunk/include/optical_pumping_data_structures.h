@@ -14,7 +14,7 @@ class DM_container {
   DM_container(int numEStates, int numFStates, int numGStates);
   static void add(DM_container* dm, DM_container *other);
   static void mul(DM_container* dm, double c);
-
+  bool equalsZero();
   int numEStates, numFStates, numGStates;
 
   vector<vector<gsl_complex> > ee;
