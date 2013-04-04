@@ -20,7 +20,7 @@ class Rate_Equations: public OpticalPumping_Method {
  public:
   Rate_Equations();
   Rate_Equations(Eigenvector_Helper set_eigen, Laser_data laser_fe,
-                 Laser_data laser_ge);
+                 Laser_data laser_ge, double tilt);
   ~Rate_Equations();
   void setup_transition_rates(double linewidth);
   double set_transition_rate(double laser_power, double sat_intensity,

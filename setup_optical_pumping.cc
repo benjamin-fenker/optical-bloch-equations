@@ -99,10 +99,12 @@ int main(int argc, char* argv[]) {
   double laser_fe_linewidth = 0.2 *_MHz;  // MHz (FWHM)
   double laser_ge_linewidth = 0.2 *_MHz;  // MHz (FWHM)
 
-  double laser_fe_offTime = -1;  // <0 implies always on
+  double laser_fe_offTime = 125000.0*_ns;  // <0 implies always on
   double laser_ge_offTime = -1;  // <0 implies aways on
   double B_z = 2.0 * _G;  // G
   double B_x = 0.0 * _G;  // G
+
+  double tilt = 0.0;                // To start with some asymmetry
   // *******************************
 
   // Also will accept command line input
@@ -135,6 +137,7 @@ int main(int argc, char* argv[]) {
              laser_fe_s3_over_s0);
       printf("Fourteenth parameter is output file [%s]\n", outFile);
       printf("Fifteenth parameter is method [%s]\n", method.c_str());
+      printf("Sixteenth parameter is tilt [%g]\n", tilt);
       printf("\n\n");
       return 0;
     } else if (strcmp(argv[1], "-f") == 0) {  // accept input from file
@@ -239,6 +242,8 @@ int main(int argc, char* argv[]) {
         readAndCheckFromFile(file, expectedInput, &B_x);
         B_x *= _G;            // Have to get the units right!
 
+        snprintf(expectedInput, sizeof(expectedInput), "tilt");
+        readAndCheckFromFile(file, expectedInput, &tilt);
         //        printf("Method = %s\n", method.c_str());
       } else {                  // File does not exist
         printf("File %s does not exist\n", inFile);
@@ -263,6 +268,7 @@ int main(int argc, char* argv[]) {
       if (argc > 13) laser_ge_s3_over_s0 = atof(argv[13]);
       if (argc > 14) snprintf(outFile, sizeof(outFile), "%s", argv[14]);
       if (argc > 15) method = argv[15];
+      if (argc > 16) tilt = atof(argv[16]);
     }
   }
   OpticalPumping pumper;
@@ -274,7 +280,7 @@ int main(int argc, char* argv[]) {
                            laser_ge_detune, laser_fe_linewidth,
                            laser_ge_linewidth, laser_fe_s3_over_s0,
                            laser_ge_s3_over_s0, laser_fe_offTime,
-                           laser_ge_offTime, B_z, B_x, outFile);
+                           laser_ge_offTime, B_z, B_x, outFile, tilt);
   if (!op_batch) printf("\nCompleted with status = %d\n\n", status);
   return status;
   }

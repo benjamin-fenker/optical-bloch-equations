@@ -35,7 +35,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                          double laser_fe_linewidth, double laser_ge_linewidth,
                          double laser_fe_s3_over_s0, double laser_ge_s3_over_s0,
                          double laser_fe_offTime, double laser_ge_offTime,
-                         double set_B_z, double set_B_x, char *outFile) {
+                         double set_B_z, double set_B_x, char *outFile,
+                         double tilt) {
   bool debug = false;
   atom_data atom;
   atom.Je2 = temp_Je2;
@@ -269,12 +270,12 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   //  int (*update_func)(double, const double[], double[], void*);
 
   if (strcmp(method.c_str(), "R") == 0) {
-    equ = new Rate_Equations(decomp, laser_fe, laser_ge);
+    equ = new Rate_Equations(decomp, laser_fe, laser_ge, tilt);
     //    update_func = &Rate_Equations::update_population_gsl;
     //    int (*update_func)(double, const double[], double[], void*) =
     //      &Rate_Equations::update_population_gsl;
   } else if (strcmp(method.c_str(), "O") == 0) {
-    equ = new Density_Matrix(decomp, laser_fe, laser_ge, flags);
+    equ = new Density_Matrix(decomp, laser_fe, laser_ge, flags, tilt);
     //  update_func = &Density_Matrix::update_population_gsl;
   } else {
     printf("Failed to initialize the optical pumping method\t");
@@ -318,10 +319,12 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     if (time > -2.0*_ns) {
       // equ -> change_magnetic_field(0.0);
     }
-    if (!isZero) {
+    if (!isZero || !op_batch) {
       // **********************************************************************
       equ->update_population_RK4(tStep);  // ********************************
       // **********************************************************************
+    } else {
+      // printf("skipped\n");
     }
     // equ->print_density_matrix(stdout);
     if (!equ->is_hermitian()) {

@@ -14,8 +14,8 @@ extern bool op_verbose;
 
 Density_Matrix::Density_Matrix(Eigenvector_Helper set_eigen,
                                Laser_data set_laser_fe, Laser_data set_laser_ge,
-                               coherence_flags flags)
-    : OpticalPumping_Method(set_eigen, set_laser_fe, set_laser_ge),
+                               coherence_flags flags, double tilt)
+    : OpticalPumping_Method(set_eigen, set_laser_fe, set_laser_ge, tilt),
       dipole_moment_eg(numEStates, vector<double>(numGStates, 0.0)),
       dipole_moment_ef(numEStates, vector<double>(numFStates, 0.0)) {
   // printf("DensityMatrix::Density_Matrix(...)\n\n");
@@ -546,6 +546,7 @@ void Density_Matrix::integrate_fg(DM_container *in) {
       // B. Dalton and P. Knight J. Phys. B 15 (1982) 3997-4015 (fig 2)
       // double real = M_PI*(laser_fe.linewidth + laser_ge.linewidth);
       double real = 500.0 * _Hz;
+      real = 0.0 *_Hz;
       double imag = 2*M_PI*((fabs(nu_F[f] - nu_G[g]))
                             - (laser_ge.nu - laser_fe.nu));
       gsl_complex decayTerm = gsl_complex_rect(real, imag);

@@ -71,7 +71,7 @@ void OPFitObject::rerunOPModel() {
       detune_ge = detune_fe - 1.0;
       break;
     case 2:
-      detune_fe = detune_ge + 1.0;
+      detune_ge = detune_fe + 1.0;
       break;
     default:
       cout << "lState not 1 or 2.  Aborting" << endl;

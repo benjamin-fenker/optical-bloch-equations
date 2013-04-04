@@ -13,7 +13,8 @@ extern bool op_batch;
 OpticalPumping_Method::OpticalPumping_Method() {}
 OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
                                              Laser_data set_laser_fe,
-                                             Laser_data set_laser_ge)
+                                             Laser_data set_laser_ge,
+                                             double tilt)
   : eigen(set_eigen),
     numEStates(eigen.atom.numEStates), numFStates(eigen.atom.numFStates),
     numGStates(eigen.atom.numGStates), tau(eigen.atom.tau),
@@ -46,7 +47,8 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
   setup_eg_coupling(eigen.atom);
   setup_ef_coupling(eigen.atom);
   if (op_verbose) print_couplings(stdout);
-  setup_pop_uniform_ground();
+  // setup_pop_uniform_ground();
+  setup_pop_withTilt(tilt);
 
   data.numGStates = eigen.atom.numGStates;
   data.numFStates = eigen.atom.numFStates;
@@ -109,7 +111,9 @@ void OpticalPumping_Method::update_population_RK4(double dt) {
   DM_container::add(inc, k3);
   DM_container::add(inc, k4);
   DM_container::mul(inc, dt/6.0);
-  // if (inc -> equalsZero()) printf("Zero!\n");
+  bool j = inc -> equalsZero();
+  if (j) printf("Zero!\n");
+  //  if (inc -> equalsZero()) printf("Zero!\n");
   DM_container::add(dm_status, inc);
 
   delete k1;
@@ -327,6 +331,47 @@ void OpticalPumping_Method::setup_pop_uniform_ground() {
                                                     startPop);
   for (int g = 0; g < numGStates; g++) GSL_SET_REAL(&dm_status->gg[g][g],
                                                     startPop);
+}
+
+void OpticalPumping_Method::setup_pop_withTilt(double tilt) {
+  double startPop = numFStates + numGStates;
+  startPop = 1.0 / startPop;
+  // printf("First comparison: %g\n", static_cast<double>(numFStates)/2.0);
+  for (int f = 0; f < floor(static_cast<double>(numFStates)/2.0); f++) {
+    GSL_SET_REAL(&dm_status->ff[f][f], startPop*(1.0-tilt));
+    // printf("Filling index %d with %g\n", f, (1.0-tilt));
+  }
+  int highStarting = numFStates/2;
+  if (numFStates % 2 != 0) {
+    GSL_SET_REAL(&dm_status->ff[(numFStates/2)][(numFStates/2)],
+                 startPop);
+    // printf("Filling index %d with %g\n", (numFStates/2), 1.0);
+    highStarting++;
+  }
+
+  printf("High starting: %d\n", highStarting);
+  for (int f = highStarting; f < numFStates; f++) {
+    GSL_SET_REAL(&dm_status->ff[f][f], startPop*(1.0+tilt));
+    // printf("Filling index %d with %g\n", f, (1.0+asym));
+  }
+
+  for (int g = 0; g < floor(static_cast<double>(numGStates)/2.0); g++) {
+    GSL_SET_REAL(&dm_status->gg[g][g], startPop*(1.0-tilt));
+    // printf("Filling index %d with %g\n", g, (1.0-tilt));
+  }
+  highStarting = numGStates/2;
+  if (numGStates % 2 != 0) {
+    GSL_SET_REAL(&dm_status->gg[(numGStates/2)][(numGStates/2)],
+                 startPop);
+    // printf("Filling index %d with %g\n", (numGStates/2), 1.0);
+    highStarting++;
+  }
+
+  printf("High starting: %d\n", highStarting);
+  for (int g = highStarting; g < numGStates; g++) {
+    GSL_SET_REAL(&dm_status->gg[g][g], startPop*(1.0+tilt));
+    // printf("Filling index %d with %g\n", g, (1.0+asym));
+  }
 }
 
 void OpticalPumping_Method::print_couplings(FILE * des) {

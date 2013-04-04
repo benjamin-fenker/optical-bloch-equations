@@ -21,7 +21,7 @@ class OpticalPumping {
            double laser_fe_linewidth, double laser_ge_linewidth,
            double laser_fe_s3_over_s0, double laser_ge_s3_over_s0,
            double laser_fe_offTime, double laser_ge_offTime, double B_z,
-           double B_x, char *outfile);
+           double B_x, char *outfile, double tilt);
   int test();
 };
 #endif  // INCLUDE_OPTICAL_PUMPING_H_
