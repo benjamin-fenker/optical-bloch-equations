@@ -19,7 +19,7 @@ class OpticalPumping_Method {
  public:
   OpticalPumping_Method();
   OpticalPumping_Method(Eigenvector_Helper set_eigen, Laser_data laser_fe,
-                        Laser_data laser_ge);
+                        Laser_data laser_ge, double tilt);
   virtual ~OpticalPumping_Method();
   void setup_quantum_numbers(int I2, int J2);
   void setup_quantum_numbers(atom_data atom);
@@ -48,6 +48,7 @@ class OpticalPumping_Method {
   double set_raising(int F2, int M2);
   double set_lowering(int F2, int M2);
   void setup_pop_uniform_ground();
+  void setup_pop_withTilt(double tilt);
   virtual void switch_off_laser(int las); /* las = 1: g-->e; las = 2: f-->e */
   virtual void change_magnetic_field(double newField);
   // Struct to hold atom, laser and eignenvector information

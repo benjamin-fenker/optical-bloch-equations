@@ -1,5 +1,4 @@
 // Authors: Benjamin Fenker 2013
-
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -135,6 +134,10 @@ void calc_chi2(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par,
                                                 fitObj -> mod_e);
       integrated *= norm[i];
       integrated += bkg[i];
+      cout << "Signal " << j << " compares " << integrated << " to "
+                << fitObj->expDat[j] << endl;
+      int j2;
+      cin >> j2;
       tmp = (integrated - fitObj->expDat[j])/(fitObj -> dexpDat[j]);
       tmp = tmp*tmp;
       chi2 += tmp;
@@ -159,14 +162,14 @@ void formatDataTGraph(TGraph *tg) {
 }
 // *****************************************************************************
 
-void fitFluorescence2() {
-  const Double_t pGuess = 332.7;        // Power
-  const Double_t sGuess = 0.965;        // Stokes (s3)
-  const Double_t nGuess = 86.78;        // Normalization
-  const Double_t dGuess = 2.000;        // Detuning
-  const Double_t bGuess = 0.313;        // Background level
-  const Double_t fGuess = 1.900;        // B-Field_z
-  const Double_t xGuess = 0.000;        // B-Field_x (transverse)
+void fitFluorescence2(Double_t sGuess, Double_t fGuess, Double_t xGuess) {
+  Double_t pGuess = 700.0; // mW/cm^2
+  //    Double_t sGuess = 0.965;        // Stokes (s3)
+  Double_t nGuess = 40.00;        // Normalization
+  Double_t dGuess = 2.000;        // Detuning
+  Double_t bGuess = 0.474312;        // Background level (From linear fit)
+//   Double_t fGuess = 1.900;        // B-Field_z
+  //    Double_t xGuess = 0.000;        // B-Field_x (transverse)
 
   // Load my classes ***********************************************************
   if (!TClass::GetDict("OPFitObject")) {
@@ -209,7 +212,10 @@ void fitFluorescence2() {
   cin >> polChoice;
   if (polChoice != 0) polChoice = polChoice / abs(polChoice); // Ensures |p| = 1
   if (polChoice > 0)  cout << "You chose sigma+" << endl;
-  if (polChoice < 0)  cout << "You chose sigma-" << endl;
+  if (polChoice < 0)  {
+    cout << "You chose sigma-" << endl;
+    dGuess *= -1.0;
+  }
   if (polChoice == 0) cout << "You chose both" << endl;
 
   cout << "Choose Magnetic field state 1 or 2 (see laserScheme.pdf for what";
@@ -227,21 +233,69 @@ void fitFluorescence2() {
     cout << "Cannot choose " << methodChoice << endl;
     exit(1);
   }
-  // cout << "Choose which parameters to fix (others will be varied): " << endl;
-  // cout << "Enter -1 when done" << endl;
-  // if (polChoice != 0) {
-  //   cout << "Power: " << kPower << endl << "s3: " << ks3 << endl
-  //        << "Normalization: " << kNorm << endl << "Detune: " << kDetune
-  //        << endl << "Background: " << kBkgLevel << endl << "B-field_z: "
-  //        << kBfieldZ << endl;
-  // } else {
-  //   cout << "Power (both): " << kPower_sim << endl << "s3 (+): " << ks3_plu
-  //        << endl << "s3 (-): " << ks3_min << endl << "
-  // }
+  cout << "Choose which parameters to fix (others will be varied): " << endl;
+  cout << "Enter -1 when done" << endl;
+  if (polChoice != 0) {
+    cout << "Power: " << kPower << endl << "s3: " << ks3 << endl
+	 << "Normalization: " << kNorm << endl << "Detune: " << kDetune
+	 << endl << "Background: " << kBkgLevel << endl << "B-field_z: "
+	 << kBFieldZ << endl << "B-field_x: " << kBFieldX << endl;
+  } else {
+    cout << "Power (both): " << kPower_sim << endl << "s3 (+): " << ks3_plu
+	 << endl << "s3 (-): " << ks3_min << endl << "Normalization (+): " << kNorm_plu
+	 << endl << "Normalization (-): " << kNorm_min << endl << "Detune: " << kDetune_sim
+	 << endl << "Background (+): " << kBkgLevel_plu << endl << "Background (-): "
+	 << kBkgLevel_min << endl << "B-fieldz: " << kBFieldZ_sim << endl << "B-field_x: "
+	 << kBFieldX_sim << endl;
+ }
+
+  Int_t fixChoice = -1;
+  vector<Int_t> fix;
+  cin >> fixChoice;
+  while (fixChoice > 0) {
+    fix.push_back(fixChoice);
+    cin >> fixChoice;
+  }
+
+  cout << "Choose MIGRAD strategy (0-2)" << endl;
+  Int_t migStrat;
+  cin >> migStrat;
+
   // ***************************************************************************
 
   // Read data file ************************************************************
-  dataFile.open("FluorescenceScalerData_plain.dat");
+  Int_t fileChoice = -1;
+  cout << "Enter 1 for old dat with systematic errors" << endl;
+  cout << "Enter 2 for new (Dec-like) data with systematic errors" << endl;
+  cout << "Enter 3 for old data with statistical errors only" << endl;
+  cout << "Enter 4 for new (Dec-like) data with stat errors only" << endl;
+  cout << "Enter 5 for new (Dec-like) data with scaled systematic errors" << endl;
+  cout << "Enter 6 for old data with scaled systematic errors" << endl;
+  cin >> fileChoice;
+  switch (fileChoice) {
+  case 1:                             // Sigma + or Sigma-
+    dataFile.open("FluorescenceScalerData_plain.dat");
+    break;
+  case 2:
+    dataFile.open("FluorescenceScalerData1286_plain.dat");
+    break;
+  case 3:
+    dataFile.open("FluorescenceScalerData_1148-stats.dat");
+    break;
+  case 4:
+    dataFile.open("FluorescenceScalerData_1286-stats.dat");
+    break;
+  case 5:
+    dataFile.open("FluorescenceScalerData1286_normalized.dat");
+    break;
+  case 6:
+    dataFile.open("FluorescenceScalerData1148_normalized.dat");
+    break;
+  default:
+    cout << "I said enter one or two.  Follow instructions" << endl;
+    exit(1);
+  }
+  
   if (dataFile.is_open()) {
     // cout << "Opened file." << endl;
     for (Int_t i = 0; i < numPoints; i++) {
@@ -249,9 +303,7 @@ void fitFluorescence2() {
         dataFile >> t_center[i] >> sp[i] >> dsp[i] >> spbkg[i] >> dspbkg[i]
                  >> sm[i] >> dsm[i] >> smbkg[i] >> dsmbkg[i];
         dt_center[i] = (t_right[i] - t_left[i])/2.0;
-        dsp[i] = dsp[i] * 0.7396977611;
-        dspbkg[i] = dspbkg[i] * 0.7396977611;
-
+        cout << "Sigma- error " << i << " = " << dsm[i] << endl;
         // sp_net[i] = sp[i] - spbkg[i];
         // sm_net[i] = sm[i] - smbkg[i];
         // dsp_net[i] = sqrt((dsp[i]*dsp[i])+(dspbkg[i]*dspbkg[i]));
@@ -274,11 +326,21 @@ void fitFluorescence2() {
   arglist[0] = 0;
 
   dataG_p = new TGraphErrors(t_center.size(), &t_center[0], &sp[0], 0, &dsp[0]);
-  bkgG_p = new TGraphErrors(t_center.size(), &t_center[0], &spbkg[0], 0,
-                            &dspbkg[0]);
+  dataG_p -> SetTitle("Sigma+ data");
+  dataG_p -> SetName("Sigma+ data");
+
+  bkgG_p = new TGraphErrors(t_center.size(), &t_center[0], &spbkg[0], 0, &dspbkg[0]);
+  bkgG_p -> SetTitle("Sigma+ bkg");
+  bkgG_p -> SetName("Sigma+ bkg");
+
   dataG_m = new TGraphErrors(t_center.size(), &t_center[0], &sm[0], 0, &dsm[0]);
-  bkgG_m = new TGraphErrors(t_center.size(), &t_center[0], &smbkg[0], 0,
-                            &dsmbkg[0]);
+  dataG_m -> SetTitle("Sigma- data");
+  dataG_m -> SetName("Sigma- data");
+
+  bkgG_m = new TGraphErrors(t_center.size(), &t_center[0], &smbkg[0], 0, &dsmbkg[0]);
+  bkgG_m -> SetTitle("Sigma- bkg");
+  bkgG_m -> SetName("Sigma- bkg");
+
   fitObj_p = new OPFitObject(sp, dsp, spbkg, dspbkg, pGuess, sGuess, dGuess,
                              2.0, fGuess, xGuess, lasChoice, polChoice);
   fitObj_m = new OPFitObject(sm, dsm, smbkg, dsmbkg, pGuess, -sGuess, dGuess,
@@ -300,7 +362,7 @@ void fitFluorescence2() {
     fitter -> SetParameter(kDetune  , "detune", dGuess, 0.1, 0.0, 0.00000);
     fitter -> SetParameter(kBkgLevel, "BG Lev", bGuess, 0.1, 0.0, 0.00000);
     fitter -> SetParameter(kBFieldZ , "B_z"   , fGuess, 0.1, 0.0, 0.00000);
-    fitter -> SetParameter(kBFieldX , "B_x"   , xGuess, 0.1, 0.0, 10.0000);
+    fitter -> SetParameter(kBFieldX , "B_x"   , xGuess, 0.1, 0.0, 0.17330);  // G (5 degree tilt)
 
 
     if (polChoice > 0) {
@@ -317,10 +379,10 @@ void fitFluorescence2() {
       fitObjsToSend -> Add(fitObj_m);
       sprintf(title, "Sigma-, State %d", lasChoice);
     }
-    fitter -> FixParameter(kDetune);
-    fitter -> FixParameter(kBFieldZ);
-    fitter -> FixParameter(kBFieldX);
-    // fitter -> FixParameter(ks3);
+//     fitter -> FixParameter(kDetune);
+//     fitter -> FixParameter(kBFieldZ);
+//     fitter -> FixParameter(kBFieldX);
+//     fitter -> FixParameter(ks3);
 
   }
   if (polChoice == 0) {
@@ -338,10 +400,10 @@ void fitFluorescence2() {
     fitter -> SetParameter(kBFieldZ_sim , "B_z"       , fGuess, 0.1, 0.0, 0.00);
     fitter -> SetParameter(kBFieldX_sim , "B_x"       , xGuess, 0.1, 0.0, 0.00);
 
-    fitter -> FixParameter(kDetune_sim);
-    fitter -> FixParameter(kBFieldZ_sim);
-    fitter -> FixParameter(kNorm_min);  // Fixed to norm+
-    fitter -> FixParameter(kBFieldX_sim);
+//     fitter -> FixParameter(kDetune_sim);
+//     fitter -> FixParameter(kBFieldZ_sim);
+//     fitter -> FixParameter(kNorm_min);  // Fixed to norm+
+//     fitter -> FixParameter(kBFieldX_sim);
 
     graphsToDraw -> Add(dataG_p);
     graphsToDraw -> Add(bkgG_p);
@@ -352,6 +414,10 @@ void fitFluorescence2() {
     fitCan -> Divide(1, 2);
     fitCan -> cd(1);
     gPad -> SetLogx(1);
+  }
+
+  for (UInt_t i = 0; i < fix.size(); i++) {
+    fitter -> FixParameter(fix[i]);
   }
 
   Bool_t first = kTRUE;
@@ -383,12 +449,18 @@ void fitFluorescence2() {
   // Fit the data ************************************************************
   fitter -> SetObjectFit(fitObjsToSend);
   fitter -> SetFCN(calc_chi2);
-  arglist[0] = 0;
+  arglist[0] = migStrat;
   // fitter -> ExecuteCommand("SET PRI", &arglist[0], 1);
   fitter -> ExecuteCommand("SET STR", &arglist[0], 1);
   arglist[0] = 5000;
   arglist[1] = 1;
-  fitter -> ExecuteCommand("MIGRAD", &arglist[0], 2);
+  int j;
+  cout << "Enter 0 to skip fitting, anything else to fit" << endl;
+  cin >> j;
+  if (j != 0) fitter -> ExecuteCommand("MIGRAD", &arglist[0], 2);
+  arglist[1] = 0;
+//   fitter -> ExecuteCommand("SHO COV", &arglist[0], 0);
+//   fitter -> ExecuteCommand("MINOS", &arglist[0], 1);
   ndf = sm.size() + smbkg.size() - fitter -> GetNumberFreeParameters();
   if (polChoice == 0) ndf += sm.size() + smbkg.size();
   fitter -> GetStats(chi2, edm, errdef, nvpar, nparx);
@@ -411,6 +483,13 @@ void fitFluorescence2() {
          << fitter -> GetParError(i)*scaleFactor << endl;
   }
 
+  printf("Chi2/NDF = %8.6G/%d = %G --> prob = %G\n", chi2, ndf,
+	 chi2/(Double_t)ndf, TMath::Prob(chi2, ndf));
+  for (Int_t i = 0; i < fitter -> GetNumberTotalParameters(); i++) {
+    printf("%8s: %8.6G +/- %8.6G (%8.6G)\n", fitter -> GetParName(i),
+	   fitter -> GetParameter(i), fitter -> GetParError(i),
+	   fitter -> GetParError(i)*scaleFactor);
+  }
   // Draw the result of the fit **********************************************
   if(polChoice == 0) fitCan -> cd(1);
   vector<Double_t> norm(2, 0.0);
@@ -456,14 +535,20 @@ void fitFluorescence2() {
   paves -> AddText(label);
   cout << "Tots: " << fitter -> GetNumberTotalParameters() << endl;
   for (Int_t i = 0; i < fitter -> GetNumberTotalParameters(); i++) {
-    if (!fitter -> IsFixed(i)) {
+//     if (!fitter -> IsFixed(i)) {
       sprintf(label, "%8s: %8.6g +/- %8.6g\n", fitter -> GetParName(i),
               fitter -> GetParameter(i), fitter -> GetParError(i));
       paves -> AddText(label);
-    }
+//     }
   }
   paves -> Draw();
   
   sprintf(title, "out%g.C", chi2);
+  fitCan -> SaveAs(title);
+  char pChar;
+  if (polChoice == 1) pChar = 'p';
+  if (polChoice == -1) pChar = 'm';
+  sprintf(title, "outB%g-s%c-l%d.ps", (fitter -> GetParameter(kBFieldX))*100.0,
+	  pChar, lasChoice);
   fitCan -> SaveAs(title);
 }   // End main
