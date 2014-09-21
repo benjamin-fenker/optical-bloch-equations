@@ -83,8 +83,8 @@ int main(int argc, char* argv[]) {
   double laser_fe_s3_over_s0 = 1.0;
   double laser_ge_s3_over_s0 = 1.0;
 
-  int nominalSublevelTune2_fe = 0;
-  int nominalSublevelTune2_ge = 0;
+  int nominalSublevelTune2_fe = 4;
+  int nominalSublevelTune2_ge = 4;
 
   // ****These are only defaults****
   double tmax = 1.0 * _ns;  // ns
@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
   double laser_fe_linewidth = 0.2 *_MHz;  // MHz (FWHM)
   double laser_ge_linewidth = 0.2 *_MHz;  // MHz (FWHM)
 
-  double laser_fe_offTime = 125000.0*_ns;  // <0 implies always on
+  double laser_fe_offTime = -125000.0*_ns;  // <0 implies always on
   double laser_ge_offTime = -1;  // <0 implies aways on
   double B_z = 2.0 * _G;  // G
   double B_x = 0.0 * _G;  // G
@@ -273,6 +273,10 @@ int main(int argc, char* argv[]) {
   }
   OpticalPumping pumper;
 
+  // printf("*********************************************\n");
+  // printf("Warning...fixing laser_ge/laser_fe = 0.5\n");
+  // printf("*********************************************\n");
+  // laser_ge_I = laser_fe_I / 2.0;
   int status = pumper.pump(isotope, method, tmax, dt, zCoherences,
                            hfCoherences_ex, hfCoherences_gr, Je2,
                            nominalSublevelTune2_fe, nominalSublevelTune2_ge,

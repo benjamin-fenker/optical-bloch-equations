@@ -91,7 +91,7 @@ replot
 ! clear
 ! replot
 ! Hardcopy\POSTSCRIPT groundState.eps
-
+stuidstop
 inquire `Hit OK to continue to excited states' junk
 CLEAR
 ! !window 6
@@ -126,7 +126,7 @@ CLEAR
 label\yaxis `Nuclear pol and alignment (mag)'
 set pchar 0 0 2
 ! !set curvecolor -2
-gr `Nuclear Polarization' pop[1,*] -1*pop[#-2,*]
+gr `Nuclear Polarization' pop[1,*] pop[#-2,*]
 ! !set xlabel `time[us]'
 ! !set ylabel `Nuclear Pol %'
 ! !scales 0 pop[1,tPoints] 0.0 100.0
@@ -140,7 +140,7 @@ gr `T - alignment term' pop[1,*] -1*pop[#-1,*]
 replot 
 ! !replot
 
- inquire `Hit OK to see the excited state population' junk
+inquire `Hit OK to see the excited state population' junk
 
 CLEAR
 ! ! ! window 8
@@ -157,7 +157,7 @@ gr `Excited state population' pop[1,*] 100.0*pop[#,*]
 ! replot 
 ! replot
 
-! inquire `Hit OK to see the total population' junk
+ inquire `Hit OK to see the total population' junk
 ! clear
 ! gr `Total Population' pop[1, *] pop[#-3, *]
 
@@ -192,12 +192,12 @@ ENDDO
 ! aave = asum/(pop[1,#]-time_pgood)
 ! aave = aave * (pop[1,2] - pop[1,1])
 pave = psum/numSteps
-aave = psum/numSteps
+aave = asum/numSteps
 !display `Max P = '//rchar(pmax)//` and 95% of this is reached at t = '//rchar(time_pgood)//` and after this time <P> is '//rchar(pave)//` and <T> is'//rchar(aave)
 
 display `Max P  = '//rchar(pmax)
 display `t_good = '//rchar(time_pgood)//` us'
 display `Num steps = '//rchar(numsteps)
 display `<P>    = '//rchar(pave)
-display `<A>    = '//rchar(-aave)
+display `<A>    = '//rchar(aave)
 return
