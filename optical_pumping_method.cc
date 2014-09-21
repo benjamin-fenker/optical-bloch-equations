@@ -44,6 +44,8 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
   setup_gFactors(eigen.atom);
   setup_frequencies_excited(eigen.atom, eigen.field);
   setup_frequencies_ground(eigen.atom, eigen.field);
+  laser_fe.nu = (nu_E[5] - nu_F[2]) + laser_fe.detune;
+  laser_ge.nu = (nu_E[5] - nu_G[1]) + laser_ge.detune;
   setup_eg_coupling(eigen.atom);
   setup_ef_coupling(eigen.atom);
   if (op_verbose) print_couplings(stdout);
@@ -54,8 +56,10 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
   data.numFStates = eigen.atom.numFStates;
   data.numEStates = eigen.atom.numEStates;
   data.atom = eigen.atom;
-  data.laser_ge = set_laser_ge;
-  data.laser_fe = set_laser_fe;
+  // data.laser_ge = set_laser_ge;
+  // data.laser_fe = set_laser_fe;
+  data.laser_ge = laser_ge;
+  data.laser_fe = laser_fe;
   data.a_eg = a_eg;
   data.a_ef = a_ef;
   data.nu_E = nu_E;
@@ -74,6 +78,8 @@ OpticalPumping_Method::~OpticalPumping_Method() {
 void OpticalPumping_Method::update_population_euler(double dt) {
   reset_dPop();
   calculate_derivs(this -> dm_status);
+  // printf("Derivative for stretched state is\n%g ",
+  //        GSL_REAL(dm_derivs->ff[4][4]));
   DM_container::mul(dm_derivs, dt);
   DM_container::add(dm_status, dm_derivs);
 }
@@ -112,7 +118,9 @@ void OpticalPumping_Method::update_population_RK4(double dt) {
   DM_container::add(inc, k4);
   DM_container::mul(inc, dt/6.0);
   bool j = inc -> equalsZero();
-  if (j) printf("Zero!\n");
+  if (j) {
+    // printf("Zero!\n");
+  }
   //  if (inc -> equalsZero()) printf("Zero!\n");
   DM_container::add(dm_status, inc);
 
@@ -225,7 +233,7 @@ double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
   if (debug) printf("g_f = %6.4G, mu_B = %6.4G MHz/G, B_z = %6.4G G, ", g_f,
                     (_bohr_magneton/_planck_h)/(_MHz/_G), B_z/_G);
   double zeeman = static_cast<double>(Mf2);
-  zeeman *= g_f * (_bohr_magneton/_planck_h) * B_z / 2.0;
+  zeeman *= -1.0*g_f * (_bohr_magneton/_planck_h) * B_z / 2.0;
   if (debug) printf("Zeeman: %15.10G MHz\t", zeeman/_MHz);
   if (debug) printf("Total: %15.10G MHz\n",
                     (excitation + hyperfine + zeeman)/_MHz);
@@ -238,6 +246,7 @@ double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
                                             double g_I, double B_z) {
   Eigenvector_Helper alk;
   double g_f = alk.calc_gf(F2, J2, I2, L2, 1, g_I);
+  
   return set_frequency(excitation, I2, J2, F2, Mf2, hyperfine_const, B_z, g_f);
 }
 
@@ -349,7 +358,7 @@ void OpticalPumping_Method::setup_pop_withTilt(double tilt) {
     highStarting++;
   }
 
-  printf("High starting: %d\n", highStarting);
+  // printf("High starting: %d\n", highStarting);
   for (int f = highStarting; f < numFStates; f++) {
     GSL_SET_REAL(&dm_status->ff[f][f], startPop*(1.0+tilt));
     // printf("Filling index %d with %g\n", f, (1.0+asym));
@@ -367,7 +376,7 @@ void OpticalPumping_Method::setup_pop_withTilt(double tilt) {
     highStarting++;
   }
 
-  printf("High starting: %d\n", highStarting);
+  // printf("High starting: %d\n", highStarting);
   for (int g = highStarting; g < numGStates; g++) {
     GSL_SET_REAL(&dm_status->gg[g][g], startPop*(1.0+tilt));
     // printf("Filling index %d with %g\n", g, (1.0+asym));
@@ -438,30 +447,38 @@ double OpticalPumping_Method::get_polarization() {
   int state;
   double state_pol = 0.0;
   for (state = 0; state < numGStates; state++) {
-    if (debug) printf("For state %d, the decomp is:\n", state);
+    if (debug) printf("For g-state %d, the decomp is:\n", state);
     for (int decomp = 0; decomp < eigen.atom.numBasisStates_ground; decomp++) {
       if (debug) {
-        printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_ground[2*decomp],
+        printf("\tI2 = %d --> %8.6G \t", eigen.nuclear_spin_ground[2*decomp],
                eigen.IzJz_decomp_ground[decomp][state]);
       }
       double tmp = (static_cast<double>(eigen.nuclear_spin_ground[2*decomp]));
       tmp /= 2.0;
       tmp *= pow(eigen.IzJz_decomp_ground[decomp][state], 2.0);
       tmp *= GSL_REAL(dm_status->gg[state][state]);
+      if (debug) printf("And population: %g, contributes %g\n",
+                        GSL_REAL(dm_status->gg[state][state]), tmp);
       state_pol += tmp;
     }
   }
   for (state = state; state < eigen.atom.numBasisStates_ground; state++) {
-    if (debug) printf("For state %d, the decomp is:\n", state);
+    if (debug) printf("For f-state %d, the decomp is:\n", state);
     for (int decomp = 0; decomp < eigen.atom.numBasisStates_ground; decomp++) {
       if (debug) {
-        printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_ground[2*decomp],
+        printf("\tI2 = %d --> %8.6G \t", eigen.nuclear_spin_ground[2*decomp],
                eigen.IzJz_decomp_ground[decomp][state]);
       }
       double tmp = (static_cast<double>(eigen.nuclear_spin_ground[2*decomp]));
       tmp /= 2.0;
       tmp *= pow(eigen.IzJz_decomp_ground[decomp][state], 2.0);
       tmp *= GSL_REAL(dm_status->ff[state-numGStates][state-numGStates]);
+      if (debug) {
+        printf("And population: %g, contributes %g\n",
+               GSL_REAL(dm_status->ff[state-numGStates][state-numGStates]),
+               tmp);
+      }
+
       state_pol += tmp;
     }
   }
@@ -469,13 +486,15 @@ double OpticalPumping_Method::get_polarization() {
     if (debug) printf("For e-state %d, the decomp is:\n", state);
     for (int decomp = 0; decomp < eigen.atom.numBasisStates_excited; decomp++) {
       if (debug) {
-        printf("\tI2 = %d --> %8.6G \n", eigen.nuclear_spin_excited[2*decomp],
-               eigen.IzJz_decomp_excited[decomp][state]);
+        // printf("\tI2 = %d --> %8.6G \t", eigen.nuclear_spin_excited[2*decomp],
+        //        eigen.IzJz_decomp_excited[decomp][state]);
       }
       double tmp = (static_cast<double>(eigen.nuclear_spin_excited[2*decomp]));
       tmp /= 2.0;
       tmp *= pow(eigen.IzJz_decomp_excited[decomp][state], 2.0);
       tmp *= GSL_REAL(dm_status->ee[state][state]);
+      // if (debug) printf("And population: %g, contributes %g\n",
+      //                   GSL_REAL(dm_status->ee[state][state]), tmp);
       state_pol += tmp;
     }
   }

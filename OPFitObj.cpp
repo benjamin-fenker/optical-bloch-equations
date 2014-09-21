@@ -63,21 +63,22 @@ bool OPFitObject::needsARerun() {
 void OPFitObject::rerunOPModel() {
   char command[500];                    // Way too long!
   Double_t detune_fe = currentDetune;
-  Double_t detune_ge = -1.0;
+  Double_t detune_ge = detune_fe - 3.6474; // From Ioana on 4/9/12
   Double_t power_fe = currentPower;
   Double_t power_ge = power_fe / 2.0;   // So says JB in an email
-  switch (laserState) {
-    case 1:
-      detune_ge = detune_fe - 1.0;
-      break;
-    case 2:
-      detune_ge = detune_fe + 1.0;
-      break;
-    default:
-      cout << "lState not 1 or 2.  Aborting" << endl;
-      exit(1);
-      break;
-  }
+  
+  // switch (laserState) {
+  //   case 1:
+  //     detune_ge = detune_fe - 1.0;
+  //     break;
+  //   case 2:
+  //     detune_ge = detune_fe + 1.0;
+  //     break;
+  //   default:
+  //     cout << "lState not 1 or 2.  Aborting" << endl;
+  //     exit(1);
+  //     break;
+  // }
   sprintf(command,
           "./opticalPumping 41K 1 1740000 10.0 %g %g %18.16G %18.16G %g %18.16G %18.16G %18.16G %18.16G %s %c",
           currentBz, currentBx, detune_fe, detune_ge, currentLinewidth,

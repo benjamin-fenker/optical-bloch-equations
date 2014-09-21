@@ -83,6 +83,14 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                                              // tuned_E_F2,
                                              // Tunes max sublevel
                                              laser_fe_detune);
+  // double laser_fe_nu = alk.getLaserFrequency(atom, field, 4,
+  //                                            4,
+  //                                            4,
+  //                                            4,
+  //                                            // tuned_E_F2,
+  //                                            // Tunes max sublevel
+  //                                            laser_fe_detune);
+
   double laser_ge_nu = alk.getLaserFrequency(atom, field, tuned_G_F2,
                                              nominalSublevelTune2_eg,
                                              tuned_E_F2,
@@ -187,7 +195,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // allowing the print frquency to be higher, matching the physics frequency
   // ******CAUTION******
 
-  const int max_out = 1000;  // Maximum number of time steps to write to a file
+  // Maximum number of time steps to write to a file
+  const int max_out = 100000;
   double print_frequency;  // Number of ns between print statements
   int total_print;  // Total number of print statements
   if (tmax/tStep <= max_out) {
@@ -319,14 +328,15 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     if (time > -2.0*_ns) {
       // equ -> change_magnetic_field(0.0);
     }
-    if (!isZero || !op_batch) {
+    if (!isZero) {
       // **********************************************************************
-      equ->update_population_RK4(tStep);  // ********************************
+    equ->update_population_RK4(tStep);  // ********************************
+    //equ -> update_population_euler(tStep);
       // **********************************************************************
     } else {
-      // printf("skipped\n");
+      //  printf("skipped\n");
     }
-    // equ->print_density_matrix(stdout);
+    //   equ->print_density_matrix(stdout);
     if (!equ->is_hermitian()) {
       printf("DENSITY MATRIX NOT HERMITIAN AT t = %4.2G ns\n", time/_ns);
       equ->print_density_matrix(stdout);

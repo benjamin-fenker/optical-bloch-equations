@@ -53,6 +53,13 @@ Eigenvector_Helper::Eigenvector_Helper(atom_data set_atom,
 }
 
 vector<vector<double> > Eigenvector_Helper::diagH(int L) {
+  // GSL struggles to diagonalize a matrix with elements on order of 1E8.
+  // To fix this, I divide by the following magic number to make the elements
+  // of the matrix order of one.  GSL can then diagonalize no problem.  This
+  // does not affect the eigenvalues of the system and decreases the
+  // eigenvectors by a factor of the magic number so I also need to adjust this.
+  const double magicNum = pow(10,8);
+
   bool debug = false;
   // Figure out some parameters to use based on J
   int J2;
@@ -72,7 +79,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
     printf("FATAL ERROR.  L MUST EQUAL 0 OR 1\n L = %d\n", L);
     exit(1);
   }
-  if (op_verbose) {
+  if (debug) {
     printf("Decomposing nuclear spin I = %i/2 for the L = %i ; ", atom.I2, L);
     printf("J = %i/2 state.\n\tAj = %6.4G MHz\n", J2, Aj/_MHz);
     printf("\tB = %6.4G z + %6.4G x G\n\n", field.B_z/_G, field.B_x/_G);
@@ -249,35 +256,37 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
 
   // *****************************************************************
 
+  // Iz*Jz
   gsl_blas_zgemm(CblasNoTrans, CblasNoTrans, gsl_complex_rect(1.0, 0.0),
                  &I_z_view.matrix, &J_z_view.matrix, gsl_complex_rect(0.0, 0.0),
                  &H_view.matrix);
-
+  // IzJz+0.5(IpJm)
   gsl_blas_zgemm(CblasNoTrans, CblasNoTrans, gsl_complex_rect(0.5, 0.0),
                  &I_plus_view.matrix, &J_minus_view.matrix,
                  gsl_complex_rect(1.0, 0.0), &H_view.matrix);
-
+  // IzJz+0.5(IpJp+ImJp)
   gsl_blas_zgemm(CblasNoTrans, CblasNoTrans, gsl_complex_rect(0.5, 0.0),
                  &I_minus_view.matrix, &J_plus_view.matrix,
                  gsl_complex_rect(1.0, 0.0), &H_view.matrix);
-
+  // Aj(IzJz+0.5(IpJp+ImJp))
   gsl_matrix_complex_scale(&H_view.matrix, gsl_complex_rect(Aj, 0.0));
-
 
   // gsl_matrix_complex_fprintf(stdout, Hbt, "%g");
   // printf("*******************\n");
-  // gsl_matrix_complex_fprintf(stdout, Hbz, "%g");
+  //gsl_matrix_complex_fprintf(stdout, Hbz, "%g");
 
   gsl_matrix_complex_add(&H_view.matrix, Hbz);
   gsl_matrix_complex_add(&H_view.matrix, Hbt);
 
-
-  // printf("\nH=\n[");
-  // for(int i = 0; i < (2*numBasisStates*numBasisStates)-1; i+=2) {
-  //   printf("%8.6G\t", H[i]);
-  //   if( (i+2) % (2*numBasisStates) == 0) {
-  //     printf("\n");
+  // Scale by the magic number to put elements ~1, making GSL work better
+  gsl_matrix_complex_scale(&H_view.matrix, gsl_complex_rect(1.0/magicNum, 0.0));
+  // printf("\nH_view=\n[");
+  // for (int i = 0; i < numBasisStates; i++) {
+  //   for (int j = 0; j < numBasisStates; j++) {
+  //     printf("%12.10G\t",
+  //            GSL_REAL(gsl_matrix_complex_get(&H_view.matrix, i, j)));
   //   }
+  //   printf("\n");
   // }
   // printf("\n\n\n");
 
@@ -287,10 +296,24 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
                                                       numBasisStates);
   gsl_eigen_hermv_workspace * w = gsl_eigen_hermv_alloc(numBasisStates);
 
+
   // ALL THE MAGIC
   gsl_eigen_hermv(&H_view.matrix, eval, evec, w);
+  // Scale the eigenvalues back up to their true (Hz) value
+  gsl_vector_scale(eval, magicNum);
+  // printf("\nevec=\n[");
+  // for (int i = 0; i < numBasisStates; i++) {
+  //   for (int j = 0; j < numBasisStates; j++) {
+  //     printf("%8.6G\t",
+  //            GSL_REAL(gsl_matrix_complex_get(evec, i, j)));
+  //   }
+  //   printf("\n");
+  // }
+  // printf("\n\n\n");
+
   gsl_eigen_hermv_free(w);
   gsl_eigen_hermv_sort(eval, evec, GSL_EIGEN_SORT_VAL_ASC);
+
 
   int *F2 = new int[numBasisStates];
   int *Fz2 = new int[numBasisStates];
@@ -405,7 +428,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
     for (int j = 0; j < numBasisStates; j++) {
       gsl_vector_complex_view evec_j = gsl_matrix_complex_column(evec, j);
       gsl_complex ev = gsl_vector_complex_get(&evec_j.vector, i);
-      if (debug) printf("%12.10G\t", GSL_REAL(ev));
+      if (debug) printf("%10.8G\t", GSL_REAL(ev));
     }
     if (debug) printf("\n");
   }
@@ -447,7 +470,7 @@ double Eigenvector_Helper::calc_gj(int J2, int L2, int S2) {
   double g_J = 0.0;
   if (J2 != 0) {
     double g_L = 1.0;  // orbital g-factor
-    double g_s = 2.0023;  // electron spin g-factor
+    double g_s = 2.002319;  // electron spin g-factor
     double J = static_cast<double>(J2)/2.0;
     double L = static_cast<double>(L2)/2.0;
     double S = static_cast<double>(S2)/2.0;
@@ -478,9 +501,9 @@ double Eigenvector_Helper::calc_gf(int F2, int J2, int I2, int L2,
     num = ((F*(F+1.0)) - (J*(J+1.0)) + (I*(I+1.0)))*g_Ip;
     g_F += (num/den);
   }
-  // printf("g_F = %6.4G\t", g_F);
+  //  printf("g_F = %6.4G\n", g_F);
   return g_F;
-}
+ }
 
 vector<int> Eigenvector_Helper::get_nuclear_spin(int numBasisStates) {
   /*
