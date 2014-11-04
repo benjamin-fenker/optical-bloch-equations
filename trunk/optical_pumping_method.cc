@@ -4,9 +4,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <fstream>
+#include <iostream>
 #include <gsl/gsl_sf_coupling.h>
 #include "include/optical_pumping_method.h"
 #include "include/units.h"
+using std::string;
 using std::vector;
 extern bool op_verbose;
 extern bool op_batch;
@@ -44,13 +47,15 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
   setup_gFactors(eigen.atom);
   setup_frequencies_excited(eigen.atom, eigen.field);
   setup_frequencies_ground(eigen.atom, eigen.field);
-  laser_fe.nu = (nu_E[5] - nu_F[2]) + laser_fe.detune;
-  laser_ge.nu = (nu_E[5] - nu_G[1]) + laser_ge.detune;
+  // laser_fe.nu = (nu_E[5] - nu_F[2]) + laser_fe.detune;
+  // laser_ge.nu = (nu_E[5] - nu_G[1]) + laser_ge.detune;
   setup_eg_coupling(eigen.atom);
   setup_ef_coupling(eigen.atom);
   if (op_verbose) print_couplings(stdout);
   // setup_pop_uniform_ground();
-  setup_pop_withTilt(tilt);
+  //  setup_pop_withTilt(tilt);
+  tilt = tilt;
+  setup_pop_arbitrary("initial.pop");
 
   data.numGStates = eigen.atom.numGStates;
   data.numFStates = eigen.atom.numFStates;
@@ -95,12 +100,14 @@ void OpticalPumping_Method::update_population_RK4(double dt) {
   calculate_derivs(arg);
   DM_container *k2 = new DM_container(*dm_derivs);
 
+  delete arg;
   arg = new DM_container(*k2);
   DM_container::mul(arg, dt/2.0);
   DM_container::add(arg, dm_status);
   calculate_derivs(arg);
   DM_container *k3 = new DM_container(*dm_derivs);
 
+  delete arg;
   arg = new DM_container(*k3);
   DM_container::mul(arg, dt);
   DM_container::add(arg, dm_status);
@@ -229,6 +236,8 @@ double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
   double hyperfine = static_cast<double>((F2*(F2+2)) - (I2*(I2+2)) -
                                          (J2*(J2+2)));
   hyperfine *= hyperfine_const/8.0;
+  if (debug) printf("I2 = %d\t J2 = %d\t F2 = %d\t Mf2 = %d\n",
+                    I2, J2, F2, Mf2);
   if (debug) printf("Hyperfine: %15.10G MHz \t", hyperfine/_MHz);
   if (debug) printf("g_f = %6.4G, mu_B = %6.4G MHz/G, B_z = %6.4G G, ", g_f,
                     (_bohr_magneton/_planck_h)/(_MHz/_G), B_z/_G);
@@ -342,6 +351,57 @@ void OpticalPumping_Method::setup_pop_uniform_ground() {
                                                     startPop);
 }
 
+void OpticalPumping_Method::setup_pop_arbitrary(string fname) {
+  std::ifstream ifs;
+  ifs.open(fname.c_str(), std::ifstream::in);
+  if (!ifs.good()) {
+    printf("Could not open population file %s\n", fname.c_str());
+    setup_pop_uniform_ground();
+    return;
+  }
+  vector<double> pop(numFStates+numGStates, 0.0);
+  double sum = 0.0;
+  for (int i = 0; i < numFStates + numGStates; i++) {
+    if (!ifs.good()) {
+      printf("Population file %s not enough inputs\n", fname.c_str());
+      setup_pop_uniform_ground();
+      return;
+    }
+    double tmp;
+    ifs >> tmp;
+    if (tmp >= 0) {
+      pop[i] = tmp;
+    } else {
+      printf("WARNING: Initial population < 0 in file! ");
+      printf("(Set this population to zero and continue)\n");
+      pop[i] = 0;
+    }
+    sum += pop[i];
+  }
+
+  if (sum <= 0) {
+    printf("ERROR... Total initial population <= 0... set to uniform");
+    setup_pop_uniform_ground();
+    return;
+  }
+
+  for (int i = 0; i < numFStates + numGStates; i++) pop[i] /= sum;
+
+  printf("Initial populations...\n");
+  for (int i = 0; i < numGStates; i++) {
+    GSL_SET_REAL(&dm_status->gg[i][i], pop[i]);
+    printf("| F = %d/2, Mf = %d/2 > = %g\t", Fg2_Vector[i], MFg2_Vector[i],
+           pop[i]);
+  }
+  printf("\n");
+  for (int i = 0; i < numFStates; i++) {
+    GSL_SET_REAL(&dm_status->ff[i][i], pop[i+numGStates]);
+    printf("| F = %d/2, Mf = %d/2 > = %g\t", Ff2_Vector[i], MFf2_Vector[i],
+           pop[i+numGStates]);
+  }
+  printf("\n");
+}
+
 void OpticalPumping_Method::setup_pop_withTilt(double tilt) {
   double startPop = numFStates + numGStates;
   startPop = 1.0 / startPop;
@@ -382,6 +442,7 @@ void OpticalPumping_Method::setup_pop_withTilt(double tilt) {
     // printf("Filling index %d with %g\n", g, (1.0+asym));
   }
 }
+
 
 void OpticalPumping_Method::print_couplings(FILE * des) {
   // First get minimum coupling to normalize everythign to integers
@@ -836,7 +897,7 @@ void OpticalPumping_Method::apply_transverse_field_ee(DM_container *in) {
           if (MFe2_Vector[e]+2 == MFe2_Vector[e+1]) {  // Sanity check
             gsl_complex tmp = in->ee[e+1][ep];
             // printf("Bx = %g + %g i + ", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cPlus_E[e]);
+            tmp = gsl_complex_mul_real(tmp, cPlus_E[e]);
             left = gsl_complex_add(left, tmp);
           }
         }
@@ -845,7 +906,7 @@ void OpticalPumping_Method::apply_transverse_field_ee(DM_container *in) {
           if (MFe2_Vector[e]-2 == MFe2_Vector[e-1]) {  // Sanity check
             gsl_complex tmp = in->ee[e-1][ep];
             // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cMins_E[e]);
+            tmp = gsl_complex_mul_real(tmp, cMins_E[e]);
             left = gsl_complex_add(left, tmp);
           }
         }
@@ -855,7 +916,7 @@ void OpticalPumping_Method::apply_transverse_field_ee(DM_container *in) {
           if (MFe2_Vector[ep]+2 == MFe2_Vector[ep+1]) {  // Sanity check
             gsl_complex tmp = in->ee[e][ep+1];
             // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cPlus_E[ep]);
+            tmp = gsl_complex_mul_real(tmp, cPlus_E[ep]);
             rigt = gsl_complex_sub(rigt, tmp);
           }
         }
@@ -864,7 +925,7 @@ void OpticalPumping_Method::apply_transverse_field_ee(DM_container *in) {
           if (MFe2_Vector[ep]-2 == MFe2_Vector[ep-1]) {
             gsl_complex tmp = in->ee[e][ep-1];
             // printf("%g + %g i\n", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cMins_E[ep]);
+            tmp = gsl_complex_mul_real(tmp, cMins_E[ep]);
             rigt = gsl_complex_sub(rigt, tmp);
           }
         }
@@ -896,7 +957,7 @@ void OpticalPumping_Method::apply_transverse_field_gg(DM_container *in) {
           if (MFg2_Vector[g]+2 == MFg2_Vector[g+1]) {  // Sanity check
             gsl_complex tmp = in->gg[g+1][gp];
             // printf("Bx = %g + %g i + ", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cPlus_G[g]);
+            tmp = gsl_complex_mul_real(tmp, cPlus_G[g]);
             left = gsl_complex_add(left, tmp);
           }
         }
@@ -905,7 +966,7 @@ void OpticalPumping_Method::apply_transverse_field_gg(DM_container *in) {
           if (MFg2_Vector[g]-2 == MFg2_Vector[g-1]) {  // Sanity check
             gsl_complex tmp = in->gg[g-1][gp];
             // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cMins_G[g]);
+            tmp = gsl_complex_mul_real(tmp, cMins_G[g]);
             left = gsl_complex_add(left, tmp);
           }
         }
@@ -915,7 +976,7 @@ void OpticalPumping_Method::apply_transverse_field_gg(DM_container *in) {
           if (MFg2_Vector[gp]+2 == MFg2_Vector[gp+1]) {  // Sanity check
             gsl_complex tmp = in->gg[g][gp+1];
             // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cPlus_G[gp]);
+            tmp = gsl_complex_mul_real(tmp, cPlus_G[gp]);
             rigt = gsl_complex_sub(rigt, tmp);
           }
         }
@@ -924,7 +985,7 @@ void OpticalPumping_Method::apply_transverse_field_gg(DM_container *in) {
           if (MFg2_Vector[gp]-2 == MFg2_Vector[gp-1]) {  // Sanity check
             gsl_complex tmp = in->gg[g][gp-1];
             // printf("%g + %g i\n", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cMins_G[gp]);
+            tmp = gsl_complex_mul_real(tmp, cMins_G[gp]);
             rigt = gsl_complex_sub(rigt, tmp);
           }
         }
@@ -940,66 +1001,169 @@ void OpticalPumping_Method::apply_transverse_field_gg(DM_container *in) {
   }      // End g
 }        // End B_x gg
 
+/*
+void OpticalPumping_Method::apply_transverse_field_ff(DM_container *in) {
+  for (int i = 0; i < numFStates; i++) {
+    for (int j = 0; j < numFStates; j++) {
+      gsl_complex bx_contribution = gsl_complex_rect(0.0, 0.0);
+      double c, mf;
+      gsl_complex rho;
+
+      mf = (static_cast<double>(MFf2_Vector[i]))/2.0;
+      c = sqrt( (2-mf) * (2+mf+1) );
+
+      //      printf ("For i = %d, j = %d \t c = %g\n", i, j, c);
+      if (fabs(c) > 0.0) {
+        rho = in -> ff[i+1][j];
+        bx_contribution = gsl_complex_add(bx_contribution,
+                                          gsl_complex_mul_real(rho, c));
+      }
+
+      c = sqrt( (2+mf) * (2-mf+1) );
+      if (fabs(c) > 0.0) {
+        rho = in -> ff[i-1][j];
+        bx_contribution = gsl_complex_add(bx_contribution,
+                                          gsl_complex_mul_real(rho, c));
+      }
+
+      mf = (static_cast<double>(MFf2_Vector[j]))/2.0;
+      c = sqrt( (2-mf) * (2+mf+1) );
+      if (fabs(c) > 0.0) {
+        rho = in -> ff[i][j+1];
+        bx_contribution = gsl_complex_sub(bx_contribution,
+                                          gsl_complex_mul_real(rho, c));
+      }
+
+      c = sqrt( (2+mf) * (2-mf+1) );
+      if (fabs(c) > 0.0) {
+        rho = in -> ff[i][j-1];
+        bx_contribution = gsl_complex_sub(bx_contribution,
+                                          gsl_complex_mul_real(rho, c));
+      }
+
+      double mul_factor =
+          -1.0*_bohr_magneton*eigen.field.B_x*gFactor_F / (2.0*_planck_hbar);
+      bx_contribution = gsl_complex_mul_imag(bx_contribution, mul_factor);
+
+      dm_derivs->ff[i][j] =
+          gsl_complex_add(dm_derivs->ff[i][j], bx_contribution);
+    }
+  }
+}
+*/
+
+/*
 void OpticalPumping_Method::apply_transverse_field_ff(DM_container *in) {
   for (int f = 0; f < numFStates; f++) {
     for (int fp = 0; fp < numFStates; fp++) {
-      if ((f == fp) || (gs_Zeeman)) {
+        // Get ready for transverse magnetic field!
+        gsl_complex Bx = gsl_complex_rect(0.0, 0.0);
+        // gsl_complex left = gsl_complex_rect(0.0, 0.0);
+        // gsl_complex rigt = gsl_complex_rect(0.0, 0.0);
+        // Is there a state with Mf` = Mf+1 and F` = F?
+        double c, mf;
+
+        mf = (static_cast<double>(MFf2_Vector[f]))/2.0;
+        c = sqrt( (2-mf) * (2+mf+1) );
+        if (fabs(c) > 0) {
+            gsl_complex tmp = in->ff[f+1][fp];
+
+            // Bx = gsl_complex_add(Bx, gsl_complex_mul_real(tmp, c));
+            tmp = gsl_complex_mul_real(tmp, c);
+             Bx = gsl_complex_add(Bx, tmp);
+        }
+
+
+        c = sqrt( (2+mf) * (2-mf+1) );        
+        // Is there a state with Mf` = Mf-1 and F` = F?
+        if (fabs(c) > 0) {                    // Keep things in bounds
+            gsl_complex tmp = in->ff[f-1][fp];
+
+            // Bx = gsl_complex_add(Bx, gsl_complex_mul_real(tmp, c));
+
+            tmp = gsl_complex_mul_real(tmp, c);
+            Bx = gsl_complex_add(Bx, tmp);
+        }
+
+        // Is there a state with Mf` = Mf+1 and F` = F?
+        mf = (static_cast<double>(MFf2_Vector[fp]))/2.0;
+        c = sqrt( (2-mf) * (2+mf+1) );
+
+        if (fabs(c) > 0) {        // Keep things in bounds
+            gsl_complex tmp = in->ff[f][fp+1];
+
+            //Bx = gsl_complex_sub(Bx, gsl_complex_mul_real(tmp, c));
+            tmp = gsl_complex_mul_real(tmp, c);
+            Bx = gsl_complex_sub(Bx, tmp);
+        }
+        // Is there a state with Mf` = Mf-1 and F` = F?
+        c = sqrt( (2+mf) * (2-mf+1) );        
+        if (fabs(c) > 0) {                   // Keep things in bounds
+            gsl_complex tmp = in->ff[f][fp-1];
+            //     Bx = gsl_complex_sub(Bx, gsl_complex_mul_real(tmp, c));
+            tmp = gsl_complex_mul_real(tmp, c);
+            Bx = gsl_complex_sub(Bx, tmp);
+        }
+
+      double mul_factor =
+          -1.0*_bohr_magneton*eigen.field.B_x*gFactor_F / (2.0*_planck_hbar);
+      Bx = gsl_complex_mul_imag(Bx, mul_factor);
+
+      dm_derivs->ff[f][fp] = gsl_complex_add(dm_derivs->ff[f][fp], Bx);
+    }    // End fp
+  }      // End f
+}        // End function
+*/
+
+void OpticalPumping_Method::apply_transverse_field_ff(DM_container *in) {
+  for (int f = 0; f < numFStates; f++) {
+    for (int fp = 0; fp < numFStates; fp++) {
         // Get ready for transverse magnetic field!
         gsl_complex Bx = gsl_complex_rect(0.0, 0.0);
         gsl_complex left = gsl_complex_rect(0.0, 0.0);
         gsl_complex rigt = gsl_complex_rect(0.0, 0.0);
-        // printf("For e = %d, comparing %d to %d\n", e, MFe2_Vector[e],
-        //        MFe2_Vector[e+1]);
         // Is there a state with Mf` = Mf+1 and F` = F?
         if (f+1 < numFStates) {         // Keep things in bounds
-          if (MFf2_Vector[f]+2 == MFf2_Vector[f+1]) {  // Sanity check
             gsl_complex tmp = in->ff[f+1][fp];
-            // printf("Bx = %g + %g i + ", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cPlus_F[f]);
+            tmp = gsl_complex_mul_real(tmp, cPlus_F[f]);
             left = gsl_complex_add(left, tmp);
-          }
         }
         // Is there a state with Mf` = Mf-1 and F` = F?
         if (f > 0) {                    // Keep things in bounds
-          if (MFf2_Vector[f]-2 == MFf2_Vector[f-1]) {  // Sanity check
             gsl_complex tmp = in->ff[f-1][fp];
-            // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cMins_F[f]);
+            tmp = gsl_complex_mul_real(tmp, cMins_F[f]);
             left = gsl_complex_add(left, tmp);
-          }
         }
         left = gsl_complex_mul_real(left, gFactor_F);
         // Is there a state with Mf` = Mf+1 and F` = F?
         if (fp+1 < numFStates) {        // Keep things in bounds
-          if (MFf2_Vector[fp]+2 == MFf2_Vector[fp+1]) {  // Sanity check
             gsl_complex tmp = in->ff[f][fp+1];
-            // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cPlus_F[fp]);
-            rigt = gsl_complex_sub(rigt, tmp);
-          }
+            tmp = gsl_complex_mul_real(tmp, cPlus_F[fp]);
+            rigt = gsl_complex_add(rigt, tmp);
         }
         // Is there a state with Mf` = Mf-1 and F` = F?
         if (fp > 0) {                   // Keep things in bounds
-          if (MFf2_Vector[fp]-2 == MFf2_Vector[fp-1]) {  // Sanity check
             gsl_complex tmp = in->ff[f][fp-1];
-            // printf("%g + %g i\n", GSL_REAL(tmp), GSL_IMAG(tmp));
-            gsl_complex_mul_real(tmp, cMins_F[fp]);
-            rigt = gsl_complex_sub(rigt, tmp);
-          }
+            tmp = gsl_complex_mul_real(tmp, cMins_F[fp]);
+            rigt = gsl_complex_add(rigt, tmp);
         }
         rigt = gsl_complex_mul_real(rigt, gFactor_F);
-        Bx = gsl_complex_add(left, rigt);
+        Bx = gsl_complex_sub(left, rigt);
         Bx = gsl_complex_mul_imag(Bx,
                                   -_bohr_magneton*eigen.field.B_x
                                   /2.0/_planck_hbar);
-        // printf("Bx contribution is %g + %g i\n", GSL_REAL(Bx), GSL_IMAG(Bx));
+
         dm_derivs->ff[f][fp] = gsl_complex_add(dm_derivs->ff[f][fp], Bx);
-      }  // End if coherences
     }    // End fp
   }      // End f
 }        // End function
 
 void OpticalPumping_Method::apply_transverse_field_eg(DM_container *in) {
+  // The energy difference between e & g states is so large that the
+  // mixing is so small that this is definitely small enough to
+  // ignore.
+  in = in;
+  /*
   for (int e = 0; e < numEStates; e++) {
     for (int g = 0; g < numGStates; g++) {
       // Get ready for transverse magnetic field!
@@ -1054,9 +1218,15 @@ void OpticalPumping_Method::apply_transverse_field_eg(DM_container *in) {
       dm_derivs->eg[e][g] = gsl_complex_add(dm_derivs->eg[e][g], Bx);
     }  // End g loop
   }    // End e loop
+  */
 }
 
 void OpticalPumping_Method::apply_transverse_field_ef(DM_container *in) {
+  // The energy difference between e & g states is so large that the
+  // mixing is so small that this is definitely small enough to
+  // ignore.
+  in = in;
+  /*
   for (int e = 0; e < numEStates; e++) {
     for (int f = 0; f < numFStates; f++) {
       // Get ready for transverse magnetic field!
@@ -1111,63 +1281,13 @@ void OpticalPumping_Method::apply_transverse_field_ef(DM_container *in) {
       dm_derivs->ef[e][f] = gsl_complex_add(dm_derivs->ef[e][f], Bx);
     }  // End f loop
   }    // End e loop
+  */
 }      // End function
 
 void OpticalPumping_Method::apply_transverse_field_fg(DM_container *in) {
-  for (int f = 0; f < numFStates; f++) {
-    for (int g = 0; g < numGStates; g++) {
-      // Get ready for transverse magnetic field!
-      gsl_complex Bx = gsl_complex_rect(0.0, 0.0);
-      gsl_complex left = gsl_complex_rect(0.0, 0.0);
-      gsl_complex rigt = gsl_complex_rect(0.0, 0.0);
-      // printf("For e = %d, comparing %d to %d\n", e, MFe2_Vector[e],
-      //        MFe2_Vector[e+1]);
-      // Is there a state with Mf` = Mf+1 and F` = F?
-      if (f+1 < numFStates) {           // Keep things in bounds
-        if (MFf2_Vector[f]+2 == MFf2_Vector[f+1]) {  // Sanity check
-          gsl_complex tmp = in->fg[f+1][g];
-          // printf("Bx = %g + %g i + ", GSL_REAL(tmp), GSL_IMAG(tmp));
-          gsl_complex_mul_real(tmp, cPlus_F[f]);
-          left = gsl_complex_add(left, tmp);
-        }
-      }
-      // Is there a state with Mf` = Mf-1 and F` = F?
-      if (f > 0) {                      // Keep things in bounds
-        if (MFf2_Vector[f]-2 == MFf2_Vector[f-1]) {  // Sanity check
-          gsl_complex tmp = in->fg[f-1][g];
-          // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
-          gsl_complex_mul_real(tmp, cMins_F[f]);
-          left = gsl_complex_add(left, tmp);
-        }
-      }
-      left = gsl_complex_mul_real(left, gFactor_F);
-      // Is there a state with Mf` = Mf+1 and F` = F?
-      if (g+1 < numGStates) {           // Keep things in bounds
-        if (MFg2_Vector[g]+2 == MFg2_Vector[g+1]) {  // Sanity check
-          gsl_complex tmp = in->fg[f][g+1];
-          // printf("%g + %g i - ", GSL_REAL(tmp), GSL_IMAG(tmp));
-          gsl_complex_mul_real(tmp, cPlus_G[g]);
-          rigt = gsl_complex_sub(rigt, tmp);
-        }
-      }
-      // Is there a state with Mf` = Mf-1 and F` = F?
-      if (g > 0) {                      // Keep things in bounds
-        if (MFg2_Vector[g]-2 == MFg2_Vector[g-1]) {  // Sanity check
-          gsl_complex tmp = in->fg[f][g-1];
-          // printf("%g + %g i\n", GSL_REAL(tmp), GSL_IMAG(tmp));
-          gsl_complex_mul_real(tmp, cMins_G[g]);
-          rigt = gsl_complex_sub(rigt, tmp);
-        }
-      }
-      rigt = gsl_complex_mul_real(rigt, gFactor_G);
-      Bx = gsl_complex_add(left, rigt);
-      Bx = gsl_complex_mul_imag(Bx,
-                                -_bohr_magneton*eigen.field.B_x
-                                /2.0/_planck_hbar);
-      // printf("Bx contribution is %g + %g i\n", GSL_REAL(Bx), GSL_IMAG(Bx));
-      dm_derivs->fg[f][g] = gsl_complex_add(dm_derivs->fg[f][g], Bx);
-    }  // End g loop
-  }    // End f loop
+  // Working in the F-basis, each state has a definite F value and
+  // therefore Bx cannot mix states with different F.
+  in = in;
 }      // End function
 
 void OpticalPumping_Method::apply_transverse_field(DM_container *in) {

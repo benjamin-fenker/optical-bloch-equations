@@ -6,6 +6,7 @@
 #define INCLUDE_OPTICAL_PUMPING_METHOD_H_
 #include <gsl/gsl_complex_math.h>
 #include <gsl/gsl_errno.h>
+#include <string>
 #include <vector>
 #include "./eigenvector_helper.h"
 #include "./optical_pumping_data_structures.h"
@@ -49,6 +50,7 @@ class OpticalPumping_Method {
   double set_lowering(int F2, int M2);
   void setup_pop_uniform_ground();
   void setup_pop_withTilt(double tilt);
+  void setup_pop_arbitrary(std::string fname);
   virtual void switch_off_laser(int las); /* las = 1: g-->e; las = 2: f-->e */
   virtual void change_magnetic_field(double newField);
   // Struct to hold atom, laser and eignenvector information

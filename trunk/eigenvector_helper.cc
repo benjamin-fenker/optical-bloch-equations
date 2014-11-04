@@ -162,7 +162,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   }
   if (debug) {
     for (int i = 0; i < (2*numBasisStates*numBasisStates) -1; i+=2) {
-      printf("%6.4G", J_plus[i]);
+      printf("%6.4G", I_z[i]);
       if ((i+2) %(2*numBasisStates) == 0) {
         printf("\n");
       }
@@ -462,8 +462,14 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   //  for (int i = 0; i < numBasisStates; i++)  delete[] admixture[i];
   // genAtomicState::eval[L] = eval;
   // genAtomicState::evec[L] = evec;
-  // gsl_vector_free(eval);
-  // gsl_matrix_complex_free(evec);
+  gsl_vector_free(eval);
+  gsl_matrix_complex_free(evec);
+  gsl_matrix_complex_free(tempt);
+  gsl_matrix_complex_free(Hbt);
+  gsl_matrix_complex_free(Ix);
+  gsl_matrix_complex_free(Jx);
+  gsl_matrix_complex_free(Hbz);
+  gsl_matrix_complex_free(tempz);
 }
 
 double Eigenvector_Helper::calc_gj(int J2, int L2, int S2) {
