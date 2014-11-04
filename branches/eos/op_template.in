@@ -1,0 +1,27 @@
+file opData.dat
+method  O
+isotope 37K
+Je2 1
+tstep 8
+tmax 20000
+zCoherences 1
+hfCoherences_gr 1
+hfCoherences_ex 1
+laser_fe_power 440
+laser_fe_s3 1.0
+laser_fe_linewidth 2.0
+laser_fe_nomTune 0
+laser_fe_detune 2
+laser_fe_offTime -1
+laser_ge_power 220
+laser_ge_s3 1.0
+laser_ge_linewidth 2.0
+laser_ge_nomTune 0
+laser_ge_detune 3.0
+laser_ge_offTime -1
+B_z -2.0
+B_x 0.055
+tilt 0
+
+Units must be ns, uW/cm^2, MHz, G where appropriate
+Laser offTime should be < 0 for 'always on' (the usual case)

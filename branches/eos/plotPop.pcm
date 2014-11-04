@@ -1,0 +1,139 @@
+CLEAR
+CLEAR
+
+read\scalars\-closeafter ?1 numStates numEStates totalPop tPoints I2 Je2 junk
+read\text\-closefirst\-closeafter ?1 method
+numGrStates = numStates - numEStates
+=numStates
+=numGrStates
+=numEStates       
+
+read\matrix\-closefirst ?1 pop numStates+5
+
+set autoscale off
+IF (eqs(method,'R') = 1) THEN method = "Rate-equation"     
+IF (eqs(method,'O') = 1) THEN method = "Optical-bloch"
+
+
+
+set plotsymbol 0
+set linetype 1
+!These lines will make the chart of Fg[i] Mfg[i] and same for excited
+numLowestFStates_gr  = (((I2/2.0) - 0.5)*2.0)+1.0
+numHighestFStates_gr = (((I2/2.0) + 0.5)*2.0)+1.0
+
+Do i = [1:numLowestFStates_gr]
+   =i
+   Fg[i] = (I2/2.0) - 0.5
+   Mfg[i] = -Fg[i] + i - 1.0
+ENDDO
+DO i = [numLowestFStates_gr+1:numGrStates]
+   =i
+   Fg[i] = (I2/2.0) + 0.5
+   Mfg[i]  = -Fg[i] + i - numLowestFStates_gr - 1.0
+ENDDO
+
+Felowest = abs(I2 - Je2)/2.0
+setFe = FeLowest
+setMfe = -setFe
+DO j = [1:numEStates]
+   Fe[j] = setFe
+   Mfe[j] = setMfe
+
+   setMfe = setMfe + 1.0
+   A = 3
+   B = 2
+   IF (setMfe>setFe) THEN 
+      setFe = setFe + 1
+      setMfe = -setFe
+   ENDIF	
+
+ENDDO
+
+window 5
+@extrema.init
+!window 9
+set curvelinewidth 2
+set plotsymbol 0
+set linetype 5
+set curvecolor -1
+gr 'TOTAL' pop[1,*] pop[#-3,*] !This is for the total population
+
+set curvelinetype 2
+set legendon 1
+set legendsize 0.1
+!set legendframe 4 5 8 7
+set legendframe 2 4.9 4.5 7
+set legendtitle method
+
+DO i = [1:numGrStates]          
+set curvecolor -i
+
+    gr 'F = '//RCHAR(Fg[i])//' MF = '//RCHAR(Mfg[i]) pop[1,*] pop[i+1,*]
+
+ENDDO
+
+scales 0 pop[1,tPoints] 0.0 totalPop
+set xlabel 'time[us]'
+set ylabel 'Ground State Pop'
+replot
+!HARDCOPY\POSTSCRIPT groundState.eps
+	
+!inquire 'Hit OK to continue to excited states' junk
+!CLEAR
+window 6
+@extrema.init
+set curvelinewidth 2
+set legendframe 4.0 0.0 8.0 2.0
+
+DO i = [1:numEStates]
+  set curvecolor -i
+  gr 'ES F = '//rchar(Fe[i])//' Mf = '//RCHAR(Mfe[i]) pop[1,*] pop[numGrStates+i+1,*]
+
+    
+ENDDO
+set ylabel 'Excited State Pop'
+SCALES 0 pop[1,tPoints] 0.0 0.001*totalPop
+REPLOT
+HARDCOPY\POSTSCRIPT excitedState.eps
+
+
+!inquire 'Hit OK to see the nuclear polarization' junk
+!CLEAR	
+window 7
+@extrema.init
+set legendon 1
+set legendsize 0.1
+set legendframe 6.5 5.5 10.3 6.0
+set curvelinewidth 2
+
+set curvecolor -2
+gr 'Nuclear Polarization' pop[1,*] 100*pop[#-2,*]
+set xlabel 'time[us]'
+set ylabel 'Nuclear Pol %'
+scales 0 pop[1,tPoints] 0.0 100.0
+replot
+!replot
+
+!inquire 'Hit OK to see the alignment term' junk
+set curvecolor -3
+gr 'T - alignment term' pop[1,*] -100*pop[#-1,*]
+!set ylabel '%'
+replot 
+!replot
+
+!inquire 'Hit OK to see the excited state population' junk
+!CLEAR
+window 8
+@extrema.init
+set curvecolor -1
+set curvelinewidth 2
+gr 'Excited state population' pop[1,*] pop[#,*]
+set ylabel 'Excited State Population'
+set xlabel 'time[us]'
+scales 0 300 0 0.003
+!set autoscale y
+replot
+!replot
+
+return
