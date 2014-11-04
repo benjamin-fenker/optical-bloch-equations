@@ -566,7 +566,7 @@ void Density_Matrix::apply_transverse_field(DM_container *in) {
   OpticalPumping_Method::apply_transverse_field(in);
   apply_transverse_field_eg(in);
   apply_transverse_field_ef(in);
-  apply_transverse_field_fg(in);
+  // apply_transverse_field_fg(in);
 }
 
 void Density_Matrix::change_magnetic_field(double newfield) {

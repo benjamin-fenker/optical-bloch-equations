@@ -98,6 +98,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                                              // tuned_E_F2,
                                              // Tunes max sublevel
                                              laser_ge_detune);
+  // printf("Laser fe: %f MHz\n", laser_fe_nu/_MHz);
+  // printf("Laser ge: %f MHz\n", laser_ge_nu/_MHz);
 
   Laser_data laser_fe(laser_fe_nu, laser_fe_power, laser_fe_detune,
                       laser_fe_linewidth, laser_fe_s3_over_s0, atom.tau);
@@ -196,17 +198,16 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // ******CAUTION******
 
   // Maximum number of time steps to write to a file
-  const int max_out = 100000;
+  const int max_out = 1000;
   double print_frequency;  // Number of ns between print statements
-  int total_print;  // Total number of print statements
-  if (tmax/tStep <= max_out) {
-    print_frequency = tStep;
-    total_print = static_cast<int>(tmax/tStep);
-  } else {
-    print_frequency = tmax / static_cast<double>(max_out);
-    total_print = max_out;
+  //  int total_print;  // Total number of print statements
+  print_frequency = tStep;
+  while(tmax  / print_frequency > max_out) {
+    print_frequency *= 2.0;
   }
+
   if(op_batch) print_frequency = tStep;
+  printf("Print frequency: %g\n", print_frequency);
   // print_frequency = 10*_us;
   // Setup File I/O for later use
 
@@ -217,6 +218,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     if (file == NULL) {
       printf("could not open file %s\n", outFile);
     }
+    // This section is commented out to avoid printing the header info
+    /*
     if (!op_batch) {
       // Print data for plotting
       fprintf(file, "%d \t ", atom.numEStates+atom.numFStates+atom.numGStates);
@@ -256,7 +259,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
       fprintf(file, "%s\n", isotope.c_str());
       fprintf(file, "%s\n", method.c_str());
     }
-
+    */
   } else {
     file = stdout;
   }
@@ -312,7 +315,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     if ((fabs(time - nextPrint)/_ns < pow(10, -2))) {
       // equ -> print_data(stdout, time);
       equ->print_data(file, time);
-      // equ->print_density_matrix(stdout);
+      //      equ->print_density_matrix(stdout);
       nextPrint += print_frequency;
     }
     if (!laser_ge_Off && laser_ge_offTime > 0 && time >= laser_ge_offTime) {
@@ -330,10 +333,10 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     }
     if (!isZero) {
       // **********************************************************************
-    equ->update_population_RK4(tStep);  // ********************************
-    //equ -> update_population_euler(tStep);
+      equ->update_population_RK4(tStep);  // ********************************
+    //    equ -> update_population_euler(tStep);
       // **********************************************************************
-    } else {
+    //    } else {
       //  printf("skipped\n");
     }
     //   equ->print_density_matrix(stdout);
@@ -353,6 +356,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     //   print_frequency = 0.2*_us;
     // }
   }
+  //  equ -> print_density_matrix(stdout);
   delete equ;
   return 0;
 }

@@ -1,5 +1,5 @@
-// Authors: Benjamin Fenker 2013
-// Copyright 2012 Benjamin Fenker
+// Authors: Benjamin Fenker 2014
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,7 +11,7 @@
 using std::string;
 
 bool op_verbose = false;
-bool op_batch = true;
+bool op_batch = false;
 
 char outFile[50] = "opData.dat";
 
@@ -141,7 +141,6 @@ int main(int argc, char* argv[]) {
       printf("\n\n");
       return 0;
     } else if (strcmp(argv[1], "-f") == 0) {  // accept input from file
-      printf("with f\n");
       if (argc == 2) {                        // No file name given
         printf("File name required with -f option.\n");
         printf("opticalPumping -f in.in\n");

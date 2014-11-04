@@ -82,12 +82,26 @@ int Alkali::lookupParameters(string isotope, int Je2, int* I2, double* Aj_g,
     set_g_I = -0.00007790600;           // Tiecke10
     set_tau = 26.7*_ns;                 // Wang1997
     //set_tau = (1./0.382E+08)*_s;  // JB's code
-    double lambda = 770.107919 *_ns;    // Tiecke10
+    double lambda = 770.107919 *_nm;    // Tiecke10
     //double lambda = (1./12985.) * _cm;  // 770 nm from JB's code
     if (Je2 == 3) {
       set_tau = 26.4 *_ns;               // Tiecke10
       lambda = 766.7004587 *_ns;        // Tiecke10
       set_Aj_e = 8.4 * _MHz;            // Tiecke10
+    }
+    set_nu_excited = (_speed_of_light / lambda);
+  } else if (strcmp(isotope.c_str(), "Rb85") == 0 ||
+             strcmp(isotope.c_str(), "85Rb") == 0) {
+    set_I2 = 5;
+    set_Aj_g = 1011.9108130*_MHz;       // Arimondo1977
+    set_Aj_e = 120.640*_MHz;            // Banerjee2004
+    set_g_I = -0.00029364000;           // Arimondo1977
+    set_tau = 27.75*_ns;                // Gutterres2002
+    double lambda = 794.979014933*_nm;  // Steck2008
+    if (Je2 == 3) {
+      set_Aj_e = 25.009*_MHz;           // Arimondo1977
+      lambda = 780.24136827127*_nm;     // Steck2008
+      set_tau = 26.25*_ns;              // Gutterres2002
     }
     set_nu_excited = (_speed_of_light / lambda);
   } else {
@@ -126,6 +140,7 @@ double Alkali::getLaserFrequency(atom_data atom, magnetic_field_data field,
   double energy_gr = opm -> set_frequency(0.0, atom.I2, 1, Fg2, Mfg2, 0,
                                        atom.Aj_g, atom.g_I, field.B_z);
   if (debug) printf("Ground energy: %8.6G\n", energy_gr);
+  if (debug) printf("Aj_e = %g MHz\n", atom.Aj_e/_MHz);
   double energy_ex = opm -> set_frequency(atom.nu_excited, atom.I2, atom.Je2,
                                        Fe2, Mfe2, 1, atom.Aj_e, atom.g_I,
                                        field.B_z);
@@ -140,7 +155,7 @@ double Alkali::getGamma(double tau, double laser_power) {
   // No power broadening yet.  Which I_laser do I use if they are different?
   // Which lambda do I use; they will be different!
   double gamma = (1.0 / tau);
-  double one = laser_power / laser_power;
-  gamma *= one;
+  // double one = laser_power / laser_power;
+  // gamma *= one;
   return gamma;
 }

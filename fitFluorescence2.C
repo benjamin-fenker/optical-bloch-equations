@@ -134,10 +134,6 @@ void calc_chi2(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par,
                                                 fitObj -> mod_e);
       integrated *= norm[i];
       integrated += bkg[i];
-      cout << "Signal " << j << " compares " << integrated << " to "
-                << fitObj->expDat[j] << endl;
-      int j2;
-      cin >> j2;
       tmp = (integrated - fitObj->expDat[j])/(fitObj -> dexpDat[j]);
       tmp = tmp*tmp;
       chi2 += tmp;
@@ -303,7 +299,7 @@ void fitFluorescence2(Double_t sGuess, Double_t fGuess, Double_t xGuess) {
         dataFile >> t_center[i] >> sp[i] >> dsp[i] >> spbkg[i] >> dspbkg[i]
                  >> sm[i] >> dsm[i] >> smbkg[i] >> dsmbkg[i];
         dt_center[i] = (t_right[i] - t_left[i])/2.0;
-        cout << "Sigma- error " << i << " = " << dsm[i] << endl;
+
         // sp_net[i] = sp[i] - spbkg[i];
         // sm_net[i] = sm[i] - smbkg[i];
         // dsp_net[i] = sqrt((dsp[i]*dsp[i])+(dspbkg[i]*dspbkg[i]));
@@ -455,9 +451,15 @@ void fitFluorescence2(Double_t sGuess, Double_t fGuess, Double_t xGuess) {
   arglist[0] = 5000;
   arglist[1] = 1;
   int j;
-  cout << "Enter 0 to skip fitting, anything else to fit" << endl;
+  cout << "Enter 0 to skip fitting, 1 to fit but skip HESSE or anything else"
+       << " for both" << endl;
   cin >> j;
-  if (j != 0) fitter -> ExecuteCommand("MIGRAD", &arglist[0], 2);
+  if (j != 0) {
+    fitter -> ExecuteCommand("MIGRAD", &arglist[0], 2);
+    if (j != 1) {
+      fitter -> ExecuteCommand("HESSE", &arglist[0], 1);
+    }
+  }
   arglist[1] = 0;
 //   fitter -> ExecuteCommand("SHO COV", &arglist[0], 0);
 //   fitter -> ExecuteCommand("MINOS", &arglist[0], 1);
