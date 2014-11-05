@@ -571,8 +571,8 @@ void Density_Matrix::integrate_fg(DM_container *in) {
 void Density_Matrix::apply_transverse_field(DM_container *in) {
   // This line takes care of the on diagaonal elements
   OpticalPumping_Method::apply_transverse_field(in);
-  apply_transverse_field_eg(in);
-  apply_transverse_field_ef(in);
+  // apply_transverse_field_eg(in);
+  // apply_transverse_field_ef(in);
   // apply_transverse_field_fg(in);
 }
 

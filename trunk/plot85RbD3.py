@@ -1,12 +1,19 @@
 #!/usr/bin/python
 
 import ROOT as r
+import sys
+
 mycol = (r.kBlue, r.kRed, r.kGreen+2, r.kMagenta+1, r.kYellow-3, r.kCyan-6,
          r.kAzure, r.kOrange, r.kViolet, r.kSpring, r.kPink, r.kTeal-7)
 
+fname = "opData.dat"
+if (len(sys.argv) > 1) :
+    fname = sys.argv[1]
+
+print "fname = ", fname
 nt = r.TNtuple("opData", "opData",
                "t:g0:g1:g2:g3:g4:f0:f1:f2:f3:f4:f5:f6:e0:e1:e2:e3:e4:e5:e6:e7:e8:e9:e10:e11:e12:e13:e14:e15:e16:e17:e18:e19:e20:e21:e22:e23:tot:pol:ali:exc");
-nt.ReadFile("opData.dat")
+nt.ReadFile(fname)
 
 
 gstate = []

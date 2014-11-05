@@ -198,7 +198,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // ******CAUTION******
 
   // Maximum number of time steps to write to a file
-  const int max_out = 1000;
+  const int max_out = 5000;
   double print_frequency;  // Number of ns between print statements
   //  int total_print;  // Total number of print statements
   print_frequency = tStep;
@@ -304,6 +304,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // printf("updateFreq = %8.6G\n", updateFreq);
   bool laser_fe_Off = false;
   bool laser_ge_Off = false;
+  bool print_zero = false;
   while (time < tmax) {
     if (!op_batch) {
       if ((fabs(time - nextUpdate))/_ns < pow(10, -2)) {
@@ -334,20 +335,25 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     if (!isZero) {
       // **********************************************************************
       equ->update_population_RK4(tStep);  // ********************************
-    //    equ -> update_population_euler(tStep);
+      // equ -> update_population_euler(tStep);
       // **********************************************************************
-    //    } else {
-      //  printf("skipped\n");
+    } else {
+      if (!print_zero) {
+        print_zero = true;
+        printf("Reached steady-state at t = %g us\n", time/_us);
+      }
     }
     //   equ->print_density_matrix(stdout);
     if (!equ->is_hermitian()) {
       printf("DENSITY MATRIX NOT HERMITIAN AT t = %4.2G ns\n", time/_ns);
-      equ->print_density_matrix(stdout);
+      equ -> print_data(stdout, time);
+      equ -> print_data(file, time);
       return 1;
     }
     if (fabs(equ->get_total_population() - 1.0) > pow(10, -3)) {
       printf("PARTICLES NOT CONSERVED AT t = %4.2G ns\n", time/_ns);
-      equ->print_data(stdout, time);
+      equ -> print_data(stdout, time);
+      equ -> print_data(file, time);      
       return 1;
     }
     time += tStep;

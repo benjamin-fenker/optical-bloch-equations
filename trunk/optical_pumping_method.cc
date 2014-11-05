@@ -82,11 +82,19 @@ OpticalPumping_Method::~OpticalPumping_Method() {
 }
 
 void OpticalPumping_Method::update_population_euler(double dt) {
+  double dt_orig = dt;
   reset_dPop();
   calculate_derivs(this -> dm_status);
   // printf("Derivative for stretched state is\n%g ",
-  //        GSL_REAL(dm_derivs->ff[4][4]));
+  //        GSL_REAL(dm_derivs->ff[4][4]));  
   DM_container::mul(dm_derivs, dt);
+  // while (!DM_container::okay_to_add(dm_status, dm_daerivs)) {
+  //   printf("Problems at dt = %g ns, ", dt_orig/_ns);
+  //   dt = dt*0.5;
+  //   if (dt < 0.001 *_ns) exit(0);
+  //   printf("trying dt = %g ns\n", dt/_ns);
+  //   DM_container::mul(dm_derivs, 0.5);
+  // }
   DM_container::add(dm_status, dm_derivs);
 }
 
@@ -124,8 +132,9 @@ void OpticalPumping_Method::update_population_RK4(double dt) {
   DM_container::add(inc, k2);
   DM_container::add(inc, k3);
   DM_container::add(inc, k4);
-  DM_container::mul(inc, dt/6.0);
   bool j = inc -> equalsZero();
+  DM_container::mul(inc, dt/6.0);
+
   if (j) {
     // printf("Zero!\n");
   }
@@ -647,7 +656,7 @@ bool OpticalPumping_Method::is_hermitian() {
   // Furthermore, the diagonal elements must be strictly real or the imaginary
   // part could not be anti-symmetric!
   bool hermit = true;
-  double eps = pow(10, -8);     // Tolerance for hermitian-checking
+  double eps = pow(10, -6);     // Tolerance for hermitian-checking
   // First check that the diagonals are real
   for (int g = 0; g < numGStates; g++) {
     if (fabs(GSL_IMAG(dm_status->gg[g][g])) > eps) hermit = false;
@@ -687,6 +696,27 @@ bool OpticalPumping_Method::is_hermitian() {
       if ((imaginary_sum > eps) || (real_diff > eps)) hermit = false;
     }
   }
+
+  // Now check that the populations are between 0 and 1
+  for (int e = 0; e < numEStates; e++) {
+    if (GSL_REAL(dm_status->ee[e][e]) < (0.0 - eps)
+        || GSL_REAL(dm_status->ee[e][e]) > (1.0 + eps)) {
+      hermit = false;
+    }
+  }
+  for (int f = 0; f < numFStates; f++) {
+    if (GSL_REAL(dm_status->ff[f][f]) < (0.0 - eps)
+        || GSL_REAL(dm_status->ff[f][f]) > (1.0 + eps)) {
+      hermit = false;
+    }
+  }
+  for (int g = 0; g < numGStates; g++) {
+    if (GSL_REAL(dm_status->gg[g][g]) < (0.0 - eps)
+        || GSL_REAL(dm_status->gg[g][g]) > (1.0 + eps)) {
+      hermit = false;
+    }
+  }
+
   return hermit;
 }
 
