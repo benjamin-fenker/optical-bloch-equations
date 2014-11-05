@@ -154,7 +154,7 @@ void DM_container::mul(DM_container *dm, double c) {
 
 bool DM_container::equalsZero() {
   isZero = false;
-  double eps = pow(10, -9);
+  double eps = pow(10, -6);
   for (int e = 0; e < numEStates; e++) {
     for (int ep = 0; ep < numEStates; ep++) {
       if (fabs(GSL_REAL(ee[e][ep])) > eps) return false;

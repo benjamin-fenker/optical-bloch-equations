@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 #include <stdlib.h>
+#include <omp.h>
 #include <vector>
 #include "include/density_matrix.h"
 #include "include/units.h"
@@ -121,6 +122,7 @@ void Density_Matrix::print_rabi_frequencies(FILE * des) {
 }
 
 void Density_Matrix::integrate_ee(DM_container *in) {
+#pragma omp parallel for
   for (int e = 0; e < numEStates; e++) {
     for (int ep = 0; ep < numEStates; ep++) {
       if ((e == ep) ||
@@ -199,6 +201,7 @@ void Density_Matrix::integrate_ee(DM_container *in) {
 void Density_Matrix::integrate_gg(DM_container *in) {
   // G-Ground states rho_gg:  Equation 34
   // Zeeman coherences are when g != g`
+#pragma omp parallel for
   for (int g = 0; g < numGStates; g++) {
     for (int gp = 0; gp < numGStates; gp++) {
       gsl_complex oCoherences = gsl_complex_rect(0.0, 0.0);
@@ -265,6 +268,7 @@ void Density_Matrix::integrate_gg(DM_container *in) {
 void Density_Matrix::integrate_ff(DM_container *in) {
   // F-Ground states rho_ff:  Equation 33
   // Zeeman coherences are when f != f`
+#pragma omp parallel for
   for (int f = 0; f < numFStates; f++) {
     for (int fp = 0; fp < numFStates; fp++) {
       gsl_complex oCoherences = gsl_complex_rect(0.0, 0.0);
@@ -331,6 +335,7 @@ void Density_Matrix::integrate_ff(DM_container *in) {
 void Density_Matrix::integrate_eg(DM_container *in) {
   // EG-Optical Coherences delta_eg:  Equation 36
   bool debug_eg = false;
+#pragma omp parallel for
   for (int e = 0; e < numEStates; e++) {
     for (int g = 0; g < numGStates; g++) {
       if (debug_eg) printf("e = %d, g = %d\n", e, g);
@@ -394,6 +399,7 @@ void Density_Matrix::integrate_eg(DM_container *in) {
 void Density_Matrix::integrate_ef(DM_container *in) {
   // EF-Optical Coherences delta_ef:  Equation 35
   bool debug_ef = false;
+#pragma omp parallel for
   for (int e = 0; e < numEStates; e++) {
     for (int f = 0; f < numFStates; f++) {
       if (debug_ef) printf("e = %d, f = %d\n", e, f);
@@ -458,6 +464,7 @@ void Density_Matrix::integrate_ef(DM_container *in) {
 
 void Density_Matrix::integrate_fg(DM_container *in) {
   bool debug_fg = false;
+#pragma omp parallel for
   for (int f = 0; f < numFStates; f++) {
     for (int g = 0; g < numGStates; g++) {
       if (debug_fg) printf("f = %d, g = %d\n", f, g);

@@ -6,6 +6,7 @@
 #include <math.h>
 #include <fstream>
 #include <iostream>
+#include <omp.h>
 #include <gsl/gsl_sf_coupling.h>
 #include "include/optical_pumping_method.h"
 #include "include/units.h"
@@ -881,6 +882,7 @@ void OpticalPumping_Method::apply_dPop(double dt) {
 }
 
 void OpticalPumping_Method::apply_transverse_field_ee(DM_container *in) {
+#pragma omp parallel for
   for (int e = 0; e < numEStates; e++) {
     for (int ep = 0; ep < numEStates; ep++) {
       // if ((e == ep) ||
@@ -943,6 +945,7 @@ void OpticalPumping_Method::apply_transverse_field_ee(DM_container *in) {
 }
 
 void OpticalPumping_Method::apply_transverse_field_gg(DM_container *in) {
+#pragma omp parallel for
   for (int g = 0; g < numGStates; g++) {
     for (int gp = 0; gp < numGStates; gp++) {
       if ((g == gp) || (gs_Zeeman)) {
@@ -1003,6 +1006,7 @@ void OpticalPumping_Method::apply_transverse_field_gg(DM_container *in) {
 
 /*
 void OpticalPumping_Method::apply_transverse_field_ff(DM_container *in) {
+
   for (int i = 0; i < numFStates; i++) {
     for (int j = 0; j < numFStates; j++) {
       gsl_complex bx_contribution = gsl_complex_rect(0.0, 0.0);
@@ -1115,7 +1119,9 @@ void OpticalPumping_Method::apply_transverse_field_ff(DM_container *in) {
 }        // End function
 */
 
+
 void OpticalPumping_Method::apply_transverse_field_ff(DM_container *in) {
+#pragma omp parallel for
   for (int f = 0; f < numFStates; f++) {
     for (int fp = 0; fp < numFStates; fp++) {
         // Get ready for transverse magnetic field!
