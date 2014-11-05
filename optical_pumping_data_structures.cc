@@ -125,6 +125,24 @@ void DM_container::add(DM_container* dm, DM_container *other) {
   }
 }
 
+bool DM_container::okay_to_add(DM_container *dm, DM_container *other) {
+  DM_container *tmp = new DM_container(*dm);
+  DM_container::add(tmp, other);
+  for (int e = 0; e < dm -> numEStates; e++) {
+    double epop = GSL_REAL(dm->ee[e][e]);
+    if (epop > 1 || epop < 0) return false;
+  }
+  for (int f = 0; f < dm -> numFStates; f++) {
+    double fpop = GSL_REAL(dm->ff[f][f]);
+    if (fpop > 1 || fpop < 0) return false;
+  }
+  for (int g = 0; g < dm -> numGStates; g++) {
+    double gpop = GSL_REAL(dm->gg[g][g]);
+    if (gpop > 1 || gpop < 0) return false;
+  }
+  return true;
+}
+
 void DM_container::mul(DM_container *dm, double c) {
   for (int e = 0; e < dm -> numEStates; e++) {
     for (int ep = 0; ep < dm -> numEStates; ep++) {
