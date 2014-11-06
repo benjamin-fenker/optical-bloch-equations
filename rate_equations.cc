@@ -163,22 +163,19 @@ double Rate_Equations::set_transition_rate(double laser_power,
   double rate = laser_power / (4.0 * M_PI * pow(tau, 2.0) * sat_intensity);
   double lorentzian = 4.0*pow(laser_freq - atom_freq, 2.0) +
     pow(laser_lw + atom_lw, 2.0);
-  // lorentzian = pow(laser_lw + atom_lw, 2.0);
+  //  lorentzian = pow(laser_lw + atom_lw, 2.0);
   // Uncommenting the line above turns off the detuning factor
   lorentzian = (laser_lw + atom_lw)/lorentzian;
   rate *= lorentzian;                   // The right way
 
   // DELETE ME 
-  if (rate < 0.5 * _MHz) rate = 0.0;
+  //  if (rate < 0.5 * _MHz) rate = 0.0;
   // DELETE ME
 
   if (debug && rate > 0.0) {
     printf("\tDetune = %8.6G MHz\tLorentzian = %8.6G ns\t rate = %10.8G MHz\n",
            ((laser_freq-atom_freq))/_MHz, lorentzian/_ns, rate/_MHz);
   }
-
-  // Cludge to simplify model and ignore off-resonant transitions
-
 
   return rate;
 }
