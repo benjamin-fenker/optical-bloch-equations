@@ -48,8 +48,8 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
   setup_gFactors(eigen.atom);
   setup_frequencies_excited(eigen.atom, eigen.field);
   setup_frequencies_ground(eigen.atom, eigen.field);
-  // laser_fe.nu = (nu_E[5] - nu_F[2]) + laser_fe.detune;
-  // laser_ge.nu = (nu_E[5] - nu_G[1]) + laser_ge.detune;
+  laser_fe.nu = (nu_E[5] - nu_F[2]) + laser_fe.detune;
+  laser_ge.nu = (nu_E[5] - nu_G[1]) + laser_ge.detune;
   setup_eg_coupling(eigen.atom);
   setup_ef_coupling(eigen.atom);
   if (op_verbose) print_couplings(stdout);
@@ -62,10 +62,10 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
   data.numFStates = eigen.atom.numFStates;
   data.numEStates = eigen.atom.numEStates;
   data.atom = eigen.atom;
-  // data.laser_ge = set_laser_ge;
-  // data.laser_fe = set_laser_fe;
-  data.laser_ge = laser_ge;
-  data.laser_fe = laser_fe;
+  data.laser_ge = set_laser_ge;
+  data.laser_fe = set_laser_fe;
+  // data.laser_ge = laser_ge;
+  // data.laser_fe = laser_fe;
   data.a_eg = a_eg;
   data.a_ef = a_ef;
   data.nu_E = nu_E;
@@ -252,7 +252,7 @@ double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
   if (debug) printf("g_f = %6.4G, mu_B = %6.4G MHz/G, B_z = %6.4G G, ", g_f,
                     (_bohr_magneton/_planck_h)/(_MHz/_G), B_z/_G);
   double zeeman = static_cast<double>(Mf2);
-  zeeman *= -1.0*g_f * (_bohr_magneton/_planck_h) * B_z / 2.0;
+  zeeman *= 1.0*g_f * (_bohr_magneton/_planck_h) * B_z / 2.0;
   if (debug) printf("Zeeman: %15.10G MHz\t", zeeman/_MHz);
   if (debug) printf("Total: %15.10G MHz\n",
                     (excitation + hyperfine + zeeman)/_MHz);
