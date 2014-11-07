@@ -63,7 +63,7 @@
 
 /* Physical constants */
 #define _speed_of_light (2.99792458e8) /* m/s */
-#define _planck_h (6.62606896e-34)     /* m^3 / kg s^2 */
+#define _planck_h (6.62606957e-34)     /* m^3 / kg s^2 */
 #define _planck_hbar (1.05457162825e-34) /* m^3 / kg s^2 */
 #define _epsilon_0 (8.854e-12)           /* s^4 A^2 / kg m^3 or F/m */
 #define _elementary_charge (1.60217646e-19) /* C */

@@ -83,6 +83,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                                              // tuned_E_F2,
                                              // Tunes max sublevel
                                              laser_fe_detune);
+
   // double laser_fe_nu = alk.getLaserFrequency(atom, field, 4,
   //                                            4,
   //                                            4,
@@ -98,9 +99,12 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                                              // tuned_E_F2,
                                              // Tunes max sublevel
                                              laser_ge_detune);
+  // laser_fe_nu = _speed_of_light * 12985. / _cm;
+  // laser_ge_nu = _speed_of_light * 12985. / _cm;
+
   // printf("Laser fe: %f MHz\n", laser_fe_nu/_MHz);
   // printf("Laser ge: %f MHz\n", laser_ge_nu/_MHz);
-
+  
   Laser_data laser_fe(laser_fe_nu, laser_fe_power, laser_fe_detune,
                       laser_fe_linewidth, laser_fe_s3_over_s0, atom.tau);
   Laser_data laser_ge(laser_ge_nu, laser_ge_power, laser_ge_detune,
@@ -335,7 +339,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     if (!isZero) {
       // **********************************************************************
       equ->update_population_RK4(tStep);  // ********************************
-      // equ -> update_population_euler(tStep);
+      //      equ -> update_population_euler(tStep);
       // **********************************************************************
     } else {
       if (!print_zero) {
