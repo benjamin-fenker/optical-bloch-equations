@@ -252,7 +252,7 @@ double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
   if (debug) printf("g_f = %6.4G, mu_B = %6.4G MHz/G, B_z = %6.4G G, ", g_f,
                     (_bohr_magneton/_planck_h)/(_MHz/_G), B_z/_G);
   double zeeman = static_cast<double>(Mf2);
-  zeeman *= 1.0*g_f * (_bohr_magneton/_planck_h) * B_z / 2.0;
+  zeeman *= -1.0*g_f * (_bohr_magneton/_planck_h) * B_z / 2.0;
   if (debug) printf("Zeeman: %15.10G MHz\t", zeeman/_MHz);
   if (debug) printf("Total: %15.10G MHz\n",
                     (excitation + hyperfine + zeeman)/_MHz);

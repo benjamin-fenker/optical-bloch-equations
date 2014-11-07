@@ -109,12 +109,21 @@ void Rate_Equations::calculate_derivs(DM_container *status) {
 }
 
 void Rate_Equations::setup_transition_rates(double linewidth) {
-  bool debug = true;
+  bool debug = true;;
   if (debug) {
     printf("Laser_g %8.6G MHz\t Laser_f %8.6G MHz\n", laser_ge.nu/_MHz,
            laser_fe.nu/_MHz);
   }
   for (int q = 0; q < 3; q++) {
+    if (debug) {
+      printf("Laser_g %8.6g uW/cm2, Saturation Intensity: %8.6g uW/cm2\n",
+             laser_ge.intensity[q]/(_uW/_cm/_cm),
+             laser_ge.saturation_intensity/(_uW/_cm/_cm));
+      printf("Laser_f %8.6g uW/cm2, Saturation Intensity: %8.6g uW/cm2\n",
+             laser_fe.intensity[q]/(_uW/_cm/_cm),
+             laser_fe.saturation_intensity/(_uW/_cm/_cm));
+      printf("Linewidth = %g MHz\n", linewidth/_MHz);
+    }
     for (int e = 0; e < numEStates; e++) {
       for (int g = 0; g < numGStates; g++) {
         double transition_freq = nu_E[e] - nu_G[g];
@@ -122,6 +131,7 @@ void Rate_Equations::setup_transition_rates(double linewidth) {
           printf("|g=%d>-->|e=%d (%d)\t nu_eg = %14.10G MHz\t", g, e, q,
                  transition_freq/_MHz);
           printf("nu_L (ge) = %14.10G MHz\n", laser_ge.nu/_MHz);
+
         }
         // The tuned laser
         transition_rate_eg[e][g][q] = set_transition_rate(
@@ -145,6 +155,10 @@ void Rate_Equations::setup_transition_rates(double linewidth) {
         transition_rate_ef[e][f][q] += set_transition_rate(
             laser_ge.intensity[q], laser_ge.saturation_intensity, linewidth,
             laser_ge.linewidth, transition_freq, laser_ge.nu);
+        if (debug) {
+          printf ("                       Sum =  %8.6g MHz\n",
+                  transition_rate_ef[e][f][q]/_MHz);
+        }
       }  // End f-loop
     }    // End e-loop
   }      // End q-loop

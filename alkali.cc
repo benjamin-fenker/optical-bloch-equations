@@ -148,7 +148,7 @@ double Alkali::getLaserFrequency(atom_data atom, magnetic_field_data field,
   if (debug) printf("Energy difference [MHz] = %20.18g\n",
                     (energy_ex - energy_gr)/_MHz);
   delete opm;
-  return energy_ex - energy_gr + detune;
+  return energy_ex - energy_gr - detune;
 }
 
 double Alkali::getGamma(double tau, double laser_power) {

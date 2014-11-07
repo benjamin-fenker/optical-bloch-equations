@@ -32,11 +32,13 @@ Laser_data::Laser_data(double set_nu, double set_power, double set_detune,
 }
 
 void Laser_data::set_saturation_intensity(double tau) {
+  bool debug = true;
   double I_s = M_PI / (3.0*tau);
   I_s /= pow(_speed_of_light, 2.0);
   I_s *= _planck_h * pow(nu, 3);
   saturation_intensity = I_s;
-  if (op_verbose) printf("I_s = %10.8G mW/cm^2\n", I_s/(_mW/_cm2));
+  //  saturation_intensity = 1.7397808 * _mW/_cm/_cm;
+  if (debug) printf("I_s = %10.8G mW/cm^2\n", saturation_intensity/(_mW/_cm2));
 }
 
 void Laser_data::set_field_components() {
