@@ -136,19 +136,18 @@ double Alkali::getLaserFrequency(atom_data atom, magnetic_field_data field,
   bool debug = false;
   Rate_Equations *opm = new Rate_Equations();
   //  Eigenvector_Helper *eigen = new Eigenvector_Helper(atom, field);
-
   double energy_gr = opm -> set_frequency(0.0, atom.I2, 1, Fg2, Mfg2, 0,
                                        atom.Aj_g, atom.g_I, field.B_z);
-  if (debug) printf("Ground energy: %8.6G\n", energy_gr);
+  if (debug) printf("Ground energy: %8.6f\n", energy_gr);
   if (debug) printf("Aj_e = %g MHz\n", atom.Aj_e/_MHz);
   double energy_ex = opm -> set_frequency(atom.nu_excited, atom.I2, atom.Je2,
-                                       Fe2, Mfe2, 1, atom.Aj_e, atom.g_I,
+                                       Fe2, Mfe2, 2, atom.Aj_e, atom.g_I,
                                        field.B_z);
-  if (debug) printf("Excited energy: %8.6G\n", energy_ex);
-  if (debug) printf("Energy difference [MHz] = %20.18g\n",
+  if (debug) printf("Excited energy: %8.6f\n", energy_ex);
+  if (debug) printf("Energy difference [MHz] = %8.6f\n",
                     (energy_ex - energy_gr)/_MHz);
   delete opm;
-  return energy_ex - energy_gr - detune;
+  return energy_ex - energy_gr + detune;
 }
 
 double Alkali::getGamma(double tau, double laser_power) {

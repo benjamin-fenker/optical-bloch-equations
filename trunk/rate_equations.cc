@@ -109,7 +109,7 @@ void Rate_Equations::calculate_derivs(DM_container *status) {
 }
 
 void Rate_Equations::setup_transition_rates(double linewidth) {
-  bool debug = true;;
+  bool debug = false;
   if (debug) {
     printf("Laser_g %8.6G MHz\t Laser_f %8.6G MHz\n", laser_ge.nu/_MHz,
            laser_fe.nu/_MHz);
@@ -169,7 +169,7 @@ double Rate_Equations::set_transition_rate(double laser_power,
                                            double atom_lw,
                                            double laser_lw, double atom_freq,
                                            double laser_freq) {
-  bool debug = true;
+  bool debug = false;
   // This uses Nafcha equation 15 and Metcalf equation 2.24c to define the
   // saturation intensity
   // Note that Nafcha's linewidths of FWHM/2.  My linewidths are defined as the
