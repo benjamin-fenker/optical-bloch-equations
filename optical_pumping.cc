@@ -79,8 +79,9 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   double laser_fe_nu = alk.getLaserFrequency(atom, field, tuned_F_F2,
                                              nominalSublevelTune2_ef,
                                              tuned_E_F2,
-                                             nominalSublevelTune2_ef,
+                                             //nominalSublevelTune2_ef,
                                              // tuned_E_F2,
+                                             nominalSublevelTune2_ef,
                                              // Tunes max sublevel
                                              laser_fe_detune);
 
@@ -97,6 +98,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                                              tuned_E_F2,
                                              nominalSublevelTune2_eg,
                                              // tuned_E_F2,
+                                             //0,
                                              // Tunes max sublevel
                                              laser_ge_detune);
   // laser_fe_nu = _speed_of_light * 12985. / _cm;

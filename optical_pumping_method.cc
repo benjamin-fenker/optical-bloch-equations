@@ -48,8 +48,13 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
   setup_gFactors(eigen.atom);
   setup_frequencies_excited(eigen.atom, eigen.field);
   setup_frequencies_ground(eigen.atom, eigen.field);
-  laser_fe.nu = (nu_E[5] - nu_F[2]) + laser_fe.detune;
-  laser_ge.nu = (nu_E[5] - nu_G[1]) + laser_ge.detune;
+  // laser_fe.nu = (nu_E[5] - nu_F[2]) + laser_fe.detune;
+  // laser_ge.nu = (nu_E[5] - nu_G[1]) + laser_ge.detune;
+  // printf("Excited 22 energy: %8.6f MHz\n", nu_E[5]);
+  // printf("Ground  20 energy: %8.6f MHz\n", nu_F[2]);
+  // printf("Ground  10 energy: %8.6f MHz\n", nu_G[1]);
+  // printf("Forced ge frequency to: %12.10g MHz\n", laser_ge.nu/_MHz);
+  // printf("Forced fe frequency to: %12.10g MHz\n", laser_fe.nu/_MHz);
   setup_eg_coupling(eigen.atom);
   setup_ef_coupling(eigen.atom);
   if (op_verbose) print_couplings(stdout);
@@ -197,7 +202,7 @@ void OpticalPumping_Method::setup_gFactors(atom_data atom) {
   for (int e = 0; e < numEStates; e++) {
     gFactor_E[e] = alk.calc_gf(Fe2_Vector[e], atom.Je2, atom.I2, 2, 1,
                                atom.g_I);
-    // printf("E-state[%d] g-Factor %g\n", e, gFactor_E[e]);
+    //    printf("E-state[%d] g-Factor %g\n", e, gFactor_E[e]);
   }
 }
 
@@ -265,7 +270,6 @@ double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
                                             double g_I, double B_z) {
   Eigenvector_Helper alk;
   double g_f = alk.calc_gf(F2, J2, I2, L2, 1, g_I);
-  
   return set_frequency(excitation, I2, J2, F2, Mf2, hyperfine_const, B_z, g_f);
 }
 
@@ -828,7 +832,7 @@ void OpticalPumping_Method::switch_off_laser(int las) {
 }
 
 void OpticalPumping_Method::change_magnetic_field(double newField) {
-  // printf("OP::change_magnetic_field\n");
+  printf("OP::change_magnetic_field\n");
   eigen.field.B_z = newField;
   setup_frequencies_excited(eigen.atom, eigen.field);
   setup_frequencies_ground(eigen.atom, eigen.field);
