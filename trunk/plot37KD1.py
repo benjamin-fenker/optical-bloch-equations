@@ -93,9 +93,14 @@ exc_total.SetNameTitle("ES Population", "ES Population")
 exc_total.SetLineColor(mycol[0])
 exc_total.SetLineWidth(3)
 exc_total.Draw("AL")
-print "Final E.S. population ", exc_total.GetY()[exc_total.GetN()-1]
 
+tail = exc_total.GetY()[exc_total.GetN()-1]
+peak = exc_total.GetY()[r.TMath.LocMax(exc_total.GetN(), exc_total.GetY())]
 
+print "Tail E.S. population %g" % tail
+print "Peak E.S. population %g" % peak 
+tailpeak = tail/peak
+print "Tail/Peak = %g" % tailpeak
 
 n = nt.Draw("pol:t", "", "goff")
 pcan = r.TCanvas()
