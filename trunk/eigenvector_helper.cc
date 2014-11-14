@@ -470,10 +470,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   delete[] H;
   delete[] F2;
   delete[] Fz2;
-  return admixture;
-  //  for (int i = 0; i < numBasisStates; i++)  delete[] admixture[i];
-  // genAtomicState::eval[L] = eval;
-  // genAtomicState::evec[L] = evec;
+
   gsl_vector_free(eval);
   gsl_matrix_complex_free(evec);
   gsl_matrix_complex_free(tempt);
@@ -482,6 +479,11 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   gsl_matrix_complex_free(Jx);
   gsl_matrix_complex_free(Hbz);
   gsl_matrix_complex_free(tempz);
+
+  return admixture;
+  //  for (int i = 0; i < numBasisStates; i++)  delete[] admixture[i];
+  // genAtomicState::eval[L] = eval;
+  // genAtomicState::evec[L] = evec;
 }
 
 double Eigenvector_Helper::calc_gj(int J2, int L2, int S2) {
