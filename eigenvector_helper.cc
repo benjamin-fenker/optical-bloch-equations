@@ -60,7 +60,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   // eigenvectors by a factor of the magic number so I also need to adjust this.
   const double magicNum = pow(10,8);
 
-  bool debug = false;
+  bool debug = true;
   // Figure out some parameters to use based on J
   int J2;
   double Aj;
@@ -210,9 +210,9 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   gsl_matrix_complex_scale(Hbz, g_Ip);
 
   gsl_matrix_complex_add(tempz, &J_z_view.matrix);
-  if (debug) printf("Scaling Jz by g_J = %8.6G\n\n", calc_gj(1, L*2, 1));
+  if (debug) printf("Scaling Jz by g_J = %8.6G\n\n", calc_gj(J2, L*2, 1));
   gsl_matrix_complex_scale(tempz,
-                           gsl_complex_rect(calc_gj(1, L*2, 1), 0.0));
+                           gsl_complex_rect(calc_gj(J2, L*2, 1), 0.0));
 
   gsl_matrix_complex_add(Hbz, tempz);
   gsl_matrix_complex_scale(Hbz,
@@ -245,7 +245,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
 
   gsl_matrix_complex_add(tempt, Jx);
   gsl_matrix_complex_scale(tempt,
-                           gsl_complex_rect(calc_gj(1.0, L*2, 1.0), 0.0));
+                           gsl_complex_rect(calc_gj(J2, L*2, 1.0), 0.0));
 
   gsl_matrix_complex_add(Hbt, tempt);
   // Calculating in units of MHz
@@ -300,20 +300,32 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   // ALL THE MAGIC
   gsl_eigen_hermv(&H_view.matrix, eval, evec, w);
   // Scale the eigenvalues back up to their true (Hz) value
-  gsl_vector_scale(eval, magicNum);
-  // printf("\nevec=\n[");
-  // for (int i = 0; i < numBasisStates; i++) {
-  //   for (int j = 0; j < numBasisStates; j++) {
-  //     printf("%8.6G\t",
-  //            GSL_REAL(gsl_matrix_complex_get(evec, i, j)));
+  //  gsl_matrix_complex_fprintf(stdout, &(hamiltonian_gr_fbasis.matrix), "%g");
+  // for (int i = 0; i < 8; i++) {
+  //   for (int j = 0; j < 8; j++) {
+  //     printf("%8.6g\t", GSL_REAL(gsl_matrix_complex_get(&(H_view.matrix), i, j))/_MHz);
   //   }
   //   printf("\n");
   // }
-  // printf("\n\n\n");
+  // printf("\n\n");
+
+  gsl_vector_scale(eval, magicNum);
+  
+
 
   gsl_eigen_hermv_free(w);
   gsl_eigen_hermv_sort(eval, evec, GSL_EIGEN_SORT_VAL_ASC);
 
+
+  printf("\nevec=\n[");
+  for (int i = 0; i < numBasisStates; i++) {
+    for (int j = 0; j < numBasisStates; j++) {
+      printf("%8.6G\t",
+             GSL_REAL(gsl_matrix_complex_get(evec, i, j)));
+    }
+    printf("\n");
+  }
+  printf("\n\n\n");
 
   int *F2 = new int[numBasisStates];
   int *Fz2 = new int[numBasisStates];
