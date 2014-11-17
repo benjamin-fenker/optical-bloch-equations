@@ -197,12 +197,12 @@ void OpticalPumping_Method::setup_gFactors(atom_data atom) {
   Eigenvector_Helper alk;
   gFactor_G = alk.calc_gf(Fg2_Vector[0], 1, atom.I2, 0, 1, atom.g_I);
   gFactor_F = alk.calc_gf(Ff2_Vector[0], 1, atom.I2, 0, 1, atom.g_I);
-  // printf("F-state g-Factor: %g\n", gFactor_G);
-  // printf("G-state g-Factor: %g\n", gFactor_F);
+  // printf("F-state g-Factor: %g\n", gFactor_F);
+  // printf("G-state g-Factor: %g\n", gFactor_G);
   for (int e = 0; e < numEStates; e++) {
     gFactor_E[e] = alk.calc_gf(Fe2_Vector[e], atom.Je2, atom.I2, 2, 1,
                                atom.g_I);
-    //    printf("E-state[%d] g-Factor %g\n", e, gFactor_E[e]);
+       printf("E-state[%d] g-Factor %g\n", e, gFactor_E[e]);
   }
 }
 
@@ -210,9 +210,13 @@ void OpticalPumping_Method::setup_frequencies_excited(int I2, int Je2,
                                                       double excitation,
                                                       double hyperfine_const,
                                                       double B_z) {
+  printf("Excited state frequencies...\n");
   for (int e = 0; e < numEStates; e++) {
     nu_E[e] = set_frequency(excitation, I2, Je2, Fe2_Vector[e], MFe2_Vector[e],
                             hyperfine_const, B_z, gFactor_E[e]);
+    // printf("|%g, %g > = %g _MHz\n", static_cast<double>(Fe2_Vector[e])/2.0,
+    //        static_cast<double>(MFe2_Vector[e])/2.0, (nu_E[e] - excitation)/_MHz);
+
   }
 }
 
@@ -226,13 +230,19 @@ void OpticalPumping_Method::setup_frequencies_excited(
 void OpticalPumping_Method::setup_frequencies_ground(int I2,
                                                      double hyperfine_const,
                                                      double B_z) {
+  printf("Ground state energies...\n");
   for (int g = 0; g < numGStates; g++) {
     nu_G[g] = set_frequency(0.0, I2, 1, Fg2_Vector[g], MFg2_Vector[g],
                             hyperfine_const, B_z, gFactor_G);
+    // printf("|%g, %g > = %g _MHz\n", static_cast<double>(Fg2_Vector[g])/2.0,
+    //        static_cast<double>(MFg2_Vector[g])/2.0, nu_G[g]/_MHz);
   }
   for (int f = 0; f < numFStates; f++) {
     nu_F[f] = set_frequency(0.0, I2, 1, Ff2_Vector[f], MFf2_Vector[f],
                             hyperfine_const, B_z, gFactor_F);
+    // printf("|%g, %g > = %g _MHz\n", static_cast<double>(Ff2_Vector[f])/2.0,
+    //        static_cast<double>(MFf2_Vector[f])/2.0, nu_F[f]/_MHz);
+
   }
 }
 
@@ -246,20 +256,20 @@ double OpticalPumping_Method::set_frequency(double excitation, int I2, int J2,
                                             int F2, int Mf2,
                                             double hyperfine_const,
                                             double B_z, double g_f) {
-  bool debug = false;
+  bool debug = false;;
   // See DM equation 3.7
   double hyperfine = static_cast<double>((F2*(F2+2)) - (I2*(I2+2)) -
                                          (J2*(J2+2)));
   hyperfine *= hyperfine_const/8.0;
   if (debug) printf("I2 = %d\t J2 = %d\t F2 = %d\t Mf2 = %d\n",
                     I2, J2, F2, Mf2);
-  if (debug) printf("Hyperfine: %15.10G MHz \t", hyperfine/_MHz);
+  if (debug) printf("Hyperfine: %6.4f MHz \t", hyperfine/_MHz);
   if (debug) printf("g_f = %6.4G, mu_B = %6.4G MHz/G, B_z = %6.4G G, ", g_f,
                     (_bohr_magneton/_planck_h)/(_MHz/_G), B_z/_G);
   double zeeman = static_cast<double>(Mf2);
   zeeman *= -1.0*g_f * (_bohr_magneton/_planck_h) * B_z / 2.0;
-  if (debug) printf("Zeeman: %15.10G MHz\t", zeeman/_MHz);
-  if (debug) printf("Total: %15.10G MHz\n",
+  if (debug) printf("Zeeman: %6.4f MHz\t", zeeman/_MHz);
+  if (debug) printf("Total: %6.4f MHz\n",
                     (excitation + hyperfine + zeeman)/_MHz);
   return (excitation + hyperfine + zeeman);
 }
