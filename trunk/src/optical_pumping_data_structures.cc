@@ -32,7 +32,7 @@ Laser_data::Laser_data(double set_nu, double set_power, double set_detune,
 }
 
 void Laser_data::set_saturation_intensity(double tau) {
-  bool debug = true;
+  bool debug = false;
   double I_s = M_PI / (3.0*tau);
   I_s /= pow(_speed_of_light, 2.0);
   I_s *= _planck_h * pow(nu, 3);
