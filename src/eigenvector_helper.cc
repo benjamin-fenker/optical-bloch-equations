@@ -60,7 +60,7 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   // eigenvectors by a factor of the magic number so I also need to adjust this.
   const double magicNum = pow(10,8);
 
-  bool debug = true;
+  bool debug = false;
   // Figure out some parameters to use based on J
   int J2;
   double Aj;
@@ -317,15 +317,15 @@ vector<vector<double> > Eigenvector_Helper::diagH(int L) {
   gsl_eigen_hermv_sort(eval, evec, GSL_EIGEN_SORT_VAL_ASC);
 
 
-  printf("\nevec=\n[");
-  for (int i = 0; i < numBasisStates; i++) {
-    for (int j = 0; j < numBasisStates; j++) {
-      printf("%8.6G\t",
-             GSL_REAL(gsl_matrix_complex_get(evec, i, j)));
-    }
-    printf("\n");
-  }
-  printf("\n\n\n");
+  // printf("\nevec=\n[");
+  // for (int i = 0; i < numBasisStates; i++) {
+  //   for (int j = 0; j < numBasisStates; j++) {
+  //     printf("%8.6G\t",
+  //            GSL_REAL(gsl_matrix_complex_get(evec, i, j)));
+  //   }
+  //   printf("\n");
+  // }
+  // printf("\n\n\n");
 
   int *F2 = new int[numBasisStates];
   int *Fz2 = new int[numBasisStates];

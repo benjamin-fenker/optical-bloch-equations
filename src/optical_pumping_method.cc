@@ -202,7 +202,7 @@ void OpticalPumping_Method::setup_gFactors(atom_data atom) {
   for (int e = 0; e < numEStates; e++) {
     gFactor_E[e] = alk.calc_gf(Fe2_Vector[e], atom.Je2, atom.I2, 2, 1,
                                atom.g_I);
-       printf("E-state[%d] g-Factor %g\n", e, gFactor_E[e]);
+    //       printf("E-state[%d] g-Factor %g\n", e, gFactor_E[e]);
   }
 }
 
@@ -210,7 +210,7 @@ void OpticalPumping_Method::setup_frequencies_excited(int I2, int Je2,
                                                       double excitation,
                                                       double hyperfine_const,
                                                       double B_z) {
-  printf("Excited state frequencies...\n");
+  //  printf("Excited state frequencies...\n");
   for (int e = 0; e < numEStates; e++) {
     nu_E[e] = set_frequency(excitation, I2, Je2, Fe2_Vector[e], MFe2_Vector[e],
                             hyperfine_const, B_z, gFactor_E[e]);
@@ -230,7 +230,7 @@ void OpticalPumping_Method::setup_frequencies_excited(
 void OpticalPumping_Method::setup_frequencies_ground(int I2,
                                                      double hyperfine_const,
                                                      double B_z) {
-  printf("Ground state energies...\n");
+  //  printf("Ground state energies...\n");
   for (int g = 0; g < numGStates; g++) {
     nu_G[g] = set_frequency(0.0, I2, 1, Fg2_Vector[g], MFg2_Vector[g],
                             hyperfine_const, B_z, gFactor_G);
