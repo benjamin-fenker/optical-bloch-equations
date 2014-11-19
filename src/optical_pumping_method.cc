@@ -411,19 +411,19 @@ void OpticalPumping_Method::setup_pop_arbitrary(string fname) {
 
   for (int i = 0; i < numFStates + numGStates; i++) pop[i] /= sum;
 
-  printf("Initial populations...\n");
+  //  printf("Initial populations...\n");
   for (int i = 0; i < numGStates; i++) {
     GSL_SET_REAL(&dm_status->gg[i][i], pop[i]);
-    printf("| F = %d/2, Mf = %d/2 > = %g\t", Fg2_Vector[i], MFg2_Vector[i],
-           pop[i]);
+    // printf("| F = %d/2, Mf = %d/2 > = %g\t", Fg2_Vector[i], MFg2_Vector[i],
+    //        pop[i]);
   }
   printf("\n");
   for (int i = 0; i < numFStates; i++) {
     GSL_SET_REAL(&dm_status->ff[i][i], pop[i+numGStates]);
-    printf("| F = %d/2, Mf = %d/2 > = %g\t", Ff2_Vector[i], MFf2_Vector[i],
-           pop[i+numGStates]);
+    // printf("| F = %d/2, Mf = %d/2 > = %g\t", Ff2_Vector[i], MFf2_Vector[i],
+    //        pop[i+numGStates]);
   }
-  printf("\n");
+  // printf("\n");
 }
 
 void OpticalPumping_Method::setup_pop_withTilt(double tilt) {

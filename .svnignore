@@ -6,3 +6,4 @@ opticalPumping
 op_movie.py
 Makefile
 plot*.py
+*.pcm
