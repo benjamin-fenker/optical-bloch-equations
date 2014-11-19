@@ -145,30 +145,30 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     printf("\tTau: %5.2G ns\n\tgamma_spon = %5.2G MHz \n\n", atom.tau/_ns,
            atom.gamma_spon/_MHz);
     printf("Tmax: %8.1G ns \nTime Step: %4.2G ns \n", tmax/_ns, tStep/_ns);
-    printf("Magnetic Field: %4.2G z + %4.2G x G\n\n", field.B_z/_G,
+    printf("Magnetic Field: %+4.2G z + %4.2G x G\n\n", field.B_z/_G,
            field.B_x/_G);
 
-    printf("\nLaser g->e (Laser 1) data:\n\tDetuned %5.2G MHz from the |",
+    printf("\nLaser g->e (Laser 1) data:\n\tDetuned %+5.2G MHz from the |",
            laser_ge.detune/_MHz);
     printf("%i/2,%i/2> ---> |%i/2,%i/2>", tuned_G_F2, nominalSublevelTune2_eg,
            tuned_E_F2, nominalSublevelTune2_eg);
     printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
            laser_ge.nu/_MHz, laser_ge.linewidth/_MHz);
     printf("\tIntensity = %5.2G mW/cm^2\n", laser_ge.power/(_mW/_cm2));
-    printf("\ts3 = %5.3G V^2/m^2--> I = <%8.6G, %8.6G> mW/cm^2\n",
+    printf("\ts3 = %+5.3G V^2/m^2--> I = <%8.6G, %8.6G> mW/cm^2\n",
            laser_ge.stokes[3]/(_V*_V/_m*_m), laser_ge.intensity[0]/(_mW/_cm2),
            laser_ge.intensity[2]/(_mW/_cm2));
     printf("\t                         E = <%8.6G, %8.6G> V/m\n",
            laser_ge.field[0]/(_V/_m), laser_ge.field[2]/(_V/_m));
 
-    printf("\nLaser f->e (Laser 2) data:\n\tDetuned %5.2G MHz from the |",
+    printf("\nLaser f->e (Laser 2) data:\n\tDetuned %+5.2G MHz from the |",
            laser_fe.detune/_MHz);
     printf("%i/2,%i/2> ---> |%i/2,%i/2>", tuned_F_F2, nominalSublevelTune2_ef,
            tuned_E_F2, nominalSublevelTune2_ef);
     printf(" transition.\n\tFrequency = %14.10G MHz\n\tLinewidth = %5.2G MHz\n",
            laser_fe.nu/_MHz, laser_fe.linewidth/_MHz);
     printf("\tIntensity = %5.2G mW/cm^2\n", laser_fe.power/(_mW/_cm2));
-    printf("\ts3 = %5.3G V^2/m^2 --> I = <%8.6G, %8.6G> mW/cm^2\n",
+    printf("\ts3 = %+5.3G V^2/m^2 --> I = <%8.6G, %8.6G> mW/cm^2\n",
            laser_fe.stokes[3]/(_V*_V/_m*_m), laser_fe.intensity[0]/(_mW/_cm2),
            laser_fe.intensity[2]/(_mW/_cm2));
     printf("\t                          E = <%8.6G, %8.6G> V/m\n\n",
@@ -311,13 +311,27 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   bool laser_fe_Off = false;
   bool laser_ge_Off = false;
   bool print_zero = false;
+  int print_progress_width = 60;
+  double print_progress_dt = tmax / print_progress_width;
+  double next_print_progress = 0.0;
+  for (int i = 0; i < print_progress_width; i++) printf("=");
+  printf("\n");
   while (time < tmax) {
     if (!op_batch) {
       if ((fabs(time - nextUpdate))/_ns < pow(10, -2)) {
-        printf(" t = %8.6G ns\n", time/_ns);
-        nextUpdate += updateFreq;
-      }
+        //        printf(" t = %8.6G ns\n", time/_ns);
+         nextUpdate += updateFreq;
+       }
+     }
+     //    printf("%g\n", time/_ns);
+     if ((fabs(time - next_print_progress)) < tStep/2. && !print_zero) {
+       //       printf("A\n");
+
+       next_print_progress += print_progress_dt;
+       printf("=");
+       fflush(stdout);
     }
+    
     // if ((fabs(time - nextPrint))/_ns < pow(10, -2) {
     if ((fabs(time - nextPrint)/_ns < pow(10, -2))) {
       // equ -> print_data(stdout, time);
@@ -368,6 +382,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     //   print_frequency = 0.2*_us;
     // }
   }
+  printf("\n");
+  printf("Output complete: %s", outFile);
   //  equ -> print_density_matrix(stdout);
   delete equ;
   return 0;
