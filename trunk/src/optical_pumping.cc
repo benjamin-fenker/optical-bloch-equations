@@ -35,12 +35,12 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                          double laser_fe_linewidth, double laser_ge_linewidth,
                          double laser_fe_s3_over_s0, double laser_ge_s3_over_s0,
                          double laser_fe_offTime, double laser_ge_offTime,
-                         double set_B_z, double set_B_x, char *outFile,
+                         double set_B_z, double set_B_x, string outFile,
                          double tilt) {
   bool debug = false;
   atom_data atom;
   atom.Je2 = temp_Je2;
-
+  isZero = false;
   magnetic_field_data field;
   // **Physical constant**
   // printf("mu_B = %10.8G MHz/G\n", _bohr_magneton/_planck_h/(_MHz/_G));
@@ -218,11 +218,11 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   // Setup File I/O for later use
 
   FILE * file;
-  file = fopen(outFile, "w");
+  file = fopen(outFile.c_str(), "w");
   if (!debug) {
-    if (!op_batch) printf("Opening file...%s\n", outFile);
+    if (!op_batch) printf("Opening file...%s\n", outFile.c_str());
     if (file == NULL) {
-      printf("could not open file %s\n", outFile);
+      printf("could not open file %s\n", outFile.c_str());
     }
     // This section is commented out to avoid printing the header info
     /*
@@ -352,6 +352,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     if (time > -2.0*_ns) {
       // equ -> change_magnetic_field(0.0);
     }
+
     if (!isZero) {
       // **********************************************************************
       equ->update_population_RK4(tStep);  // ********************************
@@ -382,8 +383,9 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     //   print_frequency = 0.2*_us;
     // }
   }
+  fclose(file);
   printf("\n");
-  printf("Output complete: %s", outFile);
+  printf("Output complete and closed: %s\n", outFile.c_str());
   //  equ -> print_density_matrix(stdout);
   delete equ;
   return 0;
