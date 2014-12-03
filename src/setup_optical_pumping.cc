@@ -283,7 +283,7 @@ int main(int argc, char* argv[]) {
                            laser_ge_detune, laser_fe_linewidth,
                            laser_ge_linewidth, laser_fe_s3_over_s0,
                            laser_ge_s3_over_s0, laser_fe_offTime,
-                           laser_ge_offTime, B_z, B_x, outFile, tilt);
+                           laser_ge_offTime, B_z, B_x, string(outFile), tilt);
   if (!op_batch) printf("\nCompleted with status = %d\n\n", status);
   return status;
   }

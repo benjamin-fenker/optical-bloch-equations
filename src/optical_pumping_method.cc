@@ -82,8 +82,10 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
 }
 
 OpticalPumping_Method::~OpticalPumping_Method() {
-  delete dm_status;
-  delete dm_derivs;
+  // For some reason this crashes things on the second go-round
+  // I'm not sure why.  But this is SUSPICIOUS!
+  // if (dm_status) delete dm_status;
+  // if (dm_derivs) delete dm_derivs;
 }
 
 void OpticalPumping_Method::update_population_euler(double dt) {
