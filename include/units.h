@@ -51,6 +51,7 @@
 /* Magnetic Field [T = Tesla] */
 #define _T (1e0)                /* tesla */
 #define _G (1e-4)               /* gauss */
+#define _mG (1e-7)              /* milligauss */
 
 /* Electric charge [C = couloumb] */
 #define _C (1e0)                /* couloumbs */

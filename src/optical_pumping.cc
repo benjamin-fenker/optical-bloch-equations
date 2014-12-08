@@ -36,7 +36,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                          double laser_fe_s3_over_s0, double laser_ge_s3_over_s0,
                          double laser_fe_offTime, double laser_ge_offTime,
                          double set_B_z, double set_B_x, string outFile,
-                         double tilt) {
+                         double tilt, int verbose) {
   bool debug = false;
   atom_data atom;
   atom.Je2 = temp_Je2;
@@ -125,7 +125,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     return 2;
   }
 
-  if (!op_batch) {
+  if (verbose >= 0) {
     printf("** OPTICAL PUMPING **\n");
     printf("%s\n\n", longMethod.c_str());
 
@@ -145,7 +145,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     printf("\tTau: %5.2G ns\n\tgamma_spon = %5.2G MHz \n\n", atom.tau/_ns,
            atom.gamma_spon/_MHz);
     printf("Tmax: %8.1G ns \nTime Step: %4.2G ns \n", tmax/_ns, tStep/_ns);
-    printf("Magnetic Field: %+4.2G z + %4.2G x G\n\n", field.B_z/_G,
+    printf("Magnetic Field: %+6.4G z + %+6.4G x G\n\n", field.B_z/_G,
            field.B_x/_G);
 
     printf("\nLaser g->e (Laser 1) data:\n\tDetuned %+5.2G MHz from the |",
@@ -173,6 +173,10 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
            laser_fe.intensity[2]/(_mW/_cm2));
     printf("\t                          E = <%8.6G, %8.6G> V/m\n\n",
            laser_fe.field[0]/(_V/_m), laser_fe.field[2]/(_V/_m));
+  } else if (verbose == -1) {
+    printf("Isotope: %s     s_3 = %+6.4f/%6.4f     B_x = %6.1f mG\n",
+           isotope.c_str(), laser_fe_s3_over_s0, laser_ge_s3_over_s0,
+           field.B_x/_mG);
   }
 
   // Call function to retrieve vectors holding the Iz/Jz decomposotion of the
@@ -213,14 +217,14 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   }
 
   if(op_batch) print_frequency = tStep;
-  printf("Print frequency: %g\n", print_frequency);
+  if (verbose >= 0) printf("Print frequency: %g\n", print_frequency);
   // print_frequency = 10*_us;
   // Setup File I/O for later use
 
   FILE * file;
   file = fopen(outFile.c_str(), "w");
   if (!debug) {
-    if (!op_batch) printf("Opening file...%s\n", outFile.c_str());
+    if (verbose >= 0) printf("Opening file...%s\n", outFile.c_str());
     if (file == NULL) {
       printf("could not open file %s\n", outFile.c_str());
     }
@@ -314,8 +318,10 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
   int print_progress_width = 60;
   double print_progress_dt = tmax / print_progress_width;
   double next_print_progress = 0.0;
-  for (int i = 0; i < print_progress_width; i++) printf("=");
-  printf("\n");
+  if (verbose >= -1) {
+    for (int i = 0; i < print_progress_width; i++) printf("=");
+    printf("\n");
+  }
   while (time < tmax) {
     if (!op_batch) {
       if ((fabs(time - nextUpdate))/_ns < pow(10, -2)) {
@@ -328,8 +334,10 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
        //       printf("A\n");
 
        next_print_progress += print_progress_dt;
-       printf("=");
-       fflush(stdout);
+       if (verbose >= -1) {
+         printf("=");
+         fflush(stdout);
+       }
     }
     
     // if ((fabs(time - nextPrint))/_ns < pow(10, -2) {
@@ -361,20 +369,26 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     } else {
       if (!print_zero) {
         print_zero = true;
-        printf("Reached steady-state at t = %g us\n", time/_us);
+        if (verbose >= -1) {
+          printf("Reached steady-state at t = %g us\n", time/_us);
+        }
       }
     }
     //   equ->print_density_matrix(stdout);
     if (!equ->is_hermitian()) {
       printf("DENSITY MATRIX NOT HERMITIAN AT t = %4.2G ns\n", time/_ns);
-      equ -> print_data(stdout, time);
-      equ -> print_data(file, time);
+      if (verbose >= 0) {
+        equ -> print_data(stdout, time);
+        equ -> print_data(file, time);
+      }
       return 1;
     }
     if (fabs(equ->get_total_population() - 1.0) > pow(10, -3)) {
       printf("PARTICLES NOT CONSERVED AT t = %4.2G ns\n", time/_ns);
-      equ -> print_data(stdout, time);
-      equ -> print_data(file, time);      
+      if (verbose >= 0) {
+        equ -> print_data(stdout, time);
+        equ -> print_data(file, time);      
+      }
       return 1;
     }
     time += tStep;
@@ -384,8 +398,8 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     // }
   }
   fclose(file);
-  printf("\n");
-  printf("Output complete and closed: %s\n", outFile.c_str());
+  if (verbose >= -1) printf("\n");
+  if (verbose >= 0) printf("Output complete and closed: %s\n", outFile.c_str());
   //  equ -> print_density_matrix(stdout);
   delete equ;
   return 0;
