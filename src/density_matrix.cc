@@ -243,7 +243,9 @@ void Density_Matrix::integrate_gg(DM_container *in) {
                   printf("G - spontaneous decay: q2 not even\n");
                   exit(1);
                 }
-                q = (q/2) + 1;    // Converts q from twice the difference in M_f
+                if (abs(q) > 2) continue;
+                q = (q/2) + 1;    // Converts q from twice the
+                                  // difference in M_f
                 // to an appropriate index
                 double coupling = a_eg[e][g][q] * a_eg[ep][gp][q];
                 gsl_complex left = gsl_complex_mul_real(in->ee[e][ep],
@@ -310,6 +312,7 @@ void Density_Matrix::integrate_ff(DM_container *in) {
                   printf("F - spontaneous decay: q2 not even\n");
                   exit(1);
                 }
+                if (abs(q) > 2) continue;
                 q = (q/2) + 1;    // Converts q from twice the difference in M_f
                 // to an appropriate index
                 double coupling = a_ef[e][f][q] * a_ef[ep][fp][q];

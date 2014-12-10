@@ -14,7 +14,13 @@ using std::string;
 using std::vector;
 extern bool op_verbose;
 extern bool op_batch;
-OpticalPumping_Method::OpticalPumping_Method() {}
+OpticalPumping_Method::OpticalPumping_Method() {
+  // printf("\nOpticalPumping_Method::OpticalPumping_Method()\n");
+  // printf("Initializing dm_status and dm_derivs\n");
+  dm_status = new DM_container(1, 1, 1);
+  dm_derivs = new DM_container(1, 1, 1);
+}
+
 OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
                                              Laser_data set_laser_fe,
                                              Laser_data set_laser_ge,
@@ -35,10 +41,13 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
     gFactor_E(numEStates, 0.0), cPlus_E(numEStates, 0.0),
     cPlus_F(numFStates, 0.0), cPlus_G(numGStates, 0.0),
     cMins_E(numEStates, 0.0), cMins_F(numFStates, 0.0),
-    cMins_G(numGStates, 0.0) {
+  cMins_G(numGStates, 0.0) {
+
+  // printf("\nOpticalPumping_Method::OpticalPumping_Method(...)\n");
+  // printf("Initializing dm_status and dm_derivs\n");
   dm_status = new DM_container(numEStates, numFStates, numGStates);
   dm_derivs = new DM_container(numEStates, numFStates, numGStates);
-  // printf("\nOpticalPumping_Method::OpticalPumping_Method(...)\n");
+
   if (op_verbose) {
     printf("G = %d F = %d E = %d\n", numGStates, numFStates, numEStates);
   }
@@ -82,10 +91,9 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
 }
 
 OpticalPumping_Method::~OpticalPumping_Method() {
-  // For some reason this crashes things on the second go-round
-  // I'm not sure why.  But this is SUSPICIOUS!
-  // if (dm_status) delete dm_status;
-  // if (dm_derivs) delete dm_derivs;
+  //  printf("Deleting dm_status and dm_derivs\n");
+  delete dm_status;
+  delete dm_derivs;
 }
 
 void OpticalPumping_Method::update_population_euler(double dt) {
