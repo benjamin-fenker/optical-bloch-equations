@@ -134,7 +134,7 @@ double Alkali::getLaserFrequency(atom_data atom, magnetic_field_data field,
                                  int Fg2, int Mfg2, int Fe2, int Mfe2,
                                  double detune) {
   bool debug = false;
-  Rate_Equations *opm = new Rate_Equations();
+  OpticalPumping_Method *opm = new Rate_Equations();
   //  Eigenvector_Helper *eigen = new Eigenvector_Helper(atom, field);
   double energy_gr = opm -> set_frequency(0.0, atom.I2, 1, Fg2, Mfg2, 0,
                                        atom.Aj_g, atom.g_I, field.B_z);
