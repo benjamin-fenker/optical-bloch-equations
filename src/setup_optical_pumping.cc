@@ -6,6 +6,7 @@
 #include <cstring>
 #include <iomanip>
 #include "include/optical_pumping.h"
+#include "include/optical_pumping_data_structures.h"
 #include "include/units.h"
 
 using std::string;
@@ -105,6 +106,7 @@ int main(int argc, char* argv[]) {
   double B_x = 0.0 * _G;  // G
 
   double tilt = 0.0;                // To start with some asymmetry
+  double rf_linewidth = 500.0 * _Hz;// Gu2003 (replaces (Gam1+Gam2)/2 in Eq 37
   // *******************************
 
   // Also will accept command line input
@@ -244,6 +246,11 @@ int main(int argc, char* argv[]) {
         snprintf(expectedInput, sizeof(expectedInput), "tilt");
         readAndCheckFromFile(file, expectedInput, &tilt);
         //        printf("Method = %s\n", method.c_str());
+
+        snprintf(expectedInput, sizeof(expectedInput), "rf_linewidth");
+        readAndCheckFromFile(file, expectedInput, &rf_linewidth);
+        rf_linewidth *= _Hz;
+
       } else {                  // File does not exist
         printf("File %s does not exist\n", inFile);
         exit(1);
@@ -276,14 +283,50 @@ int main(int argc, char* argv[]) {
   // printf("Warning...fixing laser_ge/laser_fe = 0.5\n");
   // printf("*********************************************\n");
   // laser_ge_I = laser_fe_I / 2.0;
-  int status = pumper.pump(isotope, method, tmax, dt, zCoherences,
-                           hfCoherences_ex, hfCoherences_gr, Je2,
-                           nominalSublevelTune2_fe, nominalSublevelTune2_ge,
-                           laser_fe_I, laser_ge_I, laser_fe_detune,
-                           laser_ge_detune, laser_fe_linewidth,
-                           laser_ge_linewidth, laser_fe_s3_over_s0,
-                           laser_ge_s3_over_s0, laser_fe_offTime,
-                           laser_ge_offTime, B_z, B_x, string(outFile), tilt, 0);
+  Laser_parameters fe;
+  fe.power = laser_fe_I;
+  fe.detune = laser_fe_detune;
+  fe.linewidth = laser_fe_linewidth;
+  fe.s3s0 = laser_fe_s3_over_s0;
+  fe.offtime = laser_fe_offTime;
+
+  Laser_parameters ge;
+  ge.power = laser_ge_I;
+  ge.detune = laser_ge_detune;
+  ge.linewidth = laser_ge_linewidth;
+  ge.s3s0 = laser_ge_s3_over_s0;
+  ge.offtime = laser_ge_offTime;
+  
+  op_parameters params;
+  params.isotope = isotope;
+  params.method = method;
+  params.out_file = string(outFile);
+  params.Je2 = Je2;
+  params.laser_fe = fe;
+  params.laser_ge = ge;
+  params.tmax = tmax;
+  params.tstep = dt;
+  params.Bz = B_z;
+  params.Bx = B_x;
+  params.population_tilt = tilt;
+  params.verbosity = 0;
+  params.rf_linewidth = rf_linewidth;
+  params.tune_fe = nominalSublevelTune2_fe;
+  params.tune_ge = nominalSublevelTune2_ge;
+  params.zeeman = zCoherences;
+  params.hyperfine_gr = hfCoherences_gr;
+  params.hyperfine_ex = hfCoherences_ex;
+
+  // int status = pumper.pump(isotope, method, tmax, dt, zCoherences,
+  //                          hfCoherences_ex, hfCoherences_gr, Je2,
+  //                          nominalSublevelTune2_fe, nominalSublevelTune2_ge,
+  //                          laser_fe_I, laser_ge_I, laser_fe_detune,
+  //                          laser_ge_detune, laser_fe_linewidth,
+  //                          laser_ge_linewidth, laser_fe_s3_over_s0,
+  //                          laser_ge_s3_over_s0, laser_fe_offTime,
+  //                          laser_ge_offTime, B_z, B_x, string(outFile), tilt, 0);
+  int status = pumper.pump(params);
+
   if (!op_batch) printf("\nCompleted with status = %d\n\n", status);
   return status;
   }

@@ -25,6 +25,18 @@ using std::max;
 extern bool op_batch;
 extern bool isZero;
 
+int OpticalPumping::pump(op_parameters params) {
+  Laser_parameters fe = params.laser_fe;
+  Laser_parameters ge = params.laser_ge;
+
+  int status = pump(params.isotope, params.method, params.tmax, params.tstep,
+                    params.zeeman, params.hyperfine_ex, params.hyperfine_gr,
+                    params.Je2, params.tune_fe, params.tune_ge, fe.power, ge.power,
+                    fe.detune, ge.detune, fe.linewidth, ge.linewidth, fe.s3s0, ge.s3s0,
+                    fe.offtime, ge.offtime, params.Bz, params.Bx, params.out_file,
+                    params.population_tilt, params.verbosity, params.rf_linewidth);
+  return status;
+}
 int OpticalPumping::pump(string isotope, string method, double tmax,
                          double tStep, bool zCoherences, bool hfCoherences_ex,
                          bool hfCoherences_gr, int temp_Je2,
@@ -36,7 +48,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
                          double laser_fe_s3_over_s0, double laser_ge_s3_over_s0,
                          double laser_fe_offTime, double laser_ge_offTime,
                          double set_B_z, double set_B_x, string outFile,
-                         double tilt, int verbose) {
+                         double tilt, int verbose, double rf_linewidth) {
   bool debug = false;
   atom_data atom;
   atom.Je2 = temp_Je2;
@@ -171,8 +183,13 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     printf("\ts3 = %+5.3G V^2/m^2 --> I = <%8.6G, %8.6G> mW/cm^2\n",
            laser_fe.stokes[3]/(_V*_V/_m*_m), laser_fe.intensity[0]/(_mW/_cm2),
            laser_fe.intensity[2]/(_mW/_cm2));
-    printf("\t                          E = <%8.6G, %8.6G> V/m\n\n",
+    printf("\t                          E = <%8.6G, %8.6G> V/m\n",
            laser_fe.field[0]/(_V/_m), laser_fe.field[2]/(_V/_m));
+    if (rf_linewidth >= 0) {
+      printf("Lasers are 100%% correlated with RF linewidth %g Hz\n\n", rf_linewidth/_Hz);
+    } else {
+      printf("Lasers are 0%% correlated\n\n");
+    }
   } else if (verbose == -1) {
     printf("Isotope: %s     s_3 = %+6.4f/%6.4f     B_x = %6.1f mG\n",
            isotope.c_str(), laser_fe_s3_over_s0, laser_ge_s3_over_s0,
@@ -304,7 +321,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     printf("Method = %s.  Aborting.", method.c_str());
     return(2);
   }
-
+  equ -> rf_linewidth = rf_linewidth;
 
   // double tStep_in = tStep;
   // if (op_batch) tStep = 0.01*_us;

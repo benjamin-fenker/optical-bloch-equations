@@ -94,6 +94,14 @@ class OpticalPumping_Method {
   // Sturcts to hold laser polarization, intensity, frequency
   Laser_data laser_ge;
   Laser_data laser_fe;
+  double rf_linewidth;                  /* >= 0 assumes 100%
+                                            correlated lasers but the
+                                            given RF linewidth and < 0
+                                            assumes 0% correlated
+                                            lasers.  With correlated
+                                            lasers, replace Gam1 +
+                                            Gam2 / 2 in Eq 37 with RF
+                                            as in Gu 2003 */
 
   // Arrays to hold quantum numbers with the standard indexing
   // F = I + J ; J = L + S

@@ -554,9 +554,14 @@ void Density_Matrix::integrate_fg(DM_container *in) {
       // S. Gu et. al. Op. Comm.  220 (2003) 365-370
       // E. Arimondo, Progress in Optics XXXV (1996) 257 (eq 2.37)
       // B. Dalton and P. Knight J. Phys. B 15 (1982) 3997-4015 (fig 2)
-      // double real = M_PI*(laser_fe.linewidth + laser_ge.linewidth);
-      double real = 500.0 * _Hz;
-      real = 0.0 *_Hz;
+      double real;
+      if (rf_linewidth >= 0.0) {
+        //        double real = 500.0 * _Hz;
+        real = rf_linewidth;
+      } else {
+        real = M_PI*(laser_fe.linewidth + laser_ge.linewidth);
+      }
+      //      real = 0.0 *_Hz;
       double imag = 2*M_PI*((fabs(nu_F[f] - nu_G[g]))
                             - (laser_ge.nu - laser_fe.nu));
       gsl_complex decayTerm = gsl_complex_rect(real, imag);
