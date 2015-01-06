@@ -5,8 +5,10 @@
 #define INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
 
 #include <gsl/gsl_complex_math.h>
+#include <string>
 #include <vector>
 
+using std::string;
 using std::vector;
 
 class DM_container {
@@ -89,6 +91,28 @@ class Laser_data {
   // energy linewidth = hbar * linewidth)
   //  double polarization[3]; Don't want a seperate parameter anymore
   double saturation_intensity;
+};
+
+struct Laser_parameters {
+  double power, detune, linewidth;
+  double s3s0;
+  double offtime;
+  int nominal_tune;
+};
+
+struct op_parameters {
+  string isotope;
+  string method;
+  string out_file;
+  int Je2;
+  int tune_fe, tune_ge;
+  double tmax, tstep;
+  bool zeeman, hyperfine_gr, hyperfine_ex;
+  Laser_parameters laser_fe, laser_ge;
+  double Bx, Bz;
+  double population_tilt;
+  int verbosity;
+  double rf_linewidth;
 };
 
 struct op_data_for_gsl {
