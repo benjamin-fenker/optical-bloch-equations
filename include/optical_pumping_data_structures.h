@@ -113,6 +113,7 @@ struct op_parameters {
   double population_tilt;
   int verbosity;
   double rf_linewidth;
+  string initial_population;
 };
 
 struct op_data_for_gsl {

@@ -51,6 +51,7 @@ class OpticalPumping_Method {
   void setup_pop_uniform_ground();
   void setup_pop_withTilt(double tilt);
   void setup_pop_arbitrary(std::string fname);
+  void setup_pop(std::string fname_option);
   virtual void switch_off_laser(int las); /* las = 1: g-->e; las = 2: f-->e */
   virtual void change_magnetic_field(double newField);
   // Struct to hold atom, laser and eignenvector information
