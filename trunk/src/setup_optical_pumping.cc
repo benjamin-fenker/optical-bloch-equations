@@ -107,6 +107,7 @@ int main(int argc, char* argv[]) {
 
   double tilt = 0.0;                // To start with some asymmetry
   double rf_linewidth = 500.0 * _Hz;// Gu2003 (replaces (Gam1+Gam2)/2 in Eq 37
+  string population_setup = "uniform";
   // *******************************
 
   // Also will accept command line input
@@ -251,6 +252,11 @@ int main(int argc, char* argv[]) {
         readAndCheckFromFile(file, expectedInput, &rf_linewidth);
         rf_linewidth *= _Hz;
 
+        snprintf(expectedInput, sizeof(expectedInput), "population");
+        readAndCheckFromFile(file, expectedInput, &population_setup);
+        printf("Read %s\n", population_setup.c_str());
+        
+
       } else {                  // File does not exist
         printf("File %s does not exist\n", inFile);
         exit(1);
@@ -316,6 +322,7 @@ int main(int argc, char* argv[]) {
   params.zeeman = zCoherences;
   params.hyperfine_gr = hfCoherences_gr;
   params.hyperfine_ex = hfCoherences_ex;
+  params.initial_population = population_setup;
 
   // int status = pumper.pump(isotope, method, tmax, dt, zCoherences,
   //                          hfCoherences_ex, hfCoherences_gr, Je2,

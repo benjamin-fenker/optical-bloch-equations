@@ -29,26 +29,33 @@ int OpticalPumping::pump(op_parameters params) {
   Laser_parameters fe = params.laser_fe;
   Laser_parameters ge = params.laser_ge;
 
-  int status = pump(params.isotope, params.method, params.tmax, params.tstep,
-                    params.zeeman, params.hyperfine_ex, params.hyperfine_gr,
-                    params.Je2, params.tune_fe, params.tune_ge, fe.power, ge.power,
-                    fe.detune, ge.detune, fe.linewidth, ge.linewidth, fe.s3s0, ge.s3s0,
-                    fe.offtime, ge.offtime, params.Bz, params.Bx, params.out_file,
-                    params.population_tilt, params.verbosity, params.rf_linewidth);
-  return status;
-}
-int OpticalPumping::pump(string isotope, string method, double tmax,
-                         double tStep, bool zCoherences, bool hfCoherences_ex,
-                         bool hfCoherences_gr, int temp_Je2,
-                         int nominalSublevelTune2_ef,
-                         int nominalSublevelTune2_eg,
-                         double laser_fe_power, double laser_ge_power,
-                         double laser_fe_detune, double laser_ge_detune,
-                         double laser_fe_linewidth, double laser_ge_linewidth,
-                         double laser_fe_s3_over_s0, double laser_ge_s3_over_s0,
-                         double laser_fe_offTime, double laser_ge_offTime,
-                         double set_B_z, double set_B_x, string outFile,
-                         double tilt, int verbose, double rf_linewidth) {
+  string isotope = params.isotope;
+  string method = params.method;
+  double tmax = params.tmax;
+  double tStep = params.tstep;
+  double zCoherences = params.zeeman;
+  double hfCoherences_ex = params.hyperfine_ex;
+  double hfCoherences_gr = params.hyperfine_gr;
+  int  temp_Je2 = params.Je2;
+  int nominalSublevelTune2_ef = params.tune_fe;
+  int nominalSublevelTune2_eg = params.tune_ge;
+  double laser_fe_power = fe.power;
+  double laser_ge_power = ge.power;
+  double laser_fe_detune = fe.detune;
+  double laser_ge_detune = ge.detune;
+  double laser_fe_linewidth = fe.linewidth;
+  double laser_ge_linewidth = ge.linewidth;
+  double laser_fe_s3_over_s0 = fe.s3s0;
+  double laser_ge_s3_over_s0 = ge.s3s0;
+  double laser_fe_offTime = fe.offtime;
+  double laser_ge_offTime = ge.offtime;
+  double set_B_z = params.Bz;
+  double set_B_x = params.Bx;
+  string outFile = params.out_file;
+  double tilt = params.population_tilt;
+  int verbose = params.verbosity;
+  double rf_linewidth = params.rf_linewidth;
+
   bool debug = false;
   atom_data atom;
   atom.Je2 = temp_Je2;
@@ -321,6 +328,7 @@ int OpticalPumping::pump(string isotope, string method, double tmax,
     printf("Method = %s.  Aborting.", method.c_str());
     return(2);
   }
+  equ -> setup_pop(params.initial_population);
   equ -> rf_linewidth = rf_linewidth;
 
   // double tStep_in = tStep;

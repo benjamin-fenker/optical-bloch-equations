@@ -67,9 +67,10 @@ OpticalPumping_Method::OpticalPumping_Method(Eigenvector_Helper set_eigen,
   setup_eg_coupling(eigen.atom);
   setup_ef_coupling(eigen.atom);
   if (op_verbose) print_couplings(stdout);
-  setup_pop_uniform_ground();
+  //  setup_pop("uniform");
+  //  setup_pop_uniform_ground();
   //  setup_pop_withTilt(tilt);
-  tilt = tilt;
+  //  tilt = tilt;
   //  setup_pop_arbitrary("initial.pop");
 
   data.numGStates = eigen.atom.numGStates;
@@ -374,6 +375,14 @@ double OpticalPumping_Method::set_lowering(int F2, int M2) {
   double F = (static_cast<double>(F2))/2.0;
   double M = (static_cast<double>(M2))/2.0;
   return sqrt((F+M)*(F-M+1));
+}
+
+void OpticalPumping_Method::setup_pop(string fname_option) {
+  if (fname_option == "uniform") {
+    setup_pop_uniform_ground();
+  } else {
+    setup_pop_arbitrary(fname_option);
+  }
 }
 
 void OpticalPumping_Method::setup_pop_uniform_ground() {
