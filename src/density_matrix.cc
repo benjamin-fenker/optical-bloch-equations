@@ -6,8 +6,8 @@
 #include <stdlib.h>
 #include <omp.h>
 #include <vector>
-#include "include/density_matrix.h"
-#include "include/units.h"
+#include "density_matrix.h"
+#include "units.h"
 
 using std::vector;
 using std::min;

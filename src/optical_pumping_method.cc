@@ -8,8 +8,8 @@
 #include <iostream>
 #include <omp.h>
 #include <gsl/gsl_sf_coupling.h>
-#include "include/optical_pumping_method.h"
-#include "include/units.h"
+#include "optical_pumping_method.h"
+#include "units.h"
 using std::string;
 using std::vector;
 extern bool op_verbose;

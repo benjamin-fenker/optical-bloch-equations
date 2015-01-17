@@ -6,8 +6,8 @@
 #include <stdlib.h>
 
 #include <gsl/gsl_const_mksa.h>
-#include "include/optical_pumping_data_structures.h"
-#include "include/units.h"
+#include "optical_pumping_data_structures.h"
+#include "units.h"
 
 
 extern bool op_verbose;
