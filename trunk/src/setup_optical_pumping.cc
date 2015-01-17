@@ -5,9 +5,9 @@
 #include <stdlib.h>
 #include <cstring>
 #include <iomanip>
-#include "include/optical_pumping.h"
-#include "include/optical_pumping_data_structures.h"
-#include "include/units.h"
+#include "optical_pumping.h"
+#include "optical_pumping_data_structures.h"
+#include "units.h"
 
 using std::string;
 

@@ -2,8 +2,8 @@
 // Copyright 2012 Benjamin Fenker
 #include <stdio.h>
 #include <math.h>
-#include "include/rate_equations.h"
-#include "include/units.h"
+#include "rate_equations.h"
+#include "units.h"
 
 using std::vector;
 extern bool op_verbose;

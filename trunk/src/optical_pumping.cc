@@ -10,14 +10,18 @@
 #include <gsl/gsl_errno.h>      // GSL Reserves error codes -2 to 32 (succes = 0)
 #include <gsl/gsl_matrix.h>
 
-#include "include/optical_pumping.h"
-#include "include/alkali.h"
-#include "include/eigenvector_helper.h"
-#include "include/optical_pumping_method.h"
-#include "include/rate_equations.h"
-#include "include/density_matrix.h"
-#include "include/optical_pumping_data_structures.h"
-#include "include/units.h"
+//#include <boost/python.hpp>
+
+#include "optical_pumping.h"
+#include "alkali.h"
+#include "eigenvector_helper.h"
+#include "optical_pumping_method.h"
+#include "rate_equations.h"
+#include "density_matrix.h"
+#include "optical_pumping_data_structures.h"
+#include "units.h"
+
+//using namespace boost::python;
 
 using std::string;
 using std::max;
@@ -244,7 +248,8 @@ int OpticalPumping::pump(op_parameters params) {
   if (verbose >= 0) printf("Print frequency: %g\n", print_frequency);
   // print_frequency = 10*_us;
   // Setup File I/O for later use
-
+  // print_frequency = 0.25 * _us;
+  // tStep = 5 * _ns;
   FILE * file;
   file = fopen(outFile.c_str(), "w");
   if (!debug) {
@@ -434,3 +439,9 @@ int OpticalPumping::test() {
   printf("here rwar\n");
   return -1;
 }
+
+// BOOST_PYTHON_MODULE(OpticalPumping) {
+//   class_<op_parameters>("op_parameters");
+//   class_<OpticalPumping>("OpticalPumping")
+//       .def("pump", &OpticalPumping::pump);
+// }

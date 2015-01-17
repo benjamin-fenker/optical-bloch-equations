@@ -8,8 +8,8 @@
 
 #include <gsl/gsl_const_mksa.h>
 
-#include "include/alkali.h"
-#include "include/units.h"
+#include "alkali.h"
+#include "units.h"
 
 using std::string;
 

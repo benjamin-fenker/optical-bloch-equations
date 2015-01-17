@@ -11,9 +11,9 @@
 #include <gsl/gsl_eigen.h>
 #include <iomanip>
 #include <vector>
-#include "/usr/include/math.h"
-#include "include/eigenvector_helper.h"
-#include "include/units.h"
+#include "math.h"
+#include "eigenvector_helper.h"
+#include "units.h"
 
 using std::string;
 extern bool op_verbose;
