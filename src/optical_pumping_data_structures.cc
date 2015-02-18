@@ -1,9 +1,12 @@
 // Authors: Benjamin Fenker 2013
 // Copyright 2012 Benjamin Fenker
 
-#include <stdio.h>
+#include <cstring>
+#include <iomanip>
 #include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
+
 
 #include <gsl/gsl_const_mksa.h>
 #include "optical_pumping_data_structures.h"
@@ -207,4 +210,225 @@ bool DM_container::equalsZero() {
   }
   isZero = true;
   return true;
+}
+
+op_parameters::op_parameters() {
+  // ****These are only defaults****
+  isotope = "37K";
+  method = "O";
+  out_file = "opData.dat";
+  Je2 = 1;
+  tune_fe = 4;
+  tune_ge = 4;
+  tmax = 1.0 * _ns;
+  tstep = 1.0 * _ns;
+  zeeman = true;
+  hyperfine_gr = true;
+  hyperfine_ex = true;
+
+  laser_fe.power = 200.0 * (_uW/_cm2);
+  laser_fe.detune = -4.5 * _MHz;
+  laser_fe.linewidth = 0.2 * _MHz;
+  laser_fe.s3s0 = 1.0;
+  laser_fe.offtime = -1.0 * _ns;
+
+  laser_ge.power = 200.0 * (_uW/_cm2);
+  laser_ge.detune = -4.5 * _MHz;
+  laser_ge.linewidth = 0.2 * _MHz;
+  laser_ge.s3s0 = 1.0;
+  laser_ge.offtime = -1.0 * _ns;
+
+  Bx = 0.0 * _G;
+  Bz = 2.0 * _G;
+
+  population_tilt = 0.0;                // obsolete
+
+  verbosity = 0;
+
+  rf_linewidth = 500.0 * _Hz;
+  initial_population = "uniform";
+}
+
+op_parameters::op_parameters(int argc, char* argv[]) {
+  isotope = argv[1];
+  if (argc > 2) Je2 = atoi(argv[2]);
+  if (argc > 3) tmax = atof(argv[3])*_ns;
+  if (argc > 4) tstep = atof(argv[4])*_ns;
+  if (argc > 5) Bz = atof(argv[5])*_G;
+  if (argc > 6) Bx = atof(argv[6])*_G;
+  if (argc > 7) laser_fe.detune = atof(argv[7]) *_MHz;
+  if (argc > 8) laser_ge.detune = atof(argv[8]) * _MHz;
+  if (argc > 9) {
+    laser_fe.linewidth = atof(argv[9]) *_MHz;
+    laser_ge.linewidth = atof(argv[9]) *_MHz;
+  }
+  if (argc > 10) laser_fe.power = atof(argv[10]) * _uW/_cm2;
+  if (argc > 11) laser_ge.power = atof(argv[11]) * _uW/_cm2;
+  if (argc > 12) laser_fe.s3s0 = atof(argv[12]);
+  if (argc > 13) laser_ge.s3s0 = atof(argv[13]);
+  if (argc > 14) out_file = string(argv[14]);
+  if (argc > 15) method = string(argv[15]);
+  if (argc > 16) population_tilt = atof(argv[16]);
+}
+
+op_parameters::op_parameters(FILE *file) {
+  char expectedInput[40] = "file";
+  string file_s = "tmp.dat";
+  readAndCheckFromFile(file, expectedInput, &file_s);
+  out_file = file_s;
+  
+
+  snprintf(expectedInput, sizeof(expectedInput), "method");
+  readAndCheckFromFile(file, expectedInput, &method);
+
+  snprintf(expectedInput, sizeof(expectedInput), "isotope");
+  readAndCheckFromFile(file, expectedInput, &isotope);
+
+  snprintf(expectedInput, sizeof(expectedInput), "Je2");
+  readAndCheckFromFile(file, expectedInput, &Je2);
+  
+  snprintf(expectedInput, sizeof(expectedInput), "tstep");
+  readAndCheckFromFile(file, expectedInput, &tstep);
+  tstep *= _ns;              // Have to get the units right!
+
+  snprintf(expectedInput, sizeof(expectedInput), "tmax");
+  readAndCheckFromFile(file, expectedInput, &tmax);
+  tmax *= _ns;              // Have to get the units right!
+
+  int useCoherence = 1;
+  snprintf(expectedInput, sizeof(expectedInput), "zCoherences");
+  readAndCheckFromFile(file, expectedInput, &useCoherence);
+  if (useCoherence != 1) {
+    zeeman = false;
+  } else {
+    zeeman = true;
+  }
+
+  useCoherence = 1;
+  snprintf(expectedInput, sizeof(expectedInput), "hfCoherences_gr");
+  readAndCheckFromFile(file, expectedInput, &useCoherence);
+  if (useCoherence != 1) {
+    hyperfine_gr = false;
+  } else {
+    hyperfine_gr = true;
+  }
+
+  useCoherence = 1;
+  snprintf(expectedInput, sizeof(expectedInput), "hfCoherences_ex");
+  readAndCheckFromFile(file, expectedInput, &useCoherence);
+  if (useCoherence != 1) {
+    hyperfine_ex = false;
+  } else {
+    hyperfine_ex = true;
+  }
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_fe_power");
+  readAndCheckFromFile(file, expectedInput, &laser_fe.power);
+  laser_fe.power *= _uW/_cm2;            // Have to get the units right!
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_fe_s3");
+  readAndCheckFromFile(file, expectedInput, &laser_fe.s3s0);
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_fe_linewidth");
+  readAndCheckFromFile(file, expectedInput, &laser_fe.linewidth);
+  laser_fe.linewidth *= _MHz;            // Have to get the units right!
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_fe_nomTune");
+  readAndCheckFromFile(file, expectedInput, &tune_fe);
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_fe_detune");
+  readAndCheckFromFile(file, expectedInput, &laser_fe.detune);
+  laser_fe.detune *= _MHz;            // Have to get the units right!
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_fe_offTime");
+  readAndCheckFromFile(file, expectedInput, &laser_fe.offtime);
+  laser_fe.offtime *= _ns;            // Have to get the units right!
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_ge_power");
+  readAndCheckFromFile(file, expectedInput, &laser_ge.power);
+  laser_ge.power *= _uW/_cm2;            // Have to get the units right!
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_ge_s3");
+  readAndCheckFromFile(file, expectedInput, &laser_ge.s3s0);
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_ge_linewidth");
+  readAndCheckFromFile(file, expectedInput, &laser_ge.linewidth);
+  laser_ge.linewidth *= _MHz;            // Have to get the units right!
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_ge_nomTune");
+  readAndCheckFromFile(file, expectedInput, &tune_ge);
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_ge_detune");
+  readAndCheckFromFile(file, expectedInput, &laser_ge.detune);
+  laser_ge.detune *= _MHz;            // Have to get the units right!
+
+  snprintf(expectedInput, sizeof(expectedInput), "laser_ge_offTime");
+  readAndCheckFromFile(file, expectedInput, &laser_ge.offtime);
+  laser_ge.offtime *= _ns;            // Have to get the units right!
+
+  snprintf(expectedInput, sizeof(expectedInput), "B_z");
+  readAndCheckFromFile(file, expectedInput, &Bz);
+  Bz *= _G;            // Have to get the units right!
+
+  snprintf(expectedInput, sizeof(expectedInput), "B_x");
+  readAndCheckFromFile(file, expectedInput, &Bx);
+  Bx *= _G;            // Have to get the units right!
+
+  snprintf(expectedInput, sizeof(expectedInput), "tilt");
+  readAndCheckFromFile(file, expectedInput, &population_tilt);
+
+  snprintf(expectedInput, sizeof(expectedInput), "rf_linewidth");
+  readAndCheckFromFile(file, expectedInput, &rf_linewidth);
+  rf_linewidth *= _Hz;
+
+  snprintf(expectedInput, sizeof(expectedInput), "population");
+  readAndCheckFromFile(file, expectedInput, &initial_population);
+  //  printf("Read %s\n", population_setup.c_str());
+}
+
+void op_parameters::readAndCheckFromFile(FILE *f, char *parameter, string *s) {
+  char tempL[40] = "";
+  char tempR[40] = "";
+  int val;
+  val = fscanf(f, "%s\t%s", tempL, tempR);
+  if (val != 2) {
+    printf("Read error.\n");
+    exit(1);
+  }
+  // printf("READ %s\n", tempR);
+  if (strcmp(parameter, tempL) != 0) {
+    printf("Unexpected line in input file: %s\n",
+           tempR);
+    exit(1);
+  }
+  string out = tempR;
+  *s = out;
+}
+
+void op_parameters::readAndCheckFromFile(FILE *f, char *parameter, int *i) {
+  char temp[20] = "";
+  int val = fscanf(f, "%s\t%d", temp, i);
+  if (val != 2) {
+    printf("Read error.\n");
+    exit(1);
+  }
+  if (strcmp(parameter, temp) != 0) {
+    printf("Unexpected line in input file: %s\n",
+           temp);
+    exit(1);
+  }
+}
+
+void op_parameters::readAndCheckFromFile(FILE *f, char *parameter, double *i) {
+  char temp[20] = "";
+  int val = fscanf(f, "%s\t%lf", temp, i);
+  if (val != 2) {
+    printf("Read error.\n");
+    exit(1);
+  }
+  if (strcmp(parameter, temp) != 0) {
+    printf("Unexpected line in input file: %s\n",
+           temp);
+    exit(1);
+  }
 }
