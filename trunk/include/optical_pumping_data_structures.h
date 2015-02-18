@@ -4,6 +4,7 @@
 #ifndef INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
 #define INCLUDE_OPTICAL_PUMPING_DATA_STRUCTURES_H_
 
+#include <stdio.h>
 #include <gsl/gsl_complex_math.h>
 #include <string>
 #include <vector>
@@ -97,15 +98,18 @@ struct Laser_parameters {
   double power, detune, linewidth;
   double s3s0;
   double offtime;
-  int nominal_tune;
 };
 
-struct op_parameters {
+class op_parameters {
+public:
+  op_parameters();
+  op_parameters(int argc, char* argv[]);
+  op_parameters(FILE *file);
   string isotope;
   string method;
   string out_file;
   int Je2;
-  int tune_fe, tune_ge;
+  int tune_fe, tune_ge;                 /* duplicated in Laser_parameters? */
   double tmax, tstep;
   bool zeeman, hyperfine_gr, hyperfine_ex;
   Laser_parameters laser_fe, laser_ge;
@@ -114,6 +118,10 @@ struct op_parameters {
   int verbosity;
   double rf_linewidth;
   string initial_population;
+private:
+  void readAndCheckFromFile(FILE *f, char *parameter, double *i);
+  void readAndCheckFromFile(FILE *f, char *parameter, int *i);
+  void readAndCheckFromFile(FILE *f, char *parameter, string *s);
 };
 
 struct op_data_for_gsl {
