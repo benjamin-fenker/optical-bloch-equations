@@ -1,8 +1,8 @@
 // Author: Benjamin Fenker
+#include <iostream>
+#include <string>
+#include <vector>
 
-// Purpose: To write down some functions that will be useful in
-// fitting OP fluorescence spectra.  
-// Standard includes
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -15,45 +15,17 @@
 // boost includes
 #include <boost/algorithm/string.hpp>
 
-namespace OPFit {
-// Return value: Status (0 = success, anything else = failure)
-
-// hist_to_fill: Initialized histogram with arbitrary binning.  It
-// will be filled up by this function
-
-// fname: Filename of OP data to fill up histogram with.  Data must
-// have time in the first column and fluoresence in the last column.
-// All other columsn are ignored.
-
-// tscale: Unit scaling factor to adjust time values to match the
-// histogram.  t_hist = t_file*tscale
-int FillFluorHistFromFile(TH1D *hist_to_fill, std::string fname,
-                          double tscale = 1.0, std::string option = "");
-
-
-// Return value: whether the histograms have 1) the same number of bins and
-// 2) whether the center of each bin is identical
-// a, b: Histograms to check.  
-bool HistsHaveSameBinning(TH1D *a, TH1D *b);
-
-// Return value: chi2 of two histograms data, model or 0.0 if they
-// have different binnigs
-// data: Data histogram - errors are IGNORED
-// model: model histogram - errors are USED or assume = 1 if they don't exist
-// option: not used (yet?)
-double CompareFluorHists(TH1D *data, TH1D *model, std::string option = "");
-
+#include "OPfluorFitting.h"
 enum {
   success = 0,
   bad_file = 1,
   read_error = 2,
 };
-}
 
-#ifndef __OPFIT__
-#define __OPFIT__
+
 int OPFit::FillFluorHistFromFile(TH1D *hist_to_fill, std::string fname,
-                                 double tscale, std::string option) {
+                                 double tscale, std::string option,
+                                 double toffset) {
   boost::algorithm::to_lower(option);
 
   std::ifstream ifs(fname, std::ifstream::in);
@@ -64,6 +36,10 @@ int OPFit::FillFluorHistFromFile(TH1D *hist_to_fill, std::string fname,
   
   std::string line;
   std::vector<std::string> word;
+  std::vector<int> times_filled(hist_to_fill -> GetNbinsX() + 1, 0);
+  for (int i = 1; i <= hist_to_fill -> GetNbinsX(); i++) 
+    hist_to_fill -> SetBinContent(i, 0.0);
+
   while (std::getline(ifs, line)) {
     while (line.c_str()[0] == ' ') line.erase(0, 1);
     //    std::cout << line << std::endl;
@@ -78,13 +54,23 @@ int OPFit::FillFluorHistFromFile(TH1D *hist_to_fill, std::string fname,
       std::cout << "Error converting to double in file " << fname << std::endl;
       return read_error;
     }
+    // Adjust time
+    time = time + toffset;
     //    std::cout << time << "\t" << fluor << std::endl;
     int binn = hist_to_fill -> FindBin(time);
     hist_to_fill ->
         SetBinContent(binn, hist_to_fill->GetBinContent(binn) + fluor);
+    times_filled[binn]++;
   }
   ifs.close();
   for (int i = 1; i <= hist_to_fill -> GetNbinsX(); i++) {
+    if (times_filled[i] > 0) {
+      hist_to_fill ->
+          SetBinContent(i, hist_to_fill -> GetBinContent(i) / times_filled[i]);
+    } else {
+      hist_to_fill -> SetBinContent(i, 0.0);
+    }
+    hist_to_fill -> SetBinContent(i, hist_to_fill -> GetBinContent(i));
     //    hist_to_fill -> SetBinError(i, sqrt(hist_to_fill->GetBinContent(i)));
     hist_to_fill -> SetBinError(i, 0.0);
     if (option == "rate") {
@@ -98,16 +84,20 @@ int OPFit::FillFluorHistFromFile(TH1D *hist_to_fill, std::string fname,
   return success;
 }
 
-double OPFit::CompareFluorHists(TH1D *data, TH1D *model, std::string option) {
+double OPFit::CompareFluorHists(TH1D *data, TH1D *model, std::string option,
+                                double min, double max) {
   int verbose = 0;
   if (verbose > 0) {
-    std::cout << "Simulation\tData\tUncert.\tchi2" << std::endl;
+    std::cout << "Center\tSimulation\tData\tUncert.\tchi2" << std::endl;
   }
 
   double chi2 = 0.0;
   double t = 0.0;
   if (HistsHaveSameBinning(data, model)) {
     for (int i = 0; i <= data -> GetNbinsX(); i++) {
+
+      if (data -> GetBinLowEdge(i) < min) continue;
+      if (data -> GetBinLowEdge(i) + data -> GetBinWidth(i) > max) continue;
       double sim = model -> GetBinContent(i);
       double exp = data -> GetBinContent(i);
       double err = data -> GetBinError(i);
@@ -120,7 +110,8 @@ double OPFit::CompareFluorHists(TH1D *data, TH1D *model, std::string option) {
 
       t = t * t;
       if (verbose > 0) {
-        std::cout << sim << "\t" << exp << "\t" << err << "\t" << t << std::endl;
+        std::cout << data -> GetBinCenter(i) << "\t" << sim << "\t"
+                  << exp << "\t" << err << "\t" << t << std::endl;
       }
       chi2 = chi2 + t;
     }
@@ -146,4 +137,4 @@ bool OPFit::HistsHaveSameBinning(TH1D *a, TH1D *b) {
   return same;
 }
 
-#endif                                   
+
