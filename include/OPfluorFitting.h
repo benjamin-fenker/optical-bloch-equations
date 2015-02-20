@@ -47,6 +47,10 @@ bool HistsHaveSameBinning(TH1D *a, TH1D *b);
 double CompareFluorHists(TH1D *data, TH1D *model, std::string option,
                          double min, double max);
 
+void ScaleSimulationIncludingBackground(TH1D *data, TH1D *model,
+                                        double bkg_per_bin, double start,
+                                        double stop);
+
 }
 
 #endif                                   

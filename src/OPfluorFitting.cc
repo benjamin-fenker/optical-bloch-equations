@@ -137,4 +137,24 @@ bool OPFit::HistsHaveSameBinning(TH1D *a, TH1D *b) {
   return same;
 }
 
+void OPFit::ScaleSimulationIncludingBackground(TH1D *data, TH1D *model,
+                                               double bkg_per_bin, double start,
+                                               double stop) {
+  double scale_num = (data -> Integral(data -> FindBin(start),
+                                       data -> FindBin(stop)));
+  int nbins = data -> FindBin(stop) - data -> FindBin(start);
+  // cout << "In the data there are " << scale_num << " counts in "
+  //      << nbins << " bins" << endl;
+
+  scale_num = scale_num - (bkg_per_bin * nbins);
+  double scale_den = model -> Integral(model -> FindBin(start),
+                                       model -> FindBin(stop));
+      
+  double scale = scale_num / scale_den;
+  model -> Scale(scale);
+  for (int i = 1; i < model -> GetNbinsX(); i++) {
+    model -> SetBinContent(i, model -> GetBinContent(i) + bkg_per_bin);
+  }
+
+}
 
