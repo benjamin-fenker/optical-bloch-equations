@@ -118,6 +118,7 @@ public:
   int verbosity;
   double rf_linewidth;
   string initial_population;
+  void PrintToFile(string fname);
 private:
   void readAndCheckFromFile(FILE *f, char *parameter, double *i);
   void readAndCheckFromFile(FILE *f, char *parameter, int *i);

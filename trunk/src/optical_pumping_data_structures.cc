@@ -432,3 +432,48 @@ void op_parameters::readAndCheckFromFile(FILE *f, char *parameter, double *i) {
     exit(1);
   }
 }
+
+void op_parameters::PrintToFile(string fname) {
+  FILE *file;
+  file = fopen(fname.c_str(), "w");
+  
+  fprintf(file, "file %s\n", out_file.c_str());
+  fprintf(file, "method %s\n", method.c_str());
+  fprintf(file, "isotope %s\n", isotope.c_str());
+  fprintf(file, "Je2 %d\n", Je2);
+  fprintf(file, "tstep %f\n", tstep/_ns);
+  fprintf(file, "tmax %f\n", tmax/_ns);
+  fprintf(file, "zCoherences %d\n", (zeeman)? 1:0);
+  fprintf(file, "hfCoherences_gr %d\n", (hyperfine_gr)? 1:0);
+  fprintf(file, "hfCoherences_ex %d\n", (hyperfine_ex)? 1:0);
+  fprintf(file, "laser_fe_power %f\n", laser_fe.power/(_uW/_cm2));
+  fprintf(file, "laser_fe_s3 %f\n", laser_fe.s3s0);
+  fprintf(file, "laser_fe_linewidth %f\n", laser_fe.linewidth/_MHz);
+  fprintf(file, "laser_fe_nomTune %d\n", tune_fe);
+  fprintf(file, "laser_fe_detune %f\n", laser_fe.detune/_MHz);
+  fprintf(file, "laser_fe_offTime %f\n", laser_fe.offtime/_ns);
+  fprintf(file, "laser_ge_power %f\n", laser_ge.power/(_uW/_cm2));
+  fprintf(file, "laser_ge_s3 %f\n", laser_ge.s3s0);
+  fprintf(file, "laser_ge_linewidth %f\n", laser_ge.linewidth/_MHz);
+  fprintf(file, "laser_ge_nomTune %d\n", tune_ge);
+  fprintf(file, "laser_ge_detune %f\n", laser_ge.detune/_MHz);
+  fprintf(file, "laser_ge_offTime %f\n", laser_ge.offtime/_ns);
+  fprintf(file, "B_z %f\n", Bz/_G);
+  fprintf(file, "B_x %f\n", Bx/_G);
+  fprintf(file, "tilt %f\n", population_tilt);
+  fprintf(file, "rf_linewidth %f\n", rf_linewidth/_Hz);
+  fprintf(file, "population %s\n", initial_population.c_str());
+  fprintf(file, "\n");
+
+  fprintf(file, "Units must be ns, uW/cm^2, MHz, G where appropriate\n\n");
+  fprintf(file, "Laser offTime should be < 0 for 'always on' (the usual case)\n\n");
+  fprintf(file, "Each 'nomTune' is the 2*Mf of the state\n\n");
+  fprintf(file, "It is always assumed that your are pumping to the HIGHEST F-manifold\n");
+  fprintf(file, "in the excited state\n\n");
+  fprintf(file, "For rf_linewidth the UNITS ARE HERTZ. If rf_linewidth set to >= 0.0,\n");
+  fprintf(file, "the (Gam1+Gam2)/2 term in Eq 37 will replaced by this value.  This\n");
+  fprintf(file, "simulates 100%% correlated lasers as in Gu (2003).  If rf_linewidth < \n");
+  fprintf(file, "0, use Eq 37 (T&J) exactly as is, simulating 0%% correlated lasers. xb\n");
+
+  fclose(file);
+}
