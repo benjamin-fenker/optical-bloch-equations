@@ -240,7 +240,7 @@ int OpticalPumping::pump(op_parameters params) {
   double print_frequency;  // Number of ns between print statements
   //  int total_print;  // Total number of print statements
   print_frequency = tStep;
-  while(tmax  / print_frequency > max_out) {
+  while(tmax  / print_frequency > max_out && print_frequency < 0.25 *_us) {
     print_frequency *= 2.0;
   }
 

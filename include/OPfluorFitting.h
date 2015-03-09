@@ -50,6 +50,11 @@ double CompareFluorHists(TH1D *data, TH1D *model, std::string option,
 void ScaleSimulationIncludingBackground(TH1D *data, TH1D *model,
                                         double bkg_per_bin, double start,
                                         double stop);
+void ScaleSimulationIncludingSNratio(TH1D *data, TH1D *model,
+                                     double sn_ratio, double start,
+                                     double stop);
+double GetFinalPolarizationFromFile(std::string gname);
+TH1D* GetResidualHistogram(TH1D *data, TH1D *model, double min, double max);
 
 }
 
