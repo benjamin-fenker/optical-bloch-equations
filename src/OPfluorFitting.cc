@@ -245,8 +245,15 @@ double OPFit::GetFinalPolarizationFromFile(std::string fname) {
   while (std::getline(ifs, line)) {
     boost::split(word, line, boost::is_any_of(" \t"));
   }
-  double polarization = stod(word[word.size() - 3]);
+  double polarization;
+  try {
+    polarization = stod(word[word.size() - 3]);
+  }
+  catch (...) {
+    std::cout << "Error converting to double in file " << fname << std::endl;
+    std::cout << line << std::endl;
+    polarization = 0.0;
+  }
   std::cout << "Polarization = " << polarization << std::endl;
   return polarization;
-  
 }
